@@ -72,6 +72,51 @@ class WishListService
         ];
     }
 
+    /**
+     * Получает данные для публичного просмотра списка желаний.
+     */
+    public function getPublicWishListData(string $publicId): array
+    {
+        $wishList = $this->findPublic($publicId);
+
+        if (!$wishList) {
+            abort(404, __('Список желаний не найден'));
+        }
+
+        $wishes = $wishList->wishes;
+        $user = $wishList->user;
+        
+        // Логика для модальных окон
+        $isGuest = !auth()->check();
+        $isFriend = false;
+        if (auth()->check()) {
+            $currentUser = auth()->user();
+            $isFriend = app(\App\Services\FriendService::class)->isAlreadyFriendOrRequested($currentUser, $user->id);
+        }
+
+        return [
+            'wishList' => $wishList,
+            'wishes' => $wishes,
+            'user' => $user,
+            'isGuest' => $isGuest,
+            'isFriend' => $isFriend
+        ];
+    }
+
+    /**
+     * Получает данные для главной страницы списков желаний.
+     */
+    public function getIndexData(int $userId): array
+    {
+        $wishLists = $this->findByUser($userId);
+        $statistics = $this->getStatistics($userId);
+
+        return [
+            'wishLists' => $wishLists,
+            'statistics' => $statistics
+        ];
+    }
+
     private function validateCreateData(array $data): void
     {
         $validator = Validator::make($data, [

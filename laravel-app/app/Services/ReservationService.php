@@ -95,7 +95,7 @@ class ReservationService
         $reservations = Reservation::where('user_id', $userId)->with('wish');
 
         return [
-            'total_reservations' => $reservations->count(),
+            'total_reserved_wishes' => $reservations->count(),
             'active_reservations' => $reservations->whereHas('wish', function ($query) {
                 $query->where('is_reserved', true);
             })->count(),

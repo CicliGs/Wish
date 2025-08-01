@@ -1,0 +1,371 @@
+/* Modern Profile Page Styles */
+.profile-card {
+    border: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.profile-avatar-edit {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    border-radius: 50%;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.profile-avatar-edit:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.friend-card:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    transform: translateY(-5px);
+}
+
+.profile-widget {
+    transition: all 0.4s ease;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.profile-widget:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    transform: translateY(-8px) scale(1.02);
+}
+
+.profile-widget-link {
+    text-decoration: none;
+    display: block;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.profile-widget-link:hover .profile-widget {
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+    transform: translateY(-10px) scale(1.03);
+}
+
+/* Modern Achievements Section */
+.achievements-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem 1.5rem;
+    justify-content: center;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.achievement-icon-wrapper {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem 1rem 1rem 1rem;
+    width: 120px;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.4s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.achievement-icon-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.achievement-icon-wrapper:hover::before {
+    left: 100%;
+}
+
+.achievement-icon-wrapper:hover {
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.15);
+    transform: translateY(-8px) scale(1.05);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+}
+
+.achievement-icon {
+    width: 65px;
+    height: 65px;
+    object-fit: contain;
+    border-radius: 15px;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.achievement-icon-wrapper:hover .achievement-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.achievement-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4a5568;
+    text-align: center;
+    max-width: 100px;
+    margin-top: 0.5rem;
+    transition: all 0.3s ease;
+    line-height: 1.2;
+}
+
+.achievement-icon-wrapper:hover .achievement-title {
+    color: #2d3748;
+    font-weight: 700;
+}
+
+.achievement-icon-wrapper .badge {
+    margin-top: 0.5rem;
+    border-radius: 15px;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    transition: all 0.3s ease;
+}
+
+.achievement-icon-wrapper:hover .badge {
+    transform: scale(1.1);
+}
+
+.profile-widget .bi {
+    transition: all 0.3s ease;
+}
+
+.profile-widget:hover .bi {
+    transform: scale(1.2) rotate(5deg);
+}
+
+.profile-widget div:first-child {
+    transition: all 0.3s ease;
+    color: #2d3748;
+    font-weight: 700;
+}
+
+.profile-widget:hover div:first-child {
+    color: #667eea;
+    transform: scale(1.1);
+}
+
+.profile-widget div:last-child {
+    transition: all 0.3s ease;
+    color: #718096;
+}
+
+.profile-widget:hover div:last-child {
+    color: #4a5568;
+    font-weight: 600;
+}
+
+/* Modal styling - FIXED */
+.modal {
+    z-index: 99999 !important;
+}
+
+.modal-backdrop {
+    z-index: 99997 !important;
+}
+
+.modal-content {
+    border-radius: 25px;
+    border: none;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(20px);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+    position: relative;
+    z-index: 100000 !important;
+}
+
+.modal-dialog {
+    z-index: 100001 !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 25px 25px 0 0;
+    padding: 1.5rem 2rem;
+}
+
+.modal-title {
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 1.5rem;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.btn-close {
+    border-radius: 50%;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+    z-index: 100002 !important;
+    position: relative;
+}
+
+.btn-close:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+/* QR Code Modal specific styles */
+#qrcode-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 15px;
+    margin: 1rem 0;
+}
+
+.qr-code-wrapper {
+    text-align: center;
+    padding: 1rem;
+}
+
+.qr-code-wrapper canvas {
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+/* Specific fix for achievement modals - NO BACKDROP */
+#allAchievementsModal {
+    z-index: 999999 !important;
+}
+
+#allAchievementsModal .modal-content {
+    z-index: 1000000 !important;
+}
+
+#allAchievementsModal .modal-dialog {
+    z-index: 1000001 !important;
+}
+
+#allAchievementsModal .btn-close {
+    z-index: 1000002 !important;
+}
+
+/* Force modal backdrop to be behind modal content */
+.modal-backdrop.show {
+    z-index: 99997 !important;
+    opacity: 0.5;
+}
+
+/* COMPLETELY REMOVE MODAL BACKDROP ONLY FOR ACHIEVEMENTS MODAL */
+#allAchievementsModal + .modal-backdrop,
+.modal-backdrop[data-bs-target="#allAchievementsModal"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+    .achievements-flex {
+        gap: 1rem 0.5rem;
+        justify-content: center;
+    }
+
+    .achievement-icon-wrapper {
+        width: 100px;
+        min-width: 100px;
+        padding: 1rem 0.5rem 0.75rem 0.5rem;
+    }
+
+    .achievement-icon {
+        width: 55px;
+        height: 55px;
+        padding: 8px;
+    }
+
+    .achievement-title {
+        font-size: 0.8rem;
+        max-width: 80px;
+    }
+
+    .profile-widget {
+        padding: 1rem !important;
+    }
+
+    .profile-widget div:first-child {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animation for achievement icons */
+@keyframes achievementGlow {
+    0%, 100% {
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.1);
+    }
+    50% {
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
+    }
+}
+
+.achievement-icon-wrapper:not(.opacity-50) {
+    animation: achievementGlow 3s ease-in-out infinite;
+}
+
+/* Hover effects for buttons */
+.btn-outline-dark {
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 2px solid #2d3748;
+}
+
+.btn-outline-dark:hover {
+    background: linear-gradient(135deg, #2d3748, #4a5568);
+    border-color: #2d3748;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(45, 55, 72, 0.3);
+}
+
+.btn-outline-danger {
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 2px solid #e53e3e;
+    padding: 0.75rem 2rem;
+}
+
+.btn-outline-danger:hover {
+    background: linear-gradient(135deg, #e53e3e, #f56565);
+    border-color: #e53e3e;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(229, 62, 62, 0.3);
+}

@@ -1,0 +1,139 @@
+/* Global Modal Fixes */
+.modal {
+    z-index: 99999 !important;
+}
+
+.modal-backdrop {
+    z-index: 99997 !important;
+}
+
+.modal-content {
+    border-radius: 25px;
+    border: none;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(20px);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+    position: relative;
+    z-index: 100000 !important;
+}
+
+.modal-dialog {
+    z-index: 100001 !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 25px 25px 0 0;
+    padding: 1.5rem 2rem;
+}
+
+.modal-title {
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 1.5rem;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.btn-close {
+    border-radius: 50%;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+    z-index: 100002 !important;
+    position: relative;
+}
+
+.btn-close:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+/* QR Code specific styles */
+.qr-code-wrapper {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 15px;
+    margin: 1rem 0;
+}
+
+.qr-code-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    min-width: 200px;
+}
+
+.qr-code-container canvas {
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    background: white;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Ensure modals are always on top */
+.modal.show {
+    display: block !important;
+}
+
+/* Force modal backdrop to be behind modal content */
+.modal-backdrop.show {
+    z-index: 99997 !important;
+    opacity: 0.5;
+}
+
+/* Override Bootstrap's default z-index */
+.modal-backdrop.fade {
+    z-index: 99997 !important;
+}
+
+.modal-backdrop.fade.show {
+    z-index: 99997 !important;
+}
+
+/* Override any conflicting z-index */
+* {
+    z-index: auto;
+}
+
+.modal, .modal-backdrop, .modal-content, .modal-dialog {
+    z-index: inherit;
+}
+
+/* Specific fix for achievement modals - NO BACKDROP */
+#allAchievementsModal {
+    z-index: 999999 !important;
+}
+
+#allAchievementsModal .modal-content {
+    z-index: 1000000 !important;
+}
+
+#allAchievementsModal .modal-dialog {
+    z-index: 1000001 !important;
+}
+
+#allAchievementsModal .btn-close {
+    z-index: 1000002 !important;
+}
+
+/* COMPLETELY REMOVE MODAL BACKDROP ONLY FOR ACHIEVEMENTS MODAL */
+#allAchievementsModal + .modal-backdrop,
+.modal-backdrop[data-bs-target="#allAchievementsModal"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Additional force for all modal backdrops - KEEP THEM */
+body .modal-backdrop {
+    z-index: 99997 !important;
+}
+
+body .modal-backdrop.show {
+    z-index: 99997 !important;
+} 

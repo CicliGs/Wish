@@ -7,18 +7,20 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Services\UserService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class LoginController extends Controller
 {
     public function __construct(protected UserService $userService) {}
 
-    public function showLoginForm(): \Illuminate\View\View
+    public function showLoginForm(): View
     {
         return view('login');
     }
 
-    public function login(LoginRequest $request): \Illuminate\Http\RedirectResponse
+    public function login(LoginRequest $request):RedirectResponse
     {
         $credentials = $request->validated();
         if ($this->userService->processLogin($credentials, $request, $request->boolean('remember'))) {
@@ -26,11 +28,11 @@ class LoginController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Неверный email или пароль',
+            'email' => __('Неверный email или пароль'),
         ])->onlyInput('email');
     }
 
-    public function logout(Request $request): \Illuminate\Http\RedirectResponse
+    public function logout(Request $request): RedirectResponse
     {
         $this->userService->logout($request);
 

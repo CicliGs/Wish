@@ -20,10 +20,10 @@ class ReservationController extends Controller
         $result = $this->service->reserve($wish, Auth::id());
 
         if ($result === true) {
-            return back()->with('success', 'Подарок забронирован!');
+            return back()->with('success', __('Подарок забронирован!'));
         }
 
-        return back()->with('error', $result);
+        return back()->with('error', __($result));
     }
 
     public function unreserve(int $wishId): RedirectResponse
@@ -35,7 +35,7 @@ class ReservationController extends Controller
             return back()->with('success', __('Бронирование снято!'));
         }
 
-        return back()->with('error', $result);
+        return back()->with('error', __($result));
     }
 
     public function index(): View

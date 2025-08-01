@@ -27,7 +27,7 @@ class UpdateWishRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'url' => ['nullable', 'url', 'max:500'],
-            'image' => ['nullable', 'url', 'max:500'],
+            'image' => ['nullable', 'string', 'max:500'], // изменено с 'url' на 'string'
             'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
         ];
     }
@@ -42,7 +42,6 @@ class UpdateWishRequest extends FormRequest
             'title.max' => 'Название не может быть длиннее 255 символов.',
             'url.url' => 'Ссылка должна быть валидным URL.',
             'url.max' => 'Ссылка не может быть длиннее 500 символов.',
-            'image.url' => 'Ссылка на изображение должна быть валидным URL.',
             'image.max' => 'Ссылка на изображение не может быть длиннее 500 символов.',
             'price.numeric' => 'Цена должна быть числом.',
             'price.min' => 'Цена не может быть отрицательной.',

@@ -18,30 +18,41 @@ class WishListController extends Controller
 
     public function __construct(protected WishListService $service) {}
 
+    /**
+     * Отображает список списков желаний пользователя.
+     */
     public function index(): View
     {
-        $wishLists = $this->service->findByUser(Auth::id());
-        $statistics = $this->service->getStatistics(Auth::id());
-
-        return view('wishlists.index', compact('wishLists', 'statistics'));
+        $data = $this->service->getIndexData(Auth::id());
+        
+        return view('wishlists.index', $data);
     }
 
+    /**
+     * Отображает форму создания списка желаний.
+     */
     public function create(): View
     {
         return view('wishlists.create');
     }
 
+    /**
+     * Сохраняет новый список желаний.
+     */
     public function store(Request $request): RedirectResponse
     {
         try {
             $this->service->create($request->all(), Auth::id());
-
-            return redirect()->route('wish-lists.index')->with('success', 'Список желаний создан!');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Ошибка при создании списка: '.$e->getMessage());
+            return back()->withInput()->with('error', __('messages.error_creating_list') . $e->getMessage());
         }
+
+        return redirect()->route('wish-lists.index')->with('success', __('messages.wishlist_created'));
     }
 
+    /**
+     * Отображает форму редактирования списка желаний.
+     */
     public function edit(WishList $wishList): View
     {
         $this->authorize('update', $wishList);
@@ -49,6 +60,9 @@ class WishListController extends Controller
         return view('wishlists.edit', compact('wishList'));
     }
 
+    /**
+     * Обновляет список желаний.
+     */
     public function update(Request $request, WishList $wishList): RedirectResponse
     {
         $this->authorize('update', $wishList);
@@ -56,39 +70,25 @@ class WishListController extends Controller
         try {
             $this->service->update($wishList, $request->all());
         } catch (\Exception $e) {
-
-            return back()->withInput()->with('error', 'Ошибка при обновлении: '.$e->getMessage());
+            return back()->withInput()->with('error', __('messages.error_updating_list') . $e->getMessage());
         }
 
-        return redirect()->route('wish-lists.index')->with('success', 'Список желаний обновлен!');
+        return redirect()->route('wish-lists.index')->with('success', __('messages.wishlist_updated'));
     }
 
+    /**
+     * Отображает публичный список желаний.
+     */
     public function public(string $publicId): View
     {
-        $wishList = $this->service->findPublic($publicId);
-
-        if (! $wishList) {
-            abort(404, 'Список желаний не найден');
-        }
-
-        $wishes = $wishList->wishes;
-
-        return view('wishlists.public', compact('wishList', 'wishes'));
+        $data = $this->service->getPublicWishListData($publicId);
+        
+        return view('wishlists.public', $data);
     }
-    //
-    //    public function regeneratePublicId(WishList $wishList): RedirectResponse
-    //    {
-    //        $this->authorize('update', $wishList);
-    //
-    //        try {
-    //            $this->service->regeneratePublicId($wishList);
-    //
-    //            return back()->with('success', 'Публичная ссылка обновлена!');
-    //        } catch (\Exception $e) {
-    //            return back()->with('error', 'Ошибка при обновлении ссылки: '.$e->getMessage());
-    //        }
-    //    }
 
+    /**
+     * Удаляет список желаний.
+     */
     public function destroy(WishList $wishList): RedirectResponse
     {
         $this->authorize('delete', $wishList);
@@ -96,10 +96,9 @@ class WishListController extends Controller
         try {
             $this->service->delete($wishList);
         } catch (\Exception $e) {
-
-            return back()->with('error', 'Ошибка при удалении: '.$e->getMessage());
+            return back()->with('error', __('messages.error_deleting_list') . $e->getMessage());
         }
 
-        return redirect()->route('wish-lists.index')->with('success', 'Список желаний удален!');
+        return redirect()->route('wish-lists.index')->with('success', __('messages.wishlist_deleted'));
     }
 }

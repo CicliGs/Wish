@@ -8,6 +8,7 @@ use App\Http\Requests\StoreWishRequest;
 use App\Http\Requests\UpdateWishRequest;
 use App\Models\Wish;
 use App\Models\WishList;
+use App\Models\User;
 use App\Services\WishService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -17,15 +18,19 @@ class WishController extends Controller
 {
     public function __construct(protected WishService $service) {}
 
+    /**
+     * Отображает список желаний в списке желаний.
+     */
     public function index(int $wishListId): View
     {
-        $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
-        $wishes = $this->service->findByWishList($wishList->id);
-        $statistics = $this->service->getWishListStatistics($wishList->id);
-
-        return view('wishes.index', compact('wishes', 'wishList', 'statistics'));
+        $data = $this->service->getIndexData($wishListId, Auth::id());
+        
+        return view('wishes.index', $data);
     }
 
+    /**
+     * Отображает форму создания желания.
+     */
     public function create(int $wishListId): View
     {
         $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
@@ -33,20 +38,29 @@ class WishController extends Controller
         return view('wishes.create', compact('wishList'));
     }
 
+    /**
+     * Сохраняет новое желание.
+     */
     public function store(StoreWishRequest $request, int $wishListId): RedirectResponse
     {
         $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
 
         try {
-            $this->service->create($request->validated(), $wishList->id);
+            $data = $request->validated();
+            $imageFile = $request->hasFile('image_file') ? $request->file('image_file') : null;
+            $this->service->createWithImage($data, $wishList->id, $imageFile);
 
-            return redirect()->route('wishes.index', $wishList->id)
-                ->with('success', 'Желание добавлено!');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Ошибка при создании: '.$e->getMessage());
+            return back()->withInput()->with('error', __('messages.error_creating_wish') . $e->getMessage());
         }
+
+        return redirect()->route('wishes.index', $wishList->id)
+            ->with('success', __('messages.wish_created'));
     }
 
+    /**
+     * Отображает форму редактирования желания.
+     */
     public function edit(int $wishListId, Wish $wish): View
     {
         $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
@@ -55,6 +69,9 @@ class WishController extends Controller
         return view('wishes.edit', compact('wish', 'wishList'));
     }
 
+    /**
+     * Обновляет желание.
+     */
     public function update(UpdateWishRequest $request, int $wishListId, Wish $wish): RedirectResponse
     {
         $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
@@ -63,13 +80,17 @@ class WishController extends Controller
         try {
             $this->service->update($wish, $request->validated());
 
-            return redirect()->route('wishes.index', $wishList->id)
-                ->with('success', 'Желание обновлено!');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Ошибка при обновлении: '.$e->getMessage());
+            return back()->withInput()->with('error', __('messages.error_updating_wish') . $e->getMessage());
         }
+        
+        return redirect()->route('wishes.index', $wishList->id)
+            ->with('success', __('messages.wish_updated'));
     }
 
+    /**
+     * Удаляет желание.
+     */
     public function destroy(int $wishListId, Wish $wish): RedirectResponse
     {
         $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
@@ -78,26 +99,89 @@ class WishController extends Controller
         try {
             $this->service->delete($wish);
 
-            return redirect()->route('wishes.index', $wishList->id)
-                ->with('success', 'Желание удалено!');
         } catch (\Exception $e) {
-            return back()->with('error', 'Ошибка при удалении: '.$e->getMessage());
+            return back()->with('error', __('messages.error_deleting_wish') . $e->getMessage());
         }
+
+        return redirect()->route('wishes.index', $wishList->id)
+            ->with('success', __('messages.wish_deleted'));
     }
 
+    /**
+     * Отображает доступные желания.
+     */
     public function available(int $wishListId): View
     {
-        $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
-        $wishes = $this->service->getAvailableWishes($wishList->id);
-
-        return view('wishes.available', compact('wishes', 'wishList'));
+        $data = $this->service->getAvailableData($wishListId, Auth::id());
+        
+        return view('wishes.available', $data);
     }
 
+    /**
+     * Отображает зарезервированные желания.
+     */
     public function reserved(int $wishListId): View
     {
-        $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
-        $wishes = $this->service->getReservedWishes($wishList->id);
+        $data = $this->service->getReservedData($wishListId, Auth::id());
+        
+        return view('wishes.reserved', $data);
+    }
 
-        return view('wishes.reserved', compact('wishes', 'wishList'));
+    /**
+     * Отменяет резервирование желания.
+     */
+    public function unreserve(int $wishListId, Wish $wish): RedirectResponse
+    {
+        $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
+        $this->authorize('reserve', $wish);
+
+        try {
+            $this->service->unreserve($wish, Auth::id());
+
+        } catch (\Exception $e) {
+            return back()->with('error', __('messages.error_unreserving_wish') . $e->getMessage());
+        }
+
+        return redirect()->route('wishes.index', $wishList->id)
+            ->with('success', __('messages.wish_unreserved'));
+    }
+
+    /**
+     * Резервирует желание.
+     */
+    public function reserve(int $wishListId, Wish $wish): RedirectResponse
+    {
+        $wishList = WishList::forUser(Auth::id())->findOrFail($wishListId);
+        $this->authorize('reserve', $wish);
+
+        try {
+            $this->service->reserve($wish, Auth::id());
+
+        } catch (\Exception $e) {
+            return back()->with('error', __('messages.error_reserving_wish') . $e->getMessage());
+        }
+
+        return redirect()->route('wishes.index', $wishList->id)
+            ->with('success', __('messages.wish_reserved'));
+    }
+
+    /**
+     * Отображает все желания пользователя.
+     */
+    public function showUser(int $userId): View
+    {
+        $data = $this->service->getUserWishesData($userId);
+        
+        return view('wishes.user_all', $data);
+    }
+
+    /**
+     * Отображает список желаний пользователя.
+     */
+    public function showUserWishList(int $userId, int $wishListId): View
+    {
+        $data = $this->service->getUserWishListData($userId, $wishListId);
+        
+        return view('wishes.user', $data);
     }
 }

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar', // добавлено поле для аватара
     ];
 
     /**
@@ -54,9 +55,9 @@ class User extends Authenticatable
     /**
      * Get the wish lists for the user.
      */
-    public function wishLists(): HasMany
+    public function wishLists()
     {
-        return $this->hasMany(WishList::class);
+        return $this->hasMany(\App\Models\WishList::class);
     }
 
     /**
@@ -65,6 +66,48 @@ class User extends Authenticatable
     public function reservations(): HasMany
     {
         return $this->hasMany(Reservation::class);
+    }
+
+    /**
+     * Друзья, которых добавил пользователь
+     */
+    public function friends()
+    {
+        return $this->belongsToMany(User::class, 'friends', 'user_id', 'friend_id');
+    }
+
+    /**
+     * Пользователи, которые добавили этого пользователя в друзья
+     */
+    public function friendOf()
+    {
+        return $this->belongsToMany(User::class, 'friends', 'friend_id', 'user_id');
+    }
+
+    public function incomingRequests()
+    {
+        return $this->hasMany(FriendRequest::class, 'friend_id');
+    }
+
+    public function outgoingRequests()
+    {
+        return $this->hasMany(FriendRequest::class, 'user_id');
+    }
+
+    /**
+     * Friend requests, отправленные этим пользователем
+     */
+    public function sentRequests()
+    {
+        return $this->hasMany(FriendRequest::class, 'user_id');
+    }
+
+    /**
+     * Friend requests, полученные этим пользователем
+     */
+    public function receivedRequests()
+    {
+        return $this->hasMany(FriendRequest::class, 'friend_id');
     }
 
     /**
@@ -117,5 +160,10 @@ class User extends Authenticatable
     public function hasReservedWish(Wish $wish): bool
     {
         return $this->reservations()->where('wish_id', $wish->id)->exists();
+    }
+
+    public function wishes()
+    {
+        return $this->hasMany(Wish::class);
     }
 }
