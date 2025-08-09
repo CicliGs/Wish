@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class WishList extends Model
 {
@@ -23,6 +24,8 @@ class WishList extends Model
         'user_id',
         'title',
         'description',
+        'uuid',
+        'is_public',
     ];
 
     /**
@@ -33,6 +36,7 @@ class WishList extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'is_public' => 'boolean',
     ];
 
     /**
@@ -41,47 +45,71 @@ class WishList extends Model
     protected static function booted(): void
     {
         static::creating(function (WishList $wishList) {
-            if (empty($wishList->public_id)) {
-                $wishList->public_id = (string) \Illuminate\Support\Str::uuid();
+            if (empty($wishList->uuid)) {
+                $wishList->uuid = (string) Str::uuid();
             }
         });
     }
 
+    /**
+     * Get the wishes for this wish list.
+     */
     public function wishes(): HasMany
     {
         return $this->hasMany(Wish::class);
     }
 
+    /**
+     * Get the user that owns this wish list.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Scope for user.
+     */
     public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
     }
 
+    /**
+     * Scope for public wish lists.
+     */
     public function scopePublic(Builder $query): Builder
     {
-        return $query->whereNotNull('public_id');
+        return $query->whereNotNull('uuid');
     }
 
+    /**
+     * Get public URL attribute.
+     */
     public function getPublicUrlAttribute(): string
     {
-        return route('wish-lists.public', $this->public_id);
+        return route('wish-lists.public', $this->uuid);
     }
 
+    /**
+     * Check if wish list has wishes.
+     */
     public function hasWishes(): bool
     {
         return $this->wishes()->exists();
     }
 
+    /**
+     * Get wishes count attribute.
+     */
     public function getWishesCountAttribute(): int
     {
         return $this->wishes()->count();
     }
 
+    /**
+     * Get reserved wishes count attribute.
+     */
     public function getReservedWishesCountAttribute(): int
     {
         return $this->wishes()->where('is_reserved', true)->count();

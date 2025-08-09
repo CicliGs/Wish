@@ -189,11 +189,11 @@
 
 /* Modal styling - FIXED */
 .modal {
-    z-index: 99999 !important;
+    z-index: 1050 !important;
 }
 
 .modal-backdrop {
-    z-index: 99997 !important;
+    z-index: 1040 !important;
 }
 
 .modal-content {
@@ -203,11 +203,11 @@
     backdrop-filter: blur(20px);
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
     position: relative;
-    z-index: 100000 !important;
+    z-index: 1051 !important;
 }
 
 .modal-dialog {
-    z-index: 100001 !important;
+    z-index: 1052 !important;
 }
 
 .modal-header {
@@ -230,24 +230,34 @@
     border-radius: 50%;
     padding: 0.5rem;
     transition: all 0.3s ease;
-    z-index: 100002 !important;
+    z-index: 1053 !important;
     position: relative;
     transform: none !important;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(102, 126, 234, 0.2);
 }
 
 .btn-close:hover {
     background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.5);
     transform: none !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
 }
 
 .btn-close:focus {
     transform: none !important;
-    box-shadow: none !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3) !important;
+    outline: none;
 }
 
 /* Force modal backdrop to be behind modal content */
 .modal-backdrop.show {
-    z-index: 99997 !important;
+    z-index: 1040 !important;
     opacity: 0.5;
 }
 

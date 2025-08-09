@@ -12,6 +12,13 @@ return [
     'language' => 'Язык',
     'russian' => 'Русский',
     'english' => 'English',
+    'settings' => 'Настройки',
+    
+    // Настройки
+    'preferred_currency' => 'Предпочитаемая валюта',
+    'currency_description' => 'Эта валюта будет использоваться для отображения цен во всем приложении.',
+    'save_settings' => 'Сохранить настройки',
+    'settings_updated' => 'Настройки успешно обновлены.',
     
     // Профиль
     'achievements' => 'Достижения',
@@ -145,6 +152,7 @@ return [
     'friend_request_accepted' => 'Заявка принята!',
     'friend_request_declined' => 'Заявка отклонена.',
     'friend_removed' => 'Пользователь удалён из друзей!',
+    'confirm_remove_friend' => 'Вы уверены, что хотите удалить этого пользователя из друзей?',
     'wish_reserved' => 'Подарок забронирован!',
     'wish_unreserved' => 'Бронь отменена!',
     'wish_created' => 'Желание добавлено!',
@@ -166,6 +174,8 @@ return [
     'not_found' => 'Не найдено',
     'validation_error' => 'Ошибка валидации',
     'server_error' => 'Ошибка сервера',
+    'error_occurred' => 'Произошла ошибка',
+    'processing' => 'Обработка',
     
     // Статистика
     'total_lists' => 'Всего списков',
@@ -198,4 +208,22 @@ return [
     'no_account' => 'Нет аккаунта?',
     'have_account' => 'Уже есть аккаунт?',
     'your_name' => 'Ваше имя',
+    'edit_profile' => 'Редактировать профиль',
+    'avatar' => 'Аватар',
+    'avatar_help' => 'Выберите изображение (максимум 2MB). Поддерживаются форматы: JPG, PNG, GIF.',
+    'preview' => 'Предварительный просмотр',
+    'save_changes' => 'Сохранить изменения',
+    'cancel' => 'Отмена',
+    'enter_name' => 'Введите имя',
+    'profile_updated' => 'Профиль успешно обновлен',
+    'search_friends' => 'Поиск друзей',
+    'back_to_friends' => 'Назад к друзьям',
+    'search_friends_placeholder' => 'Введите имя или email пользователя...',
+    'this_is_you' => 'Это вы',
+    'already_friends' => 'Уже друзья',
+    'request_sent' => 'Заявка отправлена',
+    'no_users_found' => 'Пользователи не найдены',
+    'try_different_search' => 'Попробуйте другой поисковый запрос',
+    'search_for_friends' => 'Поиск друзей',
+    'enter_name_or_email' => 'Введите имя или email пользователя для поиска',
 ]; 

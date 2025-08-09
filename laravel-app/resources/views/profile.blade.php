@@ -4,26 +4,23 @@
 <div class="container py-5 d-flex justify-content-center align-items-center" style="min-height: 70vh;">
     <div class="card shadow-lg p-4 profile-card" style="border-radius: 28px; max-width: 480px; width: 100%; background: #f6f6f7; border: none;">
         <div class="d-flex flex-column align-items-center position-relative mb-3">
-            <div class="profile-avatar-wrapper mb-2 position-relative">
-                @if(Auth::user()->avatar ?? false)
-                    <img src="{{ Auth::user()->avatar }}" alt="avatar" class="rounded-circle profile-avatar" style="width: 110px; height: 110px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 2px 12px 0 #e0e0e0;">
+            <div class="profile-avatar-wrapper mb-3 position-relative">
+                @if($user->avatar ?? false)
+                    <img src="{{ $user->avatar }}" alt="avatar" class="rounded-circle profile-avatar" style="width: 110px; height: 110px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 2px 12px 0 #e0e0e0;">
                 @else
                     <div class="rounded-circle d-flex align-items-center justify-content-center profile-avatar" style="width: 110px; height: 110px; background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); font-size: 2.8rem; color: #fff; font-weight: 700; border: 4px solid #fff; box-shadow: 0 2px 12px 0 #e0e0e0;">
-                        {{ mb_substr(Auth::user()->name, 0, 1) }}
+                        {{ mb_substr($user->name, 0, 1) }}
                     </div>
                 @endif
-                <a href="{{ route('profile.avatar.edit') }}" class="btn btn-outline-dark btn-sm profile-avatar-edit" title="{{ __('messages.change_photo') }}">
+                <!-- <a href="{{ route('profile.edit') }}" class="profile-avatar-edit" title="{{ __('messages.edit_profile') }}">
                     <i class="bi bi-camera"></i>
-                </a>
+                </a> -->
             </div>
             <div class="d-flex align-items-center gap-2 mb-3">
                 <h2 class="mb-0">{{ $user->name }}</h2>
-                <a href="{{ route('profile.edit_name') }}" class="btn btn-outline-dark btn-sm" title="{{ __('messages.change_name') }}"><i class="bi bi-pencil"></i></a>
+                <a href="{{ route('profile.edit') }}" class="btn btn-outline-dark btn-sm" title="{{ __('messages.edit_profile') }}"><i class="bi bi-pencil"></i></a>
             </div>
-            <form method="POST" action="{{ route('logout') }}" class="mb-4">
-                @csrf
-                <button type="submit" class="btn btn-outline-danger w-100">{{ __('messages.logout_account') }}</button>
-            </form>
+            <div class="mb-3 text-muted">{{ $user->email }}</div>
         </div>
         <hr class="my-3" style="border-top: 1.5px solid #e0e0e0;">
         <div class="w-100">
@@ -90,7 +87,7 @@
                 </a>
             </div>
             <div class="col-6">
-                <a href="{{ route('wishes.user', ['userId' => Auth::id()]) }}" class="profile-widget-link">
+                <a href="{{ route('wishes.user', ['userId' => $user->id]) }}" class="profile-widget-link">
                 <div class="p-3 text-center shadow-sm rounded-4 profile-widget" style="background: #fff; color: #222; font-weight: 600; border-radius: 16px;">
                     <div style="font-size: 1.6rem;"><i class="bi bi-gift-fill me-1"></i>{{ $stats['total_wishes'] ?? 0 }}</div>
                     <div style="font-size: 0.98rem; color: #444;">{{ __('messages.wishes') }}</div>
@@ -114,6 +111,11 @@
                 </a>
             </div>
         </div>
+        <hr class="my-3" style="border-top: 1.5px solid #e0e0e0;">
+        <form method="POST" action="{{ route('logout') }}" class="mb-0">
+            @csrf
+            <button type="submit" class="btn btn-outline-danger w-100">{{ __('messages.logout_account') }}</button>
+        </form>
     </div>
 </div>
 @push('styles')

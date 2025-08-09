@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTOs\FriendsDTO;
 use App\Models\FriendRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -12,329 +13,307 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class FriendService
 {
+    private const STATUS_ACCEPTED = 'accepted';
+    private const STATUS_PENDING = 'pending';
+    private const STATUS_DECLINED = 'declined';
+
     /**
-     * Отправка заявки в друзья.
+     * Send friend request by user ID.
      */
-    public function sendRequest(User $from, User $to): bool
+    public function sendRequestToUserId(User $from, int $userId): bool|string
     {
-        if ($from->id === $to->id) {
-            throw new \InvalidArgumentException(__('messages.cannot_add_self_as_friend'));
+        if ($this->isSelfRequest($from->id, $userId)) {
+            return __('messages.cannot_add_self_as_friend');
         }
 
-        $exists = FriendRequest::where(function ($query) use ($from, $to) {
-            $query->where('user_id', $from->id)
-                  ->where('friend_id', $to->id);
-        })->orWhere(function ($query) use ($from, $to) {
-            $query->where('user_id', $to->id)
-                  ->where('friend_id', $from->id);
-        })->whereIn('status', ['pending', 'accepted'])->exists();
+        $existingRequest = $this->findExistingRequest($from->id, $userId);
 
-        if ($exists) {
-            throw new \InvalidArgumentException(__('messages.request_already_sent_or_friends'));
+        if ($existingRequest) {
+            return $this->handleExistingRequest($existingRequest, $from, $userId);
         }
 
-        FriendRequest::create([
-            'user_id' => $from->id,
-            'friend_id' => $to->id,
-            'status' => 'pending',
-        ]);
-
-        return true;
+        return $this->createNewRequest($from->id, $userId);
     }
 
     /**
-     * Обёртка по поиску пользователей и отправке заявки.
+     * Accept request by ID.
      */
-    public function processSendRequest(int $fromId, int $toId): bool
+    public function acceptRequestById(int $requestId, int $authUserId): void
     {
-        $from = User::findOrFail($fromId);
-        $to = User::findOrFail($toId);
-
-        return $this->sendRequest($from, $to);
-    }
-
-    /**
-     * Принятие запроса на добавление друзей.
-     */
-    public function acceptRequest(FriendRequest $request, int $authUserId): void
-    {
-        if ($request->friend_id !== $authUserId) {
+        $request = FriendRequest::findOrFail($requestId);
+        
+        if (!$this->canAcceptRequest($request, $authUserId)) {
             throw new HttpException(403, __('messages.access_denied'));
         }
 
-        // Обёртываем в транзакцию, чтобы избежать частичных изменений
         DB::transaction(function () use ($request) {
-            $request->update(['status' => 'accepted']);
-            // Создаём обратную запись, если её нет
-            FriendRequest::updateOrCreate([
-                'user_id' => $request->friend_id,
-                'friend_id' => $request->user_id,
-            ], [
-                'status' => 'accepted',
-            ]);
+            $this->acceptRequest($request);
         });
     }
 
     /**
-     * Обёртка для обработки принятия заявки по ID.
+     * Decline request by ID.
      */
-    public function processAcceptRequest(int $requestId, int $authUserId): void
+    public function declineRequestById(int $requestId, int $authUserId): void
     {
         $request = FriendRequest::findOrFail($requestId);
-        $this->acceptRequest($request, $authUserId);
-    }
-
-    /**
-     * Отклонение заявки.
-     */
-    public function declineRequest(FriendRequest $request, int $authUserId): void
-    {
-        if ($request->friend_id !== $authUserId) {
+        
+        if (!$this->canDeclineRequest($request, $authUserId)) {
             throw new HttpException(403, __('messages.access_denied'));
         }
 
-        $request->update(['status' => 'declined']);
+        $request->update(['status' => self::STATUS_DECLINED]);
     }
 
     /**
-     * Обёртка для обработки отклонения заявки по ID.
+     * Remove friend by ID.
      */
-    public function processDeclineRequest(int $requestId, int $authUserId): void
+    public function removeFriendById(User $user, int $friendId): void
     {
-        $request = FriendRequest::findOrFail($requestId);
-        $this->declineRequest($request, $authUserId);
+        DB::transaction(function () use ($user, $friendId) {
+            $this->deleteFriendRequests($user->id, $friendId);
+        });
     }
 
     /**
-     * Удаление друга.
-     */
-    public function removeFriend(User $user, User $friend): void
-    {
-        // Удаляем обе записи о дружбе
-        FriendRequest::where(function ($query) use ($user, $friend) {
-            $query->where('user_id', $user->id)
-                  ->where('friend_id', $friend->id);
-        })->orWhere(function ($query) use ($user, $friend) {
-            $query->where('user_id', $friend->id)
-                  ->where('friend_id', $user->id);
-        })->where('status', 'accepted')->delete();
-    }
-
-    /**
-     * Обёртка для удаления друга по ID.
-     */
-    public function processRemoveFriend(int $userId, int $friendId): void
-    {
-        $user = User::findOrFail($userId);
-        $friend = User::findOrFail($friendId);
-
-        $this->removeFriend($user, $friend);
-    }
-
-    /**
-     * Получение списка друзей пользователя.
+     * Get friends for a user.
      */
     public function getFriends(User $user): Collection
     {
-        return User::whereHas('sentRequests', function ($query) use ($user) {
-            $query->where('friend_id', $user->id)
-                  ->where('status', 'accepted');
-        })->orWhereHas('receivedRequests', function ($query) use ($user) {
-            $query->where('user_id', $user->id)
-                  ->where('status', 'accepted');
-        })->get();
+        return FriendRequest::where('status', self::STATUS_ACCEPTED)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('receiver_id', $user->id);
+            })
+            ->with(['sender', 'receiver'])
+            ->get()
+            ->map(function ($request) use ($user) {
+                return $this->getFriendFromRequest($request, $user);
+            })
+            ->unique('id');
     }
 
     /**
-     * Получение входящих заявок в друзья.
+     * Get incoming friend requests.
      */
     public function getIncomingRequests(User $user): Collection
     {
-        return FriendRequest::with('sender')
-            ->where('friend_id', $user->id)
-            ->where('status', 'pending')
+        return FriendRequest::where('receiver_id', $user->id)
+            ->where('status', self::STATUS_PENDING)
+            ->with('sender')
             ->get();
     }
 
     /**
-     * Получение исходящих заявок в друзья.
+     * Get outgoing friend requests.
      */
     public function getOutgoingRequests(User $user): Collection
     {
-        return FriendRequest::with('receiver')
-            ->where('user_id', $user->id)
-            ->where('status', 'pending')
+        return FriendRequest::where('user_id', $user->id)
+            ->where('status', self::STATUS_PENDING)
+            ->with('receiver')
             ->get();
     }
 
     /**
-     * Поиск пользователей по имени или email.
-     */
-    public function searchUsers(string $query, int $excludeId): Collection
-    {
-        return User::where(function ($q) use ($query) {
-            $q->where('name', 'like', "%{$query}%")
-              ->orWhere('email', 'like', "%{$query}%");
-        })
-        ->where('id', '!=', $excludeId)
-        ->limit(10)
-        ->get();
-    }
-
-    /**
-     * Проверка, является ли пользователь другом или уже отправлена заявка.
+     * Check if users are already friends or have pending requests.
      */
     public function isAlreadyFriendOrRequested(User $from, int $toId): bool
     {
         return FriendRequest::where(function ($query) use ($from, $toId) {
             $query->where('user_id', $from->id)
-                  ->where('friend_id', $toId);
+                  ->where('receiver_id', $toId);
         })->orWhere(function ($query) use ($from, $toId) {
             $query->where('user_id', $toId)
-                  ->where('friend_id', $from->id);
-        })->whereIn('status', ['pending', 'accepted'])->exists();
+                  ->where('receiver_id', $from->id);
+        })->exists();
     }
 
     /**
-     * Отправка заявки в друзья по ID пользователя.
+     * Get friends page data.
      */
-    public function sendRequestToUserId(User $from, int $userId): bool|string
+    public function getFriendsPageData(User $user, ?int $selectedFriendId = null): FriendsDTO
     {
-        if ($from->id === $userId) {
-            return __('messages.cannot_add_self_as_friend');
+        $friends = $this->getFriends($user);
+        $incoming = $this->getIncomingRequests($user);
+        $outgoing = $this->getOutgoingRequests($user);
+        
+        $selectedFriend = $selectedFriendId ? $friends->firstWhere('id', $selectedFriendId) : null;
+
+        return new FriendsDTO(
+            friends: $friends,
+            incomingRequests: $incoming,
+            outgoingRequests: $outgoing,
+            selectedFriend: $selectedFriend
+        );
+    }
+
+    /**
+     * Search users with friend status.
+     */
+    public function searchUsersWithFriendStatus(string $query, int $excludeUserId, User $currentUser): Collection
+    {
+        return User::where(function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                  ->orWhere('email', 'like', "%{$query}%");
+            })
+            ->where('id', '!=', $excludeUserId)
+            ->limit(10)
+            ->get()
+            ->map(function ($user) use ($currentUser) {
+                $user->friend_status = $this->getFriendStatus($currentUser, $user->id);
+                return $user;
+            });
+    }
+
+    /**
+     * Get friend status between users.
+     */
+    private function getFriendStatus(User $from, int $toId): string
+    {
+        $request = $this->findExistingRequest($from->id, $toId);
+
+        if (!$request) {
+            return 'none';
         }
 
-        // Проверяем существующую заявку
-        $existingRequest = FriendRequest::where(function ($query) use ($from, $userId) {
-            $query->where('user_id', $from->id)
-                  ->where('friend_id', $userId);
-        })->orWhere(function ($query) use ($from, $userId) {
-            $query->where('user_id', $userId)
-                  ->where('friend_id', $from->id);
+        if ($request->status === self::STATUS_ACCEPTED) {
+            return 'friends';
+        }
+
+        if ($request->status === self::STATUS_PENDING) {
+            return $request->user_id === $from->id ? 'request_sent' : 'request_received';
+        }
+
+        return 'none';
+    }
+
+    /**
+     * Check if request is to self.
+     */
+    private function isSelfRequest(int $fromId, int $toId): bool
+    {
+        return $fromId === $toId;
+    }
+
+    /**
+     * Find existing friend request.
+     */
+    private function findExistingRequest(int $fromId, int $toId): ?FriendRequest
+    {
+        return FriendRequest::where(function ($query) use ($fromId, $toId) {
+            $query->where('user_id', $fromId)
+                  ->where('receiver_id', $toId);
+        })->orWhere(function ($query) use ($fromId, $toId) {
+            $query->where('user_id', $toId)
+                  ->where('receiver_id', $fromId);
         })->first();
+    }
 
-        if ($existingRequest) {
-            if ($existingRequest->status === 'accepted') {
-                return __('messages.already_friends');
-            }
-            
-            if ($existingRequest->status === 'pending') {
-                if ($existingRequest->user_id === $from->id) {
-                    return __('messages.request_already_sent');
-                } else {
-                    return __('messages.request_already_received');
-                }
-            }
-            
-            if ($existingRequest->status === 'declined') {
-                // Если заявка была отклонена, обновляем её
-                DB::transaction(function () use ($existingRequest, $from, $userId) {
-                    if ($existingRequest->user_id === $from->id) {
-                        // Заявка была отправлена этим пользователем, обновляем её
-                        $existingRequest->update(['status' => 'pending']);
-                    } else {
-                        // Заявка была отправлена другим пользователем, удаляем старую и создаём новую
-                        $existingRequest->delete();
-                        FriendRequest::create([
-                            'user_id' => $from->id,
-                            'friend_id' => $userId,
-                            'status' => 'pending',
-                        ]);
-                    }
-                });
-                return true;
-            }
+    /**
+     * Handle existing request.
+     */
+    private function handleExistingRequest(FriendRequest $request, User $from, int $userId): bool|string
+    {
+        if ($request->status === self::STATUS_ACCEPTED) {
+            return __('messages.already_friends');
         }
 
-        // Создаём новую заявку
+        if ($request->status === self::STATUS_PENDING) {
+            return $request->user_id === $from->id 
+                ? __('messages.request_already_sent')
+                : __('messages.request_already_received');
+        }
+
+        if ($request->status === self::STATUS_DECLINED) {
+            return $this->handleDeclinedRequest($request, $from, $userId);
+        }
+
+        return true;
+    }
+
+    /**
+     * Handle declined request.
+     */
+    private function handleDeclinedRequest(FriendRequest $request, User $from, int $userId): bool
+    {
+        DB::transaction(function () use ($request, $from, $userId) {
+            if ($request->user_id === $from->id) {
+                $request->update(['status' => self::STATUS_PENDING]);
+            } else {
+                $request->delete();
+                $this->createNewRequest($from->id, $userId);
+            }
+        });
+
+        return true;
+    }
+
+    /**
+     * Create new friend request.
+     */
+    private function createNewRequest(int $fromId, int $toId): bool
+    {
         FriendRequest::create([
-            'user_id' => $from->id,
-            'friend_id' => $userId,
-            'status' => 'pending',
+            'user_id' => $fromId,
+            'receiver_id' => $toId,
+            'status' => self::STATUS_PENDING,
         ]);
 
         return true;
     }
 
     /**
-     * Принятие заявки по ID.
+     * Check if user can accept request.
      */
-    public function acceptRequestById(int $requestId, int $authUserId): void
+    private function canAcceptRequest(FriendRequest $request, int $authUserId): bool
     {
-        $request = FriendRequest::findOrFail($requestId);
-        $this->acceptRequest($request, $authUserId);
+        return $request->receiver_id === $authUserId;
     }
 
     /**
-     * Отклонение заявки по ID.
+     * Check if user can decline request.
      */
-    public function declineRequestById(int $requestId, int $authUserId): void
+    private function canDeclineRequest(FriendRequest $request, int $authUserId): bool
     {
-        $request = FriendRequest::findOrFail($requestId);
-        $this->declineRequest($request, $authUserId);
+        return $request->receiver_id === $authUserId;
     }
 
     /**
-     * Удаление друга по ID.
+     * Accept friend request.
      */
-    public function removeFriendById(User $user, int $friendId): void
+    private function acceptRequest(FriendRequest $request): void
     {
-        $friend = User::findOrFail($friendId);
-        $this->removeFriend($user, $friend);
-    }
-
-    /**
-     * Получение данных для страницы друзей.
-     */
-    public function getFriendsPageData(User $user, ?int $selectedFriendId = null): array
-    {
-        $friends = $this->getFriends($user);
-        $incomingRequests = $this->getIncomingRequests($user);
-        $outgoingRequests = $this->getOutgoingRequests($user);
+        $request->update(['status' => self::STATUS_ACCEPTED]);
         
-        $selectedFriend = null;
-        if ($selectedFriendId) {
-            $selectedFriend = $friends->firstWhere('id', $selectedFriendId);
-        }
-
-        return [
-            'friends' => $friends,
-            'incomingRequests' => $incomingRequests,
-            'outgoingRequests' => $outgoingRequests,
-            'selectedFriend' => $selectedFriend,
-        ];
-    }
-
-    /**
-     * Получение статуса дружбы между пользователями.
-     */
-    public function getFriendStatus(User $from, int $toId): string
-    {
-        $request = FriendRequest::where(function ($query) use ($from, $toId) {
-            $query->where('user_id', $from->id)
-                  ->where('friend_id', $toId);
-        })->orWhere(function ($query) use ($from, $toId) {
-            $query->where('user_id', $toId)
-                  ->where('friend_id', $from->id);
-        })->first();
-
-        if (!$request) {
-            return 'none';
-        }
-
-        return $request->status;
-    }
-
-    /**
-     * Поиск пользователей с информацией о статусе дружбы.
-     */
-    public function searchUsersWithFriendStatus(string $query, int $excludeUserId, User $currentUser): Collection
-    {
-        $users = $this->searchUsers($query, $excludeUserId);
+        $reverseRequest = $this->findExistingRequest($request->receiver_id, $request->user_id);
         
-        return $users->map(function ($user) use ($currentUser) {
-            $user->friend_status = $this->getFriendStatus($currentUser, $user->id);
-            return $user;
-        });
+        if ($reverseRequest) {
+            $reverseRequest->update(['status' => self::STATUS_ACCEPTED]);
+        } else {
+            $this->createNewRequest($request->receiver_id, $request->user_id);
+        }
+    }
+
+    /**
+     * Delete friend requests.
+     */
+    private function deleteFriendRequests(int $userId, int $friendId): void
+    {
+        FriendRequest::where(function ($query) use ($userId, $friendId) {
+            $query->where('user_id', $userId)
+                  ->where('receiver_id', $friendId);
+        })->orWhere(function ($query) use ($userId, $friendId) {
+            $query->where('user_id', $friendId)
+                  ->where('receiver_id', $userId);
+        })->delete();
+    }
+
+    /**
+     * Get friend from request.
+     */
+    private function getFriendFromRequest(FriendRequest $request, User $user): User
+    {
+        return $request->user_id === $user->id ? $request->receiver : $request->sender;
     }
 }

@@ -41,7 +41,18 @@ class WishPolicy
 
     public function unreserve(User $user, Wish $wish): bool
     {
-        return $user->hasReservedWish($wish);
+        // Проверяем, что желание забронировано
+        if (!$wish->is_reserved) {
+            return false;
+        }
+        
+        // Проверяем, что у желания есть резервация
+        if (!$wish->reservation) {
+            return false;
+        }
+        
+        // Проверяем, что текущий пользователь забронировал это желание
+        return $wish->reservation->user_id === $user->id;
     }
 
     public function restore(User $user, Wish $wish): bool

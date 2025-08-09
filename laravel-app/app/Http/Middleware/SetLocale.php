@@ -18,12 +18,10 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next)
     {
-        // Получаем язык из сессии
-        $locale = Session::get('locale', 'ru'); // По умолчанию русский
-        
-        // Устанавливаем язык для приложения
+        $locale = Session::get('locale', 'ru');
+
         App::setLocale($locale);
-        
+
         return $next($request);
     }
-} 
+}

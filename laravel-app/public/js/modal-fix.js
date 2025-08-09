@@ -1,181 +1,180 @@
-// Modal Z-Index Fix
+// Modal Fix Script
 document.addEventListener('DOMContentLoaded', function() {
-    // Fix modal z-index when modal is shown
-    document.addEventListener('shown.bs.modal', function(event) {
-        const modal = event.target;
+    // Fix modal z-index issues
+    function fixModalZIndex() {
+        const modals = document.querySelectorAll('.modal');
+        const modalBackdrops = document.querySelectorAll('.modal-backdrop');
+        const modalContents = document.querySelectorAll('.modal-content');
+        const modalDialogs = document.querySelectorAll('.modal-dialog');
         
-        if (modal) {
-            // Special handling for achievements modal
-            if (modal.id === 'allAchievementsModal') {
-                modal.style.zIndex = '999999';
-                const modalContent = modal.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.style.zIndex = '1000000';
-                }
-                const modalDialog = modal.querySelector('.modal-dialog');
-                if (modalDialog) {
-                    modalDialog.style.zIndex = '1000001';
-                }
-                const btnClose = modal.querySelector('.btn-close');
-                if (btnClose) {
-                    btnClose.style.zIndex = '1000002';
-                }
-                
-                // Hide backdrop for achievements modal
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(function(backdrop) {
-                    backdrop.style.display = 'none';
-                    backdrop.style.opacity = '0';
-                    backdrop.style.visibility = 'hidden';
-                    backdrop.style.pointerEvents = 'none';
-                });
-            } else {
-                // Regular modal handling
-                modal.style.zIndex = '99999';
-                const modalContent = modal.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.style.zIndex = '100000';
-                }
-                const modalDialog = modal.querySelector('.modal-dialog');
-                if (modalDialog) {
-                    modalDialog.style.zIndex = '100001';
-                }
-                
-                // Show backdrop for regular modals
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(function(backdrop) {
-                    backdrop.style.display = 'block';
-                    backdrop.style.opacity = '0.5';
-                    backdrop.style.visibility = 'visible';
-                    backdrop.style.pointerEvents = 'auto';
-                    backdrop.style.zIndex = '99997';
-                });
-            }
-        }
-    });
-    
-    // Fix modal backdrop z-index when modal is about to show
-    document.addEventListener('show.bs.modal', function(event) {
-        const modal = event.target;
+        modals.forEach(modal => {
+            modal.style.zIndex = '99999';
+        });
         
-        setTimeout(function() {
-            if (modal.id === 'allAchievementsModal') {
-                // Hide backdrop for achievements modal
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(function(backdrop) {
-                    backdrop.style.display = 'none';
-                    backdrop.style.opacity = '0';
-                    backdrop.style.visibility = 'hidden';
-                    backdrop.style.pointerEvents = 'none';
-                });
-            } else {
-                // Show backdrop for regular modals
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(function(backdrop) {
-                    backdrop.style.display = 'block';
-                    backdrop.style.opacity = '0.5';
-                    backdrop.style.visibility = 'visible';
-                    backdrop.style.pointerEvents = 'auto';
-                    backdrop.style.zIndex = '99997';
-                });
-            }
-        }, 10);
+        modalBackdrops.forEach(backdrop => {
+            backdrop.style.zIndex = '99997';
+            backdrop.style.opacity = '0.5';
+        });
+        
+        modalContents.forEach(content => {
+            content.style.zIndex = '100000';
+        });
+        
+        modalDialogs.forEach(dialog => {
+            dialog.style.zIndex = '100001';
+        });
+    }
+
+    // Fix close button styling
+    function fixCloseButton() {
+        const closeButtons = document.querySelectorAll('.btn-close');
+        
+        closeButtons.forEach(button => {
+            // Apply styles directly
+            button.style.borderRadius = '50%';
+            button.style.padding = '0.5rem';
+            button.style.transition = 'all 0.3s ease';
+            button.style.zIndex = '100002';
+            button.style.position = 'relative';
+            button.style.transform = 'none';
+            button.style.width = '32px';
+            button.style.height = '32px';
+            button.style.display = 'flex';
+            button.style.alignItems = 'center';
+            button.style.justifyContent = 'center';
+            button.style.background = 'rgba(255, 255, 255, 0.9)';
+            button.style.border = '1px solid rgba(102, 126, 234, 0.2)';
+            button.style.margin = '0';
+            button.style.opacity = '1';
+            button.style.boxShadow = 'none';
+            
+            // Remove Bootstrap's default background image
+            button.style.backgroundImage = 'none';
+            button.style.backgroundSize = 'auto';
+            button.style.backgroundRepeat = 'no-repeat';
+            button.style.backgroundPosition = 'center';
+            
+            // Remove Bootstrap's default content and set our custom X
+            button.innerHTML = '×';
+            button.style.fontSize = '24px';
+            button.style.fontWeight = 'bold';
+            button.style.color = '#667eea';
+            button.style.lineHeight = '1';
+            button.style.textAlign = 'center';
+            
+            // Remove any pseudo-elements
+            button.style.setProperty('--bs-btn-close-bg', 'none');
+            button.style.setProperty('--bs-btn-close-focus-shadow', 'none');
+            
+            // Add hover event listener
+            button.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(102, 126, 234, 0.1)';
+                this.style.borderColor = 'rgba(102, 126, 234, 0.5)';
+                this.style.transform = 'none';
+                this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.2)';
+                this.style.opacity = '1';
+                this.style.backgroundImage = 'none';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.9)';
+                this.style.borderColor = 'rgba(102, 126, 234, 0.2)';
+                this.style.transform = 'none';
+                this.style.boxShadow = 'none';
+                this.style.opacity = '1';
+                this.style.backgroundImage = 'none';
+            });
+            
+            button.addEventListener('focus', function() {
+                this.style.transform = 'none';
+                this.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.3)';
+                this.style.outline = 'none';
+                this.style.opacity = '1';
+                this.style.backgroundImage = 'none';
+            });
+            
+            button.addEventListener('blur', function() {
+                this.style.transform = 'none';
+                this.style.boxShadow = 'none';
+                this.style.opacity = '1';
+                this.style.backgroundImage = 'none';
+            });
+        });
+    }
+
+    // Apply fixes immediately
+    fixModalZIndex();
+    fixCloseButton();
+
+    // Apply fixes when modals are shown
+    document.addEventListener('shown.bs.modal', function() {
+        setTimeout(() => {
+            fixModalZIndex();
+            fixCloseButton();
+        }, 100);
     });
-    
-    // Monitor for dynamically created modal backdrops
+
+    document.addEventListener('show.bs.modal', function() {
+        setTimeout(() => {
+            fixModalZIndex();
+            fixCloseButton();
+        }, 50);
+    });
+
+    // Use MutationObserver to detect dynamically added modals
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
                 mutation.addedNodes.forEach(function(node) {
-                    if (node.nodeType === 1 && node.classList && node.classList.contains('modal-backdrop')) {
-                        // Check if achievements modal is open
-                        const achievementsModal = document.getElementById('allAchievementsModal');
-                        if (achievementsModal && achievementsModal.classList.contains('show')) {
-                            // Hide backdrop for achievements modal
-                            node.style.display = 'none';
-                            node.style.opacity = '0';
-                            node.style.visibility = 'hidden';
-                            node.style.pointerEvents = 'none';
-                        } else {
-                            // Show backdrop for regular modals
-                            node.style.display = 'block';
-                            node.style.opacity = '0.5';
-                            node.style.visibility = 'visible';
-                            node.style.pointerEvents = 'auto';
-                            node.style.zIndex = '99997';
+                    if (node.nodeType === 1) { // Element node
+                        if (node.classList && node.classList.contains('modal')) {
+                            setTimeout(() => {
+                                fixModalZIndex();
+                                fixCloseButton();
+                            }, 100);
+                        }
+                        if (node.querySelectorAll) {
+                            const modals = node.querySelectorAll('.modal');
+                            const closeButtons = node.querySelectorAll('.btn-close');
+                            if (modals.length > 0 || closeButtons.length > 0) {
+                                setTimeout(() => {
+                                    fixModalZIndex();
+                                    fixCloseButton();
+                                }, 100);
+                            }
                         }
                     }
                 });
             }
         });
     });
-    
+
     observer.observe(document.body, {
         childList: true,
         subtree: true
     });
-});
 
-// Function to force fix all modal z-indexes
-window.fixModalZIndex = function() {
-    const modals = document.querySelectorAll('.modal');
-    const backdrops = document.querySelectorAll('.modal-backdrop');
-    
-    modals.forEach(function(modal) {
-        // Special handling for achievements modal
-        if (modal.id === 'allAchievementsModal') {
-            modal.style.zIndex = '999999';
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent) {
-                modalContent.style.zIndex = '1000000';
-            }
-            const modalDialog = modal.querySelector('.modal-dialog');
-            if (modalDialog) {
-                modalDialog.style.zIndex = '1000001';
-            }
-            const btnClose = modal.querySelector('.btn-close');
-            if (btnClose) {
-                btnClose.style.zIndex = '1000002';
-            }
-            
-            // Hide backdrop for achievements modal
-            backdrops.forEach(function(backdrop) {
-                backdrop.style.display = 'none';
-                backdrop.style.opacity = '0';
-                backdrop.style.visibility = 'hidden';
-                backdrop.style.pointerEvents = 'none';
-            });
-        } else {
-            // Regular modal handling
-            modal.style.zIndex = '99999';
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent) {
-                modalContent.style.zIndex = '100000';
-            }
-            const modalDialog = modal.querySelector('.modal-dialog');
-            if (modalDialog) {
-                modalDialog.style.zIndex = '100001';
-            }
-            
-            // Show backdrop for regular modals
-            backdrops.forEach(function(backdrop) {
-                backdrop.style.display = 'block';
-                backdrop.style.opacity = '0.5';
-                backdrop.style.visibility = 'visible';
-                backdrop.style.pointerEvents = 'auto';
-                backdrop.style.zIndex = '99997';
-            });
+    // Special handling for achievement modal
+    const achievementModal = document.getElementById('allAchievementsModal');
+    if (achievementModal) {
+        achievementModal.style.zIndex = '999999';
+        const achievementContent = achievementModal.querySelector('.modal-content');
+        const achievementDialog = achievementModal.querySelector('.modal-dialog');
+        const achievementClose = achievementModal.querySelector('.btn-close');
+        
+        if (achievementContent) achievementContent.style.zIndex = '1000000';
+        if (achievementDialog) achievementDialog.style.zIndex = '1000001';
+        if (achievementClose) achievementClose.style.zIndex = '1000002';
+    }
+
+    // Hide backdrop for achievement modal
+    const achievementBackdrops = document.querySelectorAll('.modal-backdrop');
+    achievementBackdrops.forEach(backdrop => {
+        if (backdrop.getAttribute('data-bs-target') === '#allAchievementsModal') {
+            backdrop.style.display = 'none';
+            backdrop.style.opacity = '0';
+            backdrop.style.visibility = 'hidden';
+            backdrop.style.pointerEvents = 'none';
         }
     });
-};
-
-// Fix z-index every 100ms for the first 2 seconds after page load
-let fixCount = 0;
-const fixInterval = setInterval(function() {
-    if (fixCount < 20) {
-        window.fixModalZIndex();
-        fixCount++;
-    } else {
-        clearInterval(fixInterval);
-    }
-}, 100); 
+}); 

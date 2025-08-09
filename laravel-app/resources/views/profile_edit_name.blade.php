@@ -8,7 +8,7 @@
             @csrf
             <div class="mb-3">
                 <label for="name" class="form-label profile-edit-form-label">{{ __('messages.your_name') }}</label>
-                <input type="text" name="name" id="name" class="form-control profile-edit-form-control @error('name') is-invalid @enderror" value="{{ old('name', Auth::user()->name) }}" maxlength="255" required autofocus>
+                <input type="text" name="name" id="name" class="form-control profile-edit-form-control @error('name') is-invalid @enderror" value="{{ old('name', $user->name) }}" maxlength="255" required autofocus>
                 @error('name')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

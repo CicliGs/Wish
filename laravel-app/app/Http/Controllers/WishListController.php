@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Exception;
 
 class WishListController extends Controller
 {
@@ -19,17 +20,17 @@ class WishListController extends Controller
     public function __construct(protected WishListService $service) {}
 
     /**
-     * Отображает список списков желаний пользователя.
+     * Display user wish lists.
      */
     public function index(): View
     {
-        $data = $this->service->getIndexData(Auth::id());
+        $wishListDTO = $this->service->getIndexData(Auth::id());
         
-        return view('wishlists.index', $data);
+        return view('wishlists.index', $wishListDTO->toArray());
     }
 
     /**
-     * Отображает форму создания списка желаний.
+     * Display wish list creation form.
      */
     public function create(): View
     {
@@ -37,21 +38,20 @@ class WishListController extends Controller
     }
 
     /**
-     * Сохраняет новый список желаний.
+     * Store new wish list.
      */
     public function store(Request $request): RedirectResponse
     {
         try {
             $this->service->create($request->all(), Auth::id());
-        } catch (\Exception $e) {
-            return back()->withInput()->with('error', __('messages.error_creating_list') . $e->getMessage());
+            return $this->redirectToIndex('wishlist_created');
+        } catch (Exception $e) {
+            return $this->handleError($e, 'error_creating_list');
         }
-
-        return redirect()->route('wish-lists.index')->with('success', __('messages.wishlist_created'));
     }
 
     /**
-     * Отображает форму редактирования списка желаний.
+     * Display wish list edit form.
      */
     public function edit(WishList $wishList): View
     {
@@ -61,7 +61,7 @@ class WishListController extends Controller
     }
 
     /**
-     * Обновляет список желаний.
+     * Update wish list.
      */
     public function update(Request $request, WishList $wishList): RedirectResponse
     {
@@ -69,25 +69,24 @@ class WishListController extends Controller
 
         try {
             $this->service->update($wishList, $request->all());
-        } catch (\Exception $e) {
-            return back()->withInput()->with('error', __('messages.error_updating_list') . $e->getMessage());
+            return $this->redirectToIndex('wishlist_updated');
+        } catch (Exception $e) {
+            return $this->handleError($e, 'error_updating_list');
         }
-
-        return redirect()->route('wish-lists.index')->with('success', __('messages.wishlist_updated'));
     }
 
     /**
-     * Отображает публичный список желаний.
+     * Display public wish list.
      */
-    public function public(string $publicId): View
+    public function public(string $uuid): View
     {
-        $data = $this->service->getPublicWishListData($publicId);
+        $publicWishListDTO = $this->service->getPublicWishListData($uuid);
         
-        return view('wishlists.public', $data);
+        return view('wishlists.public', $publicWishListDTO->toArray());
     }
 
     /**
-     * Удаляет список желаний.
+     * Delete wish list.
      */
     public function destroy(WishList $wishList): RedirectResponse
     {
@@ -95,10 +94,42 @@ class WishListController extends Controller
 
         try {
             $this->service->delete($wishList);
-        } catch (\Exception $e) {
-            return back()->with('error', __('messages.error_deleting_list') . $e->getMessage());
+            return $this->redirectToIndex('wishlist_deleted');
+        } catch (Exception $e) {
+            return $this->handleError($e, 'error_deleting_list');
         }
+    }
 
-        return redirect()->route('wish-lists.index')->with('success', __('messages.wishlist_deleted'));
+    /**
+     * Regenerate UUID for wish list.
+     */
+    public function regenerateUuid(WishList $wishList): RedirectResponse
+    {
+        $this->authorize('update', $wishList);
+
+        try {
+            $this->service->regenerateUuid($wishList);
+            return back()->with('success', __('messages.uuid_regenerated'));
+        } catch (Exception $e) {
+            return back()->with('error', __('messages.error_regenerating_uuid') . $e->getMessage());
+        }
+    }
+
+    /**
+     * Redirect to index with success message.
+     */
+    private function redirectToIndex(string $messageKey): RedirectResponse
+    {
+        return redirect()->route('wish-lists.index')
+            ->with('success', __('messages.' . $messageKey));
+    }
+
+    /**
+     * Handle error and return back with error message.
+     */
+    private function handleError(Exception $e, string $messageKey): RedirectResponse
+    {
+        return back()->withInput()
+            ->with('error', __('messages.' . $messageKey) . $e->getMessage());
     }
 }

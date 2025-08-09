@@ -31,45 +31,9 @@
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                         <div class="wish-card">
                             @if($wish->image)
-                                <a href="#" data-bs-toggle="modal" data-bs-target="#wishImageModal-{{ $wish->id }}">
+                                <a href="#" class="wish-image-link" data-wish-id="{{ $wish->id }}">
                                     <img src="{{ $wish->image }}" alt="image" class="wish-card-img">
                                 </a>
-                                <div class="modal fade" id="wishImageModal-{{ $wish->id }}" tabindex="-1" aria-labelledby="wishImageModalLabel-{{ $wish->id }}" aria-hidden="true">
-                                  <div class="modal-dialog modal-dialog-centered modal-lg">
-                                    <div class="modal-content">
-                                      <div class="modal-header">
-                                        <h5 class="modal-title" id="wishImageModalLabel-{{ $wish->id }}">{{ $wish->title }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('messages.close') }}"></button>
-                                      </div>
-                                      <div class="modal-body text-center">
-                                        <img src="{{ $wish->image }}" alt="image" class="img-fluid mb-3" style="max-height:70vh;">
-                                        <div class="mb-2">
-                                          @if($wish->price)
-                                            <div class="wish-card-price">{{ number_format($wish->price, 2) }} BYN</div>
-                                          @endif
-                                          @if($wish->url)
-                                            <a href="{{ $wish->url }}" target="_blank" class="wish-btn btn-outline-primary">
-                                              {{ __('messages.wish_url') }}
-                                            </a>
-                                          @endif
-                                          <div class="mb-2">
-                                            {!! $wish->is_reserved
-                                                ? '<span class="badge bg-success ms-2">' . __('messages.reserved_by_someone') . '</span>'
-                                                : '<span class="badge bg-secondary ms-2">' . __('messages.available') . '</span>' !!}
-                                          </div>
-                                          <div class="d-flex gap-2 justify-content-center">
-                                            <a href="{{ route('wishes.edit', [$wishList->id, $wish->id]) }}" class="wish-btn btn-outline-primary">{{ __('messages.edit_wish') }}</a>
-                                            <form action="{{ route('wishes.destroy', [$wishList->id, $wish->id]) }}" method="POST" style="display:inline-block;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="wish-btn btn-danger" onclick="return confirm('{{ __('messages.confirm_delete_wish') }}')">{{ __('messages.delete_wish') }}</button>
-                                            </form>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
                             @endif
                             <div class="wish-card-body d-flex flex-column">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -79,7 +43,7 @@
                                         : '<span class="badge bg-secondary ms-2">' . __('messages.available') . '</span>' !!}
                                 </div>
                                 @if($wish->price)
-                                    <div class="wish-card-price">{{ number_format($wish->price, 2) }} BYN</div>
+                                    <div class="wish-card-price">{{ $wish->formatted_price }}</div>
                                 @endif
                                 @if($wish->url)
                                     <a href="{{ $wish->url }}" target="_blank" class="wish-btn btn-outline-primary mb-2">
@@ -87,7 +51,7 @@
                                     </a>
                                 @endif
                                 <div class="mt-auto d-flex gap-2">
-                                    <a href="{{ route('wishes.edit', [$wishList->id, $wish->id]) }}" class="wish-btn btn-outline-primary w-100">{{ __('messages.edit_wish') }}</a>
+                                    <a href="{{ route('wishes.edit', [$wishList->id, $wish->id]) }}" class="wish-btn btn-outline-primary w-100 text-center" style="font-size: 11px;">{{ __('messages.edit_wish') }}</a>
                                     <form action="{{ route('wishes.destroy', [$wishList->id, $wish->id]) }}" method="POST" style="display:inline-block; width:100%;">
                                         @csrf
                                         @method('DELETE')
@@ -112,7 +76,109 @@
         </div>
     </div>
 </div>
+
+<!-- Wish Image Modal -->
+<div class="modal fade" id="wishImageModal" tabindex="-1" aria-labelledby="wishImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="wishImageModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('messages.close') }}"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="wishModalImage" src="" alt="image" class="img-fluid mb-3" style="max-height:70vh;">
+                <div class="mb-2">
+                    <div id="wishModalPrice" class="wish-card-price" style="display:none;"></div>
+                    <a id="wishModalUrl" href="" target="_blank" class="wish-btn btn-outline-primary" style="display:none;">
+                        {{ __('messages.wish_url') }}
+                    </a>
+                    <div class="mb-2">
+                        <span id="wishModalStatus" class="badge ms-2"></span>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a id="wishModalEdit" href="" class="wish-btn btn-outline-primary">{{ __('messages.edit_wish') }}</a>
+                        <form id="wishModalDelete" action="" method="POST" style="display:inline-block;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="wish-btn btn-danger" onclick="return confirm('{{ __('messages.confirm_delete_wish') }}')">{{ __('messages.delete_wish') }}</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
+
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Wish data for modals
+    const wishData = {
+        @foreach($wishes as $wish)
+            {{ $wish->id }}: {
+                title: "{{ addslashes($wish->title) }}",
+                image: "{{ $wish->image }}",
+                price: "{{ $wish->price }}",
+                formattedPrice: "{{ $wish->formatted_price }}",
+                url: "{{ $wish->url }}",
+                isReserved: {{ $wish->is_reserved ? 'true' : 'false' }},
+                editUrl: "{{ route('wishes.edit', [$wishList->id, $wish->id]) }}",
+                deleteUrl: "{{ route('wishes.destroy', [$wishList->id, $wish->id]) }}"
+            }@if(!$loop->last),@endif
+        @endforeach
+    };
+
+    // Handle wish image clicks
+    document.querySelectorAll('.wish-image-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const wishId = this.getAttribute('data-wish-id');
+            const wish = wishData[wishId];
+            
+            if (wish) {
+                // Update modal content
+                document.getElementById('wishImageModalLabel').textContent = wish.title;
+                document.getElementById('wishModalImage').src = wish.image;
+                
+                // Update price
+                const priceElement = document.getElementById('wishModalPrice');
+                if (wish.price) {
+                    priceElement.textContent = wish.formattedPrice || (wish.price + ' BYN');
+                    priceElement.style.display = 'block';
+                } else {
+                    priceElement.style.display = 'none';
+                }
+                
+                // Update URL
+                const urlElement = document.getElementById('wishModalUrl');
+                if (wish.url) {
+                    urlElement.href = wish.url;
+                    urlElement.style.display = 'inline-block';
+                } else {
+                    urlElement.style.display = 'none';
+                }
+                
+                // Update status
+                const statusElement = document.getElementById('wishModalStatus');
+                if (wish.isReserved) {
+                    statusElement.textContent = '{{ __("messages.reserved_by_someone") }}';
+                    statusElement.className = 'badge bg-success ms-2';
+                } else {
+                    statusElement.textContent = '{{ __("messages.available") }}';
+                    statusElement.className = 'badge bg-secondary ms-2';
+                }
+                
+                // Update action buttons
+                document.getElementById('wishModalEdit').href = wish.editUrl;
+                document.getElementById('wishModalDelete').action = wish.deleteUrl;
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('wishImageModal'));
+                modal.show();
+            }
+        });
+    });
+});
+</script>
 @endpush

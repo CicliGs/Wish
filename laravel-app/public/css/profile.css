@@ -10,27 +10,44 @@
 
 .profile-avatar-wrapper {
     position: relative;
-    margin-bottom: 1.5rem;
+    display: inline-block;
 }
 
 .profile-avatar-edit {
     position: absolute;
-    bottom: 0;
-    right: 0;
+    bottom: 5px;
+    right: 5px;
     border-radius: 50%;
-    padding: 6px 8px;
-    background: rgba(255, 255, 255, 0.9);
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(102, 126, 234, 0.2);
+    border: 2px solid rgba(102, 126, 234, 0.3);
     transition: all 0.3s ease;
     z-index: 10;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .profile-avatar-edit:hover {
     background: rgba(102, 126, 234, 0.1);
-    border-color: rgba(102, 126, 234, 0.5);
+    border-color: rgba(102, 126, 234, 0.6);
     transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.profile-avatar-edit i {
+    font-size: 14px;
+    color: #667eea;
+    transition: all 0.3s ease;
+}
+
+.profile-avatar-edit:hover i {
+    color: #5a67d8;
+    transform: scale(1.1);
 }
 
 .friend-card:hover {
@@ -190,11 +207,11 @@
 
 /* Modal styling - FIXED */
 .modal {
-    z-index: 99999 !important;
+    z-index: 1050 !important;
 }
 
 .modal-backdrop {
-    z-index: 99997 !important;
+    z-index: 1040 !important;
 }
 
 .modal-content {
@@ -204,11 +221,11 @@
     backdrop-filter: blur(20px);
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
     position: relative;
-    z-index: 100000 !important;
+    z-index: 1051 !important;
 }
 
 .modal-dialog {
-    z-index: 100001 !important;
+    z-index: 1052 !important;
 }
 
 .modal-header {
@@ -231,12 +248,29 @@
     border-radius: 50%;
     padding: 0.5rem;
     transition: all 0.3s ease;
-    z-index: 100002 !important;
+    z-index: 1053 !important;
     position: relative;
+    transform: none !important;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(102, 126, 234, 0.2);
 }
 
 .btn-close:hover {
     background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.btn-close:focus {
+    transform: none !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3) !important;
+    outline: none;
 }
 
 /* QR Code Modal specific styles */
@@ -263,24 +297,24 @@
 
 /* Specific fix for achievement modals - NO BACKDROP */
 #allAchievementsModal {
-    z-index: 999999 !important;
+    z-index: 1050 !important;
 }
 
 #allAchievementsModal .modal-content {
-    z-index: 1000000 !important;
+    z-index: 1051 !important;
 }
 
 #allAchievementsModal .modal-dialog {
-    z-index: 1000001 !important;
+    z-index: 1052 !important;
 }
 
 #allAchievementsModal .btn-close {
-    z-index: 1000002 !important;
+    z-index: 1053 !important;
 }
 
 /* Force modal backdrop to be behind modal content */
 .modal-backdrop.show {
-    z-index: 99997 !important;
+    z-index: 1040 !important;
     opacity: 0.5;
 }
 

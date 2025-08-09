@@ -18,12 +18,9 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /var/www/html
 
-COPY --chown=www-data:www-data . /var/www/html
+# Копируем файлы из корня проекта (../)
+COPY --chown=www-data:www-data ../ /var/www/html
 
 USER www-data
-
-# Установка зависимостей Laravel
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
-    && npm install && npm run build
 
 EXPOSE 80

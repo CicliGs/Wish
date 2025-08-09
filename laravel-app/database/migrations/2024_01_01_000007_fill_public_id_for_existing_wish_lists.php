@@ -8,16 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $wishLists = DB::table('wish_lists')->whereNull('public_id')->get();
+        $wishLists = DB::table('wish_lists')->whereNull('uuid')->get();
         foreach ($wishLists as $wishList) {
             DB::table('wish_lists')->where('id', $wishList->id)->update([
-                'public_id' => (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
             ]);
         }
     }
 
     public function down(): void
     {
-        // Не откатываем заполнение public_id
     }
 }; 

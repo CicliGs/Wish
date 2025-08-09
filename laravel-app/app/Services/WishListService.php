@@ -4,13 +4,22 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTOs\WishListDTO;
+use App\DTOs\PublicWishListDTO;
 use App\Models\WishList;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class WishListService
 {
+    private const MAX_TITLE_LENGTH = 255;
+    private const MAX_DESCRIPTION_LENGTH = 1000;
+
+    /**
+     * Find wish lists by user ID.
+     */
     public function findByUser(int $userId): Collection
     {
         return WishList::forUser($userId)->with('wishes')->get();
@@ -24,6 +33,9 @@ class WishListService
         return WishList::forUser($userId)->find($id);
     }
 
+    /**
+     * Create a new wish list.
+     */
     public function create(array $data, int $userId): WishList
     {
         $this->validateCreateData($data);
@@ -32,6 +44,9 @@ class WishListService
         return WishList::create($data);
     }
 
+    /**
+     * Update an existing wish list.
+     */
     public function update(WishList $wishList, array $data): WishList
     {
         $this->validateUpdateData($data, $wishList);
@@ -40,26 +55,35 @@ class WishListService
         return $wishList->fresh();
     }
 
+    /**
+     * Delete a wish list.
+     */
     public function delete(WishList $wishList): bool
     {
         return $wishList->delete();
     }
 
-    public function findPublic(string $publicId): ?WishList
+    /**
+     * Find public wish list by UUID.
+     */
+    public function findPublic(string $uuid): ?WishList
     {
-        return WishList::public()->where('public_id', $publicId)->with('wishes')->first();
+        return WishList::public()->where('uuid', $uuid)->with('wishes')->first();
     }
 
     /**
-     * Generate a new public ID for a wish list.
+     * Generate a new UUID for a wish list.
      */
-    public function regeneratePublicId(WishList $wishList): WishList
+    public function regenerateUuid(WishList $wishList): WishList
     {
-        $wishList->update(['public_id' => (string) \Illuminate\Support\Str::uuid()]);
+        $wishList->update(['uuid' => (string) Str::uuid()]);
 
         return $wishList->fresh();
     }
 
+    /**
+     * Get user statistics.
+     */
     public function getStatistics(int $userId): array
     {
         $wishLists = WishList::forUser($userId)->with('wishes')->get();
@@ -68,60 +92,52 @@ class WishListService
             'total_wish_lists' => $wishLists->count(),
             'total_wishes' => $wishLists->sum('wishes_count'),
             'total_reserved_wishes' => $wishLists->sum('reserved_wishes_count'),
-            'public_wish_lists' => $wishLists->whereNotNull('public_id')->count(),
+            'public_wish_lists' => $wishLists->whereNotNull('uuid')->count(),
         ];
     }
 
     /**
-     * Получает данные для публичного просмотра списка желаний.
+     * Get data for public wish list view.
      */
-    public function getPublicWishListData(string $publicId): array
+    public function getPublicWishListData(string $uuid): PublicWishListDTO
     {
-        $wishList = $this->findPublic($publicId);
-
-        if (!$wishList) {
-            abort(404, __('Список желаний не найден'));
-        }
-
-        $wishes = $wishList->wishes;
-        $user = $wishList->user;
+        $wishList = $this->findPublic($uuid);
         
-        // Логика для модальных окон
-        $isGuest = !auth()->check();
-        $isFriend = false;
-        if (auth()->check()) {
-            $currentUser = auth()->user();
-            $isFriend = app(\App\Services\FriendService::class)->isAlreadyFriendOrRequested($currentUser, $user->id);
+        if (!$wishList) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException();
         }
 
-        return [
-            'wishList' => $wishList,
-            'wishes' => $wishes,
-            'user' => $user,
-            'isGuest' => $isGuest,
-            'isFriend' => $isFriend
-        ];
+        return new PublicWishListDTO(
+            wishList: $wishList,
+            wishes: $wishList->wishes,
+            user: $wishList->user
+        );
     }
 
     /**
-     * Получает данные для главной страницы списков желаний.
+     * Get index data for wish lists.
      */
-    public function getIndexData(int $userId): array
+    public function getIndexData(int $userId): WishListDTO
     {
         $wishLists = $this->findByUser($userId);
-        $statistics = $this->getStatistics($userId);
+        $stats = $this->getStatistics($userId);
 
-        return [
-            'wishLists' => $wishLists,
-            'statistics' => $statistics
-        ];
+        return new WishListDTO(
+            wishLists: $wishLists,
+            stats: $stats,
+            userId: $userId
+        );
     }
 
+    /**
+     * Validate create data.
+     */
     private function validateCreateData(array $data): void
     {
         $validator = Validator::make($data, [
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
+            'title' => ['required', 'string', 'max:' . self::MAX_TITLE_LENGTH],
+            'description' => ['nullable', 'string', 'max:' . self::MAX_DESCRIPTION_LENGTH],
+            'is_public' => ['boolean'],
         ]);
 
         if ($validator->fails()) {
@@ -129,11 +145,15 @@ class WishListService
         }
     }
 
-    private function validateUpdateData(array $data): void
+    /**
+     * Validate update data.
+     */
+    private function validateUpdateData(array $data, WishList $wishList): void
     {
         $validator = Validator::make($data, [
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
+            'title' => ['sometimes', 'required', 'string', 'max:' . self::MAX_TITLE_LENGTH],
+            'description' => ['sometimes', 'nullable', 'string', 'max:' . self::MAX_DESCRIPTION_LENGTH],
+            'is_public' => ['sometimes', 'boolean'],
         ]);
 
         if ($validator->fails()) {

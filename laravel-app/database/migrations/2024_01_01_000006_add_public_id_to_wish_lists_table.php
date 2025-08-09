@@ -9,14 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('wish_lists', function (Blueprint $table) {
-            $table->string('public_id', 36)->unique()->nullable();
+            $table->string('uuid', 36)->unique()->nullable();
         });
     }
 
     public function down(): void
     {
         Schema::table('wish_lists', function (Blueprint $table) {
-            $table->dropColumn('public_id');
+            $table->dropColumn('uuid');
         });
     }
 }; 

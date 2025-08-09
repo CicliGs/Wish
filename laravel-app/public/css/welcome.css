@@ -198,6 +198,16 @@
     color: #718096;
     line-height: 1.6;
     margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.welcome-card-text strong {
+    color: #667eea;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .welcome-card-btn {
@@ -250,6 +260,16 @@
     
     .welcome-hero {
         padding: 4rem 0;
+    }
+
+    .welcome-btn {
+        padding: 0.6rem 1.5rem !important;
+        font-size: 0.85rem !important;
+        margin: 0.25rem !important;
+    }
+    
+    .welcome-btn:hover {
+        transform: translateY(-2px) !important;
     }
 }
 

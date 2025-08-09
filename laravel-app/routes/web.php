@@ -7,14 +7,15 @@ use App\Http\Controllers\WishController;
 use App\Http\Controllers\WishListController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\FriendsController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Роут для переключения языка
 Route::get('/language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch');
 
 Route::middleware(['auth'])->group(function () {
@@ -26,21 +27,34 @@ Route::middleware(['auth'])->group(function () {
         Route::get('wishes/{wish}/edit', [WishController::class, 'edit'])->name('wishes.edit');
         Route::put('wishes/{wish}', [WishController::class, 'update'])->name('wishes.update');
         Route::delete('wishes/{wish}', [WishController::class, 'destroy'])->name('wishes.destroy');
-        Route::post('wishes/{wish}/unreserve', [WishController::class, 'unreserve'])->name('wishes.unreserve');
-        Route::post('wishes/{wish}/reserve', [WishController::class, 'reserve'])->name('wishes.reserve');
     });
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/profile/avatar', [ProfileController::class, 'editAvatar'])->name('profile.avatar.edit');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
     Route::get('/profile/edit-name', [ProfileController::class, 'editName'])->name('profile.edit_name');
-    Route::post('/profile/update-name', [ProfileController::class, 'updateName'])->name('profile.update_name');
-    Route::get('/friends/search', [ProfileController::class, 'searchFriends'])->name('friends.search');
-    Route::post('/friends/remove/{userId}', [ProfileController::class, 'removeFriend'])->name('friends.remove');
-    Route::post('/friends/request/{userId}', [ProfileController::class, 'sendFriendRequest'])->name('friends.request');
+    Route::get('/profile/edit-name', [ProfileController::class, 'editName'])->name('profile.edit_name');
     Route::post('/friends/accept/{requestId}', [ProfileController::class, 'acceptFriendRequest'])->name('friends.accept');
     Route::post('/friends/decline/{requestId}', [ProfileController::class, 'declineFriendRequest'])->name('friends.decline');
-    Route::get('/friends', [\App\Http\Controllers\FriendsController::class, 'index'])->name('friends.index');
+    Route::get('/friends', [FriendsController::class, 'index'])->name('friends.index');
+    Route::get('/friends/search', [FriendsController::class, 'search'])->name('friends.search');
+    Route::post('/friends/remove/{userId}', [ProfileController::class, 'removeFriend'])->name('friends.remove');
+    Route::post('/friends/request/{userId}', [ProfileController::class, 'sendFriendRequest'])->name('friends.request');
+    
+    // Settings route for currency update
+    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+});
+
+Route::prefix('wish-lists/{wishList}')->group(function () {
+    Route::post('wishes/{wish}/unreserve', [WishController::class, 'unreserve'])->name('wishes.unreserve');
+    Route::post('wishes/{wish}/reserve', [WishController::class, 'reserve'])->name('wishes.reserve');
+});
+
+Route::prefix('ajax')->group(function () {
+    Route::post('wishes/{wish}/unreserve', [WishController::class, 'unreserveAjax'])->name('wishes.unreserve.ajax');
+    Route::post('wishes/{wish}/reserve', [WishController::class, 'reserveAjax'])->name('wishes.reserve.ajax');
 });
 
 Route::get('/user/{userId}/wishes', [WishController::class, 'showUser'])->name('wishes.user');
@@ -52,4 +66,4 @@ Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/public/wish-list/{publicId}', [WishListController::class, 'public'])->name('wish-lists.public');
+Route::get('/public/wish-list/{uuid}', [WishListController::class, 'public'])->name('wish-lists.public');

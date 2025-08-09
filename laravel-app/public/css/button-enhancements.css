@@ -1,0 +1,61 @@
+/* Enhanced button styles for welcome page */
+.welcome-btn.btn-outline-light {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    color: white !important;
+    backdrop-filter: blur(10px) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    font-weight: 700 !important;
+    transition: all 0.3s ease !important;
+}
+
+.welcome-btn.btn-outline-light::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+    z-index: 1;
+}
+
+.welcome-btn.btn-outline-light:hover::before {
+    left: 100%;
+}
+
+.welcome-btn.btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #667eea !important;
+    border-color: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-3px) !important;
+}
+
+.welcome-btn.btn-light {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: none !important;
+    color: #667eea !important;
+    backdrop-filter: blur(10px) !important;
+    font-weight: 700 !important;
+}
+
+.welcome-btn.btn-light:hover {
+    background: white !important;
+    color: #5a67d8 !important;
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3) !important;
+}
+
+@media (max-width: 768px) {
+    .welcome-btn {
+        padding: 0.6rem 1.5rem !important;
+        font-size: 0.85rem !important;
+        margin: 0.25rem !important;
+    }
+    
+    .welcome-btn:hover {
+        transform: translateY(-2px) !important;
+    }
+} 

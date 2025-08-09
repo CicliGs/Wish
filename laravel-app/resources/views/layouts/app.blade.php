@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Виш-лист</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -35,10 +36,7 @@
                         <a class="nav-link {{ request()->routeIs('friends.*') ? 'active' : '' }}" href="{{ route('friends.index') }}">
                             <i class="bi bi-people-fill me-1"></i>
                             {{ __('messages.friends') }}
-                            @php
-                                $incomingRequestsCount = Auth::user()->incomingRequests()->where('status', 'pending')->count();
-                            @endphp
-                            @if($incomingRequestsCount > 0)
+                            @if(isset($incomingRequestsCount) && $incomingRequestsCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle notification-badge rounded-circle" style="font-size:0.7em; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">
                                     <span class="visually-hidden">{{ __('messages.incoming_requests') }}</span>
                                     {{ $incomingRequestsCount > 9 ? '9+' : $incomingRequestsCount }}
@@ -51,6 +49,41 @@
                             <i class="bi bi-person-circle me-1"></i>
                             {{ __('messages.profile') }}
                         </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="currencyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-currency-exchange me-1"></i>
+                            {{ Auth::user()->currency }}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="currencyDropdown">
+                            @foreach(App\Models\User::getSupportedCurrencies() as $currency)
+                                <li>
+                                    <form method="POST" action="{{ route('settings.update') }}" style="display: inline;">
+                                        @csrf
+                                        <input type="hidden" name="currency" value="{{ $currency }}">
+                                        <button type="submit" class="dropdown-item {{ Auth::user()->currency === $currency ? 'active' : '' }}">
+                                            @switch($currency)
+                                                @case('BYN')
+                                                    <i class="bi bi-currency-dollar me-2"></i>
+                                                    @break
+                                                @case('USD')
+                                                    <i class="bi bi-currency-dollar me-2"></i>
+                                                    @break
+                                                @case('EUR')
+                                                    <i class="bi bi-currency-euro me-2"></i>
+                                                    @break
+                                                @case('RUB')
+                                                    <i class="bi bi-currency-ruble me-2"></i>
+                                                    @break
+                                                @default
+                                                    <i class="bi bi-currency-exchange me-2"></i>
+                                            @endswitch
+                                            {{ $currency }}
+                                        </button>
+                                    </form>
+                                </li>
+                            @endforeach
+                        </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -119,15 +152,19 @@
 <div class="container">
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            {{ session('success') }}
+            <div class="alert-message">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ session('success') }}
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            {{ session('error') }}
+            <div class="alert-message">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {{ session('error') }}
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
@@ -139,6 +176,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ asset('js/modal-fix.js') }}"></script>
+<script src="{{ asset('js/currency-selector.js') }}"></script>
 @stack('scripts')
 </body>
 </html>

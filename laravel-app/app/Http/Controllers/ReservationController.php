@@ -14,30 +14,31 @@ class ReservationController extends Controller
 {
     public function __construct(protected ReservationService $service) {}
 
+    /**
+     * Reserve a wish.
+     */
     public function reserve(int $wishId): RedirectResponse
     {
-        $wish = Wish::findOrFail($wishId);
+        $wish = $this->findWish($wishId);
         $result = $this->service->reserve($wish, Auth::id());
 
-        if ($result === true) {
-            return back()->with('success', __('Подарок забронирован!'));
-        }
-
-        return back()->with('error', __($result));
+        return $this->handleReservationResult($result, 'wish_reserved');
     }
 
+    /**
+     * Unreserve a wish.
+     */
     public function unreserve(int $wishId): RedirectResponse
     {
-        $wish = Wish::findOrFail($wishId);
+        $wish = $this->findWish($wishId);
         $result = $this->service->unreserve($wish, Auth::id());
 
-        if ($result === true) {
-            return back()->with('success', __('Бронирование снято!'));
-        }
-
-        return back()->with('error', __($result));
+        return $this->handleReservationResult($result, 'wish_unreserved');
     }
 
+    /**
+     * Display user reservations.
+     */
     public function index(): View
     {
         $reservations = $this->service->getUserReservations(Auth::id());
@@ -46,11 +47,32 @@ class ReservationController extends Controller
         return view('reservations.index', compact('reservations', 'statistics'));
     }
 
+    /**
+     * Display wish list reservations.
+     */
     public function wishList(int $wishListId): View
     {
         $reservations = $this->service->getWishListReservations($wishListId);
         $statistics = $this->service->getWishListReservationStatistics($wishListId);
 
         return view('reservations.wish-list', compact('reservations', 'statistics'));
+    }
+
+    /**
+     * Find wish by ID.
+     */
+    private function findWish(int $wishId): Wish
+    {
+        return Wish::findOrFail($wishId);
+    }
+
+    /**
+     * Handle reservation result.
+     */
+    private function handleReservationResult(bool|string $result, string $successMessageKey): RedirectResponse
+    {
+        return $result === true
+            ? back()->with('success', __('messages.' . $successMessageKey))
+            : back()->with('error', $result);
     }
 }

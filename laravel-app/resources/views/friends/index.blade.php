@@ -65,7 +65,7 @@
           <a href="{{ route('wishes.user', ['userId' => $selectedFriend->id]) }}" class="btn btn-outline-dark mb-3 w-100 d-flex justify-content-center align-items-center gap-2">
             <i class="bi bi-heart-fill"></i> {{ __('messages.view_wishes') }}
           </a>
-          <form action="{{ route('friends.remove', $selectedFriend->id) }}" method="POST" class="w-100">
+          <form action="{{ route('friends.remove', $selectedFriend->id) }}" method="POST" class="w-100" onsubmit="return confirm('{{ __('messages.confirm_remove_friend') }}')">
             @csrf
             <button type="submit" class="btn btn-outline-danger w-100 d-flex justify-content-center gap-2">
               <i class="bi bi-person-x-fill"></i> {{ __('messages.remove_friend') }}
@@ -160,5 +160,73 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <link rel="stylesheet" href="{{ asset('css/friends.css') }}">
+<style>
+/* Remove Friend Button */
+.btn-outline-danger {
+    border-radius: 20px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    border: 2px solid #dc3545;
+    color: #dc3545;
+    background: transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+}
+
+.btn-outline-danger:hover {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+}
+
+.btn-outline-danger:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+}
+
+/* View Wishes Button */
+.btn-outline-dark {
+    border-radius: 20px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    border: 2px solid #343a40;
+    color: #343a40;
+    background: transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(52, 58, 64, 0.1);
+}
+
+.btn-outline-dark:hover {
+    background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+    border-color: #343a40;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(52, 58, 64, 0.2);
+}
+
+.btn-outline-dark:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(52, 58, 64, 0.1);
+}
+
+/* Friend Link Hover */
+.friend-link {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+}
+
+.friend-link:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.friend-link.bg-primary.bg-opacity-10 {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%) !important;
+    border-left: 3px solid #007bff;
+}
+</style>
 @endpush
 @endsection

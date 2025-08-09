@@ -43,7 +43,7 @@
                                 <a href="{{ route('wishes.index', $wishList->id) }}" class="wishlist-btn btn-primary text-center">{{ __('messages.open') }}</a>
                                 <a href="{{ route('wish-lists.edit', $wishList) }}" class="wishlist-btn btn-outline-primary text-center">{{ __('messages.edit_list') }}</a>
                                 <button class="wishlist-btn btn-outline-primary text-center" data-bs-toggle="modal" data-bs-target="#qrModal-{{ $wishList->id }}">{{ __('messages.qr_code') }}</button>
-                                <button class="wishlist-btn btn-outline-primary text-center" onclick="navigator.clipboard.writeText('{{ route('wish-lists.public', $wishList->public_id) }}'); return false;">{{ __('messages.copy_link') }}</button>
+                                <button class="wishlist-btn btn-outline-primary text-center" onclick="navigator.clipboard.writeText('{{ route('wish-lists.public', $wishList->uuid) }}'); return false;">{{ __('messages.copy_link') }}</button>
                                 <form action="{{ route('wish-lists.destroy', $wishList) }}" method="POST" style="display:inline-block; width: 100%;">
                                     @csrf
                                     @method('DELETE')
@@ -82,7 +82,7 @@
                 <div class="text-muted">Загрузка QR-кода...</div>
             </div>
         </div>
-        <p class="mt-3 small text-muted text-center">{{ __('messages.link') }}: <br><a href="{{ route('wish-lists.public', $wishList->public_id) }}" target="_blank">{{ route('wish-lists.public', $wishList->public_id) }}</a></p>
+        <p class="mt-3 small text-muted text-center">{{ __('messages.link') }}: <br><a href="{{ route('wish-lists.public', $wishList->uuid) }}" target="_blank">{{ route('wish-lists.public', $wishList->uuid) }}</a></p>
       </div>
     </div>
   </div>
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeQRData() {
     window.wishListQrData = [
         @foreach($wishLists as $wishList)
-            {id: {{ $wishList->id }}, url: "{{ route('wish-lists.public', $wishList->public_id) }}"}@if(!$loop->last),@endif
+            {id: {{ $wishList->id }}, url: "{{ route('wish-lists.public', $wishList->uuid) }}"}@if(!$loop->last),@endif
         @endforeach
     ];
     

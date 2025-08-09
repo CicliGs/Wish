@@ -7,15 +7,21 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public const DEFAULT_CURRENCY = 'BYN';
+    private const SUPPORTED_CURRENCIES = ['BYN', 'USD', 'EUR', 'RUB'];
 
     /**
      * The attributes that are mass assignable.
@@ -26,7 +32,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'avatar', // добавлено поле для аватара
+        'avatar',
+        'currency',
     ];
 
     /**
@@ -55,9 +62,9 @@ class User extends Authenticatable
     /**
      * Get the wish lists for the user.
      */
-    public function wishLists()
+    public function wishLists(): HasMany
     {
-        return $this->hasMany(\App\Models\WishList::class);
+        return $this->hasMany(WishList::class);
     }
 
     /**
@@ -69,45 +76,51 @@ class User extends Authenticatable
     }
 
     /**
-     * Друзья, которых добавил пользователь
+     * Get friends added by this user.
      */
-    public function friends()
+    public function friends(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'friends', 'user_id', 'friend_id');
     }
 
     /**
-     * Пользователи, которые добавили этого пользователя в друзья
+     * Get users who added this user as friend.
      */
-    public function friendOf()
+    public function friendOf(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'friends', 'friend_id', 'user_id');
     }
 
-    public function incomingRequests()
+    /**
+     * Get incoming friend requests.
+     */
+    public function incomingRequests(): HasMany
     {
-        return $this->hasMany(FriendRequest::class, 'friend_id');
+        return $this->hasMany(FriendRequest::class, 'receiver_id');
     }
 
-    public function outgoingRequests()
+    /**
+     * Get outgoing friend requests.
+     */
+    public function outgoingRequests(): HasMany
     {
         return $this->hasMany(FriendRequest::class, 'user_id');
     }
 
     /**
-     * Friend requests, отправленные этим пользователем
+     * Get sent friend requests.
      */
-    public function sentRequests()
+    public function sentRequests(): HasMany
     {
         return $this->hasMany(FriendRequest::class, 'user_id');
     }
 
     /**
-     * Friend requests, полученные этим пользователем
+     * Get received friend requests.
      */
-    public function receivedRequests()
+    public function receivedRequests(): HasMany
     {
-        return $this->hasMany(FriendRequest::class, 'friend_id');
+        return $this->hasMany(FriendRequest::class, 'receiver_id');
     }
 
     /**
@@ -115,31 +128,29 @@ class User extends Authenticatable
      */
     public static function register(array $data): self
     {
-        $user = self::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
-        Auth::login($user);
-        return $user;
+        $data['password'] = Hash::make($data['password']);
+        $data['currency'] = $data['currency'] ?? self::DEFAULT_CURRENCY;
+        
+        return self::create($data);
     }
 
     /**
-     * Attempt to authenticate a user.
+     * Try to login user.
      */
-    public static function tryLogin(array $credentials, $request, bool $remember = false): bool
+    public static function tryLogin(array $credentials, Request $request, bool $remember = false): bool
     {
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             return true;
         }
+        
         return false;
     }
 
     /**
-     * Logout the user.
+     * Logout user.
      */
-    public static function logout($request): void
+    public static function logout(Request $request): void
     {
         Auth::logout();
         $request->session()->invalidate();
@@ -147,7 +158,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user owns a wish list.
+     * Check if user owns wish list.
      */
     public function ownsWishList(WishList $wishList): bool
     {
@@ -155,15 +166,68 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has reserved a wish.
+     * Check if user has reserved wish.
      */
     public function hasReservedWish(Wish $wish): bool
     {
-        return $this->reservations()->where('wish_id', $wish->id)->exists();
+        return $wish->reservation && $wish->reservation->user_id === $this->id;
     }
 
-    public function wishes()
+    /**
+     * Get user wishes through wish lists.
+     */
+    public function wishes(): HasManyThrough
     {
-        return $this->hasMany(Wish::class);
+        return $this->hasManyThrough(Wish::class, WishList::class);
+    }
+
+    /**
+     * Get user achievements.
+     */
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(UserAchievement::class);
+    }
+
+    /**
+     * Check if user has achievement.
+     */
+    public function hasAchievement(string $achievementKey): bool
+    {
+        return $this->achievements()->where('achievement_key', $achievementKey)->exists();
+    }
+
+    /**
+     * Get user's preferred currency.
+     */
+    public function getCurrencyAttribute(): string
+    {
+        return $this->attributes['currency'] ?? self::DEFAULT_CURRENCY;
+    }
+
+    /**
+     * Set user's preferred currency.
+     */
+    public function setCurrencyAttribute(string $currency): void
+    {
+        $this->attributes['currency'] = in_array($currency, self::SUPPORTED_CURRENCIES) 
+            ? $currency 
+            : self::DEFAULT_CURRENCY;
+    }
+
+    /**
+     * Get supported currencies.
+     */
+    public static function getSupportedCurrencies(): array
+    {
+        return self::SUPPORTED_CURRENCIES;
+    }
+
+    /**
+     * Check if currency is supported.
+     */
+    public static function isCurrencySupported(string $currency): bool
+    {
+        return in_array($currency, self::SUPPORTED_CURRENCIES);
     }
 }

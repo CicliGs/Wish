@@ -21,7 +21,7 @@
                                 : '<span class="badge bg-secondary ms-2">Свободно</span>' !!}
                         </div>
                         @if($wish->price)
-                            <div class="wish-price mb-2">{{ number_format($wish->price, 2) }} BYN</div>
+                            <div class="wish-price mb-2">{{ $wish->formatted_price }}</div>
                         @endif
                         <div class="wish-actions">
                             <a href="{{ $wish->url }}" target="_blank" class="btn btn-outline-dark btn-sm wish-link mb-2">

@@ -66,7 +66,7 @@
                 <img src="{{ asset('images/69502621.jpg') }}" class="card-img-top welcome-card-img" alt="Книга">
                 <div class="card-body">
                     <h5 class="welcome-card-title">{{ __('messages.example_book') }}</h5>
-                    <p class="welcome-card-text">{!! __('messages.example_price', ['price' => '35 BYN']) !!}</p>
+                    <p class="welcome-card-text">{!! __('messages.example_price', ['price' => '10$']) !!}</p>
                     <a href="https://www.labirint.ru/books/123456/" target="_blank" class="btn btn-outline-dark btn-sm welcome-card-btn">{{ __('messages.wish_url') }}</a>
                 </div>
             </div>
@@ -86,7 +86,7 @@
                 <img src="{{ asset('images/catan-00-1024x1024-wm.jpg') }}" class="card-img-top welcome-card-img" alt="Настольная игра">
                 <div class="card-body">
                     <h5 class="welcome-card-title">{{ __('messages.example_boardgame') }}</h5>
-                    <p class="welcome-card-text">{!! __('messages.example_price', ['price' => '100 BYN']) !!}</p>
+                    <p class="welcome-card-text">{!! __('messages.example_price', ['price' => '23€']) !!}</p>
                     <a href="https://www.mosigra.ru/games/kolonizatory/" target="_blank" class="btn btn-outline-dark btn-sm welcome-card-btn">{{ __('messages.wish_url') }}</a>
                 </div>
             </div>
@@ -96,5 +96,6 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <link rel="stylesheet" href="{{ asset('css/welcome.css') }}">
+<link rel="stylesheet" href="{{ asset('css/button-enhancements.css') }}">
 @endpush
 @endsection

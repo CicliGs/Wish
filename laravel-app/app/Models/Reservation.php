@@ -63,9 +63,4 @@ class Reservation extends Model
     {
         return $this->wish && $this->wish->is_reserved;
     }
-    //
-    //    public function getFormattedReservedAtAttribute(): string
-    //    {
-    //        return $this->created_at->format('d.m.Y H:i');
-    //    }
 }

@@ -388,13 +388,32 @@
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
+/* Wish image link styling */
+.wish-image-link {
+    display: block;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-radius: 15px 15px 0 0;
+    overflow: hidden;
+}
+
+.wish-image-link:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.wish-image-link:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
 /* Modal styling - FIXED */
 .modal {
-    z-index: 99999 !important;
+    z-index: 1050 !important;
 }
 
 .modal-backdrop {
-    z-index: 99997 !important;
+    z-index: 1040 !important;
 }
 
 .modal-content {
@@ -404,11 +423,11 @@
     backdrop-filter: blur(20px);
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
     position: relative;
-    z-index: 100000 !important;
+    z-index: 1051 !important;
 }
 
 .modal-dialog {
-    z-index: 100001 !important;
+    z-index: 1052 !important;
 }
 
 .modal-header {
@@ -427,21 +446,117 @@
     padding: 2rem;
 }
 
-.btn-close {
-    border-radius: 50%;
-    padding: 0.5rem;
-    transition: all 0.3s ease;
-    z-index: 100002 !important;
-    position: relative;
+/* FIXED CLOSE BUTTON - OVERRIDE BOOTSTRAP */
+.btn-close,
+button.btn-close,
+.modal .btn-close,
+.modal-header .btn-close {
+    border-radius: 50% !important;
+    padding: 0.5rem !important;
+    transition: all 0.3s ease !important;
+    z-index: 1053 !important;
+    position: relative !important;
+    transform: none !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(102, 126, 234, 0.2) !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    box-shadow: none !important;
+    /* Remove Bootstrap's default background image */
+    background-image: none !important;
+    background-size: auto !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
 }
 
-.btn-close:hover {
-    background: rgba(102, 126, 234, 0.1);
+.btn-close:hover,
+button.btn-close:hover,
+.modal .btn-close:hover,
+.modal-header .btn-close:hover {
+    background: rgba(102, 126, 234, 0.1) !important;
+    border-color: rgba(102, 126, 234, 0.5) !important;
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
+    opacity: 1 !important;
+    /* Remove Bootstrap's default background image on hover */
+    background-image: none !important;
+}
+
+.btn-close:focus,
+button.btn-close:focus,
+.modal .btn-close:focus,
+.modal-header .btn-close:focus {
+    transform: none !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3) !important;
+    outline: none !important;
+    opacity: 1 !important;
+    /* Remove Bootstrap's default background image on focus */
+    background-image: none !important;
+}
+
+.btn-close:active,
+button.btn-close:active,
+.modal .btn-close:active,
+.modal-header .btn-close:active {
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+    /* Remove Bootstrap's default background image on active */
+    background-image: none !important;
+}
+
+/* COMPLETELY REMOVE Bootstrap's default close button styling */
+.btn-close::before,
+.btn-close::after,
+button.btn-close::before,
+button.btn-close::after,
+.modal .btn-close::before,
+.modal .btn-close::after,
+.modal-header .btn-close::before,
+.modal-header .btn-close::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: static !important;
+    transform: none !important;
+}
+
+/* Custom close button X - ONLY ONE */
+.btn-close,
+button.btn-close,
+.modal .btn-close,
+.modal-header .btn-close {
+    content: '×' !important;
+    font-size: 24px !important;
+    font-weight: bold !important;
+    color: #667eea !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    /* Remove any pseudo-elements */
+}
+
+/* Force the button to show only our custom X */
+.btn-close:before,
+.btn-close:after,
+button.btn-close:before,
+button.btn-close:after,
+.modal .btn-close:before,
+.modal .btn-close:after,
+.modal-header .btn-close:before,
+.modal-header .btn-close:after {
+    display: none !important;
+    content: none !important;
 }
 
 /* Force modal backdrop to be behind modal content */
 .modal-backdrop.show {
-    z-index: 99997 !important;
+    z-index: 1040 !important;
     opacity: 0.5;
 }
 

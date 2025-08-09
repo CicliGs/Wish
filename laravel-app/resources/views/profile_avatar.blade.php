@@ -7,10 +7,10 @@
         <form action="{{ route('profile.avatar.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="mb-3 text-center">
-                @if(Auth::user()->avatar ?? false)
-                    <img id="avatarPreview" src="{{ Auth::user()->avatar }}" alt="avatar" class="avatar-preview">
+                @if($user->avatar ?? false)
+                    <img id="avatarPreview" src="{{ $user->avatar }}" alt="avatar" class="avatar-preview">
                 @else
-                    <img id="avatarPreview" src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&size=96" alt="avatar" class="avatar-preview">
+                    <img id="avatarPreview" src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&size=96" alt="avatar" class="avatar-preview">
                 @endif
             </div>
             <div class="mb-3">
