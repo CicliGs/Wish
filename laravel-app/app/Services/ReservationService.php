@@ -27,10 +27,11 @@ class ReservationService
                 $this->updateWishReservationStatus($wish, true);
             });
 
-            return true;
         } catch (Exception $e) {
             return __('messages.error_reserving_wish') . $e->getMessage();
         }
+
+            return true;
     }
 
     /**
@@ -50,10 +51,11 @@ class ReservationService
                 $this->updateWishReservationStatus($wish, false);
             });
 
-            return true;
         } catch (Exception $e) {
             return __('messages.error_unreserving_wish') . $e->getMessage();
         }
+
+            return true;
     }
 
     /**
@@ -98,7 +100,7 @@ class ReservationService
             'total_value' => $reservations->sum(function ($reservation) {
                 return $reservation->wish->price ?? 0;
             }),
-            'reserved_wishes' => $reservations->pluck('wish'),
+            'total_reserved_wishes' => $reservations->count(), // Added for compatibility
         ];
     }
 

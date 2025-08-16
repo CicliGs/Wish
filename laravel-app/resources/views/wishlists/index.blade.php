@@ -25,7 +25,13 @@
                     <div class="wishlist-card">
                         <div class="wishlist-card-header">
                             <h5 class="wishlist-card-title">{{ $wishList->title }}</h5>
-                            <div class="wishlist-card-subtitle">{{ __('messages.created') }} {{ $wishList->created_at->format('d.m.Y') }}</div>
+                            <div class="wishlist-card-subtitle">
+                                {{ __('messages.created') }} {{ $wishList->created_at->format('d.m.Y') }}
+                                <span class="currency-badge ms-2">
+                                    <i class="bi bi-currency-exchange me-1"></i>
+                                    {{ $wishList->currency }}
+                                </span>
+                            </div>
                         </div>
                         <div class="wishlist-card-body">
                             <p class="wishlist-card-description">{{ $wishList->description }}</p>
@@ -79,7 +85,7 @@
       <div class="modal-body d-flex flex-column align-items-center">
         <div class="qr-code-wrapper">
             <div id="qrcode-{{ $wishList->id }}" class="qr-code-container">
-                <div class="text-muted">Загрузка QR-кода...</div>
+                <div class="text-muted">{{ __('messages.loading_qr_code') }}</div>
             </div>
         </div>
         <p class="mt-3 small text-muted text-center">{{ __('messages.link') }}: <br><a href="{{ route('wish-lists.public', $wishList->uuid) }}" target="_blank">{{ route('wish-lists.public', $wishList->uuid) }}</a></p>
@@ -93,60 +99,15 @@
 <!-- Load QRious library first -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
-<!-- Then load our QR data and script -->
+<!-- Initialize QR data -->
 <script>
-// Wait for QRious to load
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof QRious === 'undefined') {
-        // Try alternative CDN
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js';
-        script.onload = function() {
-            initializeQRData();
-        };
-        document.head.appendChild(script);
-    } else {
-        initializeQRData();
-    }
-});
-
-function initializeQRData() {
-    window.wishListQrData = [
-        @foreach($wishLists as $wishList)
-            {id: {{ $wishList->id }}, url: "{{ route('wish-lists.public', $wishList->uuid) }}"}@if(!$loop->last),@endif
-        @endforeach
-    ];
-    
-    // Load our QR script
-    const qrScript = document.createElement('script');
-    qrScript.src = "{{ asset('js/wishlist-qr.js') }}";
-    qrScript.onload = function() {
-        // Trigger initial generation after script loads
-        setTimeout(function() {
-            if (window.generateQRCodes) {
-                window.generateQRCodes();
-            }
-        }, 1000);
-    };
-    document.head.appendChild(qrScript);
-}
-
-// Additional modal event handlers
-document.addEventListener('DOMContentLoaded', function() {
-    // Add click handlers for QR buttons
-    document.querySelectorAll('[data-bs-target^="#qrModal-"]').forEach(function(button) {
-        button.addEventListener('click', function() {
-            const modalId = this.getAttribute('data-bs-target');
-            const wishListId = modalId.replace('#qrModal-', '');
-            
-            // Generate QR code when button is clicked
-            setTimeout(function() {
-                if (window.generateQRForModal) {
-                    window.generateQRForModal(modalId.replace('#', ''));
-                }
-            }, 500);
-        });
-    });
-});
+window.wishListQrData = [
+    @foreach($wishLists as $wishList)
+        {id: {{ $wishList->id }}, url: "{{ route('wish-lists.public', $wishList->uuid) }}"}@if(!$loop->last),@endif
+    @endforeach
+];
 </script>
+
+<!-- Load our QR script -->
+<script src="{{ asset('js/wishlist-index.js') }}"></script>
 @endpush 

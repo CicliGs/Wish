@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('wish_id')->constrained('wishes')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
-            $table->unique('wish_id'); // Один подарок — одна бронь
+            $table->unique('wish_id');
         });
     }
 

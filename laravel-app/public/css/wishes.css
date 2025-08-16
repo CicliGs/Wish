@@ -689,3 +689,12 @@ button.btn-close:after,
     stroke: #5a67d8;
     stroke-width: 5;
 } 
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .d-flex.justify-content-between.align-items-center.mb-4 {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+} 

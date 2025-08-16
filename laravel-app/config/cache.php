@@ -105,4 +105,15 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache_'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default Cache TTL
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the default time-to-live for cached items.
+    |
+    */
+
+    'ttl' => env('CACHE_TTL', 300),
+
 ];

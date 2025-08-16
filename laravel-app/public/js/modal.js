@@ -1,13 +1,29 @@
-// Modal Management Functions
+// Modal Management Functions for Bootstrap 5
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    const backdrop = document.querySelector('.modal-backdrop');
     if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('show');
-    }
-    if (backdrop) {
-        backdrop.remove();
+        // Use Bootstrap 5 modal API
+        const bootstrapModal = bootstrap.Modal.getInstance(modal);
+        if (bootstrapModal) {
+            bootstrapModal.hide();
+        } else {
+            // Fallback for manual modal management
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            modal.removeAttribute('aria-modal');
+            
+            // Remove backdrop
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            
+            // Remove modal-open class from body
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }
     }
 }
 
@@ -29,4 +45,17 @@ document.addEventListener('keydown', function(e) {
             closeModal(modal.id);
         }
     }
+});
+
+// Ensure modals are properly initialized
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all modals with Bootstrap 5
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        new bootstrap.Modal(modal, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+    });
 }); 

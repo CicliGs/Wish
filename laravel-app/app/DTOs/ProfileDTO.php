@@ -15,7 +15,8 @@ class ProfileDTO extends BaseDTO
         public readonly Collection $friends,
         public readonly Collection $incomingRequests,
         public readonly Collection $outgoingRequests,
-        public readonly array $achievements
+        public readonly array $achievements,
+        public readonly Collection $wishLists
     ) {}
 
     public function toArray(): array
@@ -27,6 +28,7 @@ class ProfileDTO extends BaseDTO
             'incomingRequests' => $this->incomingRequests,
             'outgoingRequests' => $this->outgoingRequests,
             'achievements' => $this->achievements,
+            'wishLists' => $this->wishLists,
         ];
     }
 
@@ -39,6 +41,7 @@ class ProfileDTO extends BaseDTO
             incomingRequests: $data['incomingRequests'],
             outgoingRequests: $data['outgoingRequests'],
             achievements: $data['achievements'],
+            wishLists: $data['wishLists'],
         );
     }
 } 

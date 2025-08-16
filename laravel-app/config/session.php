@@ -105,6 +105,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session Redis Connection
+    |--------------------------------------------------------------------------
+    |
+    | When using the "redis" session driver, you may specify a Redis connection
+    | that should be used to manage these sessions. This should correspond
+    | to a connection in your database configuration options.
+    |
+    */
+
+    'redis_connection' => env('SESSION_REDIS_CONNECTION', 'session'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Sweeping Lottery
     |--------------------------------------------------------------------------
     |

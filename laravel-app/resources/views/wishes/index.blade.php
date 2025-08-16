@@ -4,7 +4,13 @@
 <div class="wishes-container">
     <div class="container">
         <div class="wishes-card">
-            <h1 class="wishes-title">{{ $wishList->title }}</h1>
+            <div class="d-flex align-items-center mb-4">
+                <h1 class="wishes-title">{{ $wishList->title }}</h1>
+                <span class="currency-badge ms-3">
+                    <i class="bi bi-currency-exchange me-1"></i>
+                    {{ $wishList->currency }}
+                </span>
+            </div>
             @push('styles')
             <link rel="stylesheet" href="{{ asset('css/wishes.css') }}">
             @endpush
@@ -112,73 +118,21 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Wish data for modals
-    const wishData = {
-        @foreach($wishes as $wish)
-            {{ $wish->id }}: {
-                title: "{{ addslashes($wish->title) }}",
-                image: "{{ $wish->image }}",
-                price: "{{ $wish->price }}",
-                formattedPrice: "{{ $wish->formatted_price }}",
-                url: "{{ $wish->url }}",
-                isReserved: {{ $wish->is_reserved ? 'true' : 'false' }},
-                editUrl: "{{ route('wishes.edit', [$wishList->id, $wish->id]) }}",
-                deleteUrl: "{{ route('wishes.destroy', [$wishList->id, $wish->id]) }}"
-            }@if(!$loop->last),@endif
-        @endforeach
-    };
-
-    // Handle wish image clicks
-    document.querySelectorAll('.wish-image-link').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const wishId = this.getAttribute('data-wish-id');
-            const wish = wishData[wishId];
-            
-            if (wish) {
-                // Update modal content
-                document.getElementById('wishImageModalLabel').textContent = wish.title;
-                document.getElementById('wishModalImage').src = wish.image;
-                
-                // Update price
-                const priceElement = document.getElementById('wishModalPrice');
-                if (wish.price) {
-                    priceElement.textContent = wish.formattedPrice || (wish.price + ' BYN');
-                    priceElement.style.display = 'block';
-                } else {
-                    priceElement.style.display = 'none';
-                }
-                
-                // Update URL
-                const urlElement = document.getElementById('wishModalUrl');
-                if (wish.url) {
-                    urlElement.href = wish.url;
-                    urlElement.style.display = 'inline-block';
-                } else {
-                    urlElement.style.display = 'none';
-                }
-                
-                // Update status
-                const statusElement = document.getElementById('wishModalStatus');
-                if (wish.isReserved) {
-                    statusElement.textContent = '{{ __("messages.reserved_by_someone") }}';
-                    statusElement.className = 'badge bg-success ms-2';
-                } else {
-                    statusElement.textContent = '{{ __("messages.available") }}';
-                    statusElement.className = 'badge bg-secondary ms-2';
-                }
-                
-                // Update action buttons
-                document.getElementById('wishModalEdit').href = wish.editUrl;
-                document.getElementById('wishModalDelete').action = wish.deleteUrl;
-                
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('wishImageModal'));
-                modal.show();
-            }
-        });
-    });
-});
+// Wish data for modals - this needs to be inline to access server variables
+window.wishData = {
+    @foreach($wishes as $wish)
+        {{ $wish->id }}: {
+            title: "{{ addslashes($wish->title) }}",
+            image: "{{ $wish->image }}",
+            price: "{{ $wish->price }}",
+            formattedPrice: "{{ $wish->formatted_price }}",
+            url: "{{ $wish->url }}",
+            isReserved: {{ $wish->is_reserved ? 'true' : 'false' }},
+            editUrl: "{{ route('wishes.edit', [$wishList->id, $wish->id]) }}",
+            deleteUrl: "{{ route('wishes.destroy', [$wishList->id, $wish->id]) }}"
+        }@if(!$loop->last),@endif
+    @endforeach
+};
 </script>
+<script src="{{ asset('js/wish-index.js') }}"></script>
 @endpush

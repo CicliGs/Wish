@@ -1,225 +1,225 @@
-# 🎁 WishList - Платформа для списков желаний
+# 🎁 WishList - Wish List Platform
 
-Современное веб-приложение для создания и управления списками желаний, с возможностью бронирования подарков друзьями.
+A modern web application for creating and managing wish lists, with the ability for friends to reserve gifts.
 
-## ✨ Основные возможности
+## ✨ Key Features
 
-- **Создание списков желаний** - организуйте свои желания по категориям
-- **Система друзей** - добавляйте друзей и делитесь списками
-- **Бронирование подарков** - друзья могут бронировать подарки из ваших списков
-- **Достижения** - система достижений для мотивации пользователей
-- **Мультиязычность** - поддержка русского и английского языков
-- **Современный дизайн** - красивые анимации и адаптивный интерфейс
-- **QR-коды** - быстрый доступ к спискам через QR-коды
-- **Публичные ссылки** - делитесь списками через уникальные UUID
+- **Wish List Creation** - organize your wishes by categories
+- **Friends System** - add friends and share lists
+- **Gift Reservation** - friends can reserve gifts from your lists
+- **Achievements** - achievement system to motivate users
+- **Multilingual** - support for Russian and English languages
+- **Modern Design** - beautiful animations and responsive interface
+- **QR Codes** - quick access to lists through QR codes
+- **Public Links** - share lists through unique UUIDs
 
-## 🚀 Технологии
+## 🚀 Technologies
 
 - **Backend**: Laravel 12, PHP 8.2+
 - **Frontend**: Bootstrap 5, JavaScript, CSS3
-- **База данных**: PostgreSQL 16
-- **Контейнеризация**: Docker & Docker Compose
-- **Сервер**: Nginx
-- **Дополнительно**: QRious.js для генерации QR-кодов
+- **Database**: PostgreSQL 16
+- **Containerization**: Docker & Docker Compose
+- **Server**: Nginx
+- **Additional**: QRious.js for QR code generation
 
-## 📋 Требования
+## 📋 Requirements
 
 - Docker & Docker Compose
 - Git
 
-## 🛠️ Установка и запуск
+## 🛠️ Installation and Setup
 
-### 1. Клонирование репозитория
+### 1. Clone Repository
 ```bash
 git clone <repository-url>
 cd pet-project/laravel-app
 ```
 
-### 2. Настройка окружения
+### 2. Environment Setup
 ```bash
 cp .env.example .env
-# Отредактируйте .env файл под ваши нужды
+# Edit .env file according to your needs
 ```
 
-### 3. Запуск с Docker
+### 3. Run with Docker
 ```bash
-# Переход в папку с Docker файлами
+# Navigate to Docker folder
 cd docker
 
-# Сборка и запуск контейнеров
+# Build and run containers
 docker-compose up -d --build
 
-# Установка зависимостей PHP
+# Install PHP dependencies
 docker-compose exec app composer install
 
-# Генерация ключа приложения
+# Generate application key
 docker-compose exec app php artisan key:generate
 
-# Выполнение миграций
+# Run migrations
 docker-compose exec app php artisan migrate
 
-# Очистка кэша
+# Clear cache
 docker-compose exec app php artisan config:clear
 docker-compose exec app php artisan view:clear
 ```
 
-### 4. Доступ к приложению
-Приложение будет доступно по адресу: `http://localhost:8080`
+### 4. Access Application
+The application will be available at: `http://localhost:8080`
 
-## 🗄️ Структура базы данных
+## 🗄️ Database Structure
 
-### Основные таблицы:
-- **users** - пользователи системы
-- **wish_lists** - списки желаний (с UUID для публичного доступа)
-- **wishes** - желания в списках
-- **friend_requests** - заявки в друзья
-- **reservations** - бронирования подарков
+### Main Tables:
+- **users** - system users
+- **wish_lists** - wish lists (with UUID for public access)
+- **wishes** - wishes in lists
+- **friend_requests** - friend requests
+- **reservations** - gift reservations
 
-### Ключевые отношения:
-- Пользователь может иметь множество списков желаний
-- Список желаний содержит множество желаний
-- Пользователи могут быть друзьями через систему заявок
-- Друзья могут бронировать желания друг друга
-- Каждый список желаний имеет уникальный UUID для публичного доступа
+### Key Relationships:
+- A user can have multiple wish lists
+- A wish list contains multiple wishes
+- Users can be friends through the request system
+- Friends can reserve each other's wishes
+- Each wish list has a unique UUID for public access
 
-## 🏗️ Архитектура
+## 🏗️ Architecture
 
-### Контроллеры
-- `ProfileController` - управление профилем пользователя
-- `WishListController` - управление списками желаний
-- `WishController` - управление желаниями
-- `FriendsController` - управление друзьями
-- `ReservationController` - управление бронированиями
+### Controllers
+- `ProfileController` - user profile management
+- `WishListController` - wish list management
+- `WishController` - wish management
+- `FriendsController` - friends management
+- `ReservationController` - reservation management
 
-### Сервисы
-- `ProfileService` - бизнес-логика профиля
-- `WishListService` - бизнес-логика списков желаний
-- `WishService` - бизнес-логика желаний
-- `FriendService` - бизнес-логика друзей
-- `ReservationService` - бизнес-логика бронирований
-- `AchievementCheckers` - проверка достижений
+### Services
+- `ProfileService` - profile business logic
+- `WishListService` - wish list business logic
+- `WishService` - wish business logic
+- `FriendService` - friends business logic
+- `ReservationService` - reservation business logic
+- `AchievementCheckers` - achievement verification
 
 ### DTO (Data Transfer Objects)
-- `ProfileDTO` - данные профиля
-- `WishListDTO` - данные списков желаний
-- `WishDTO` - данные желаний
-- `FriendsDTO` - данные друзей
-- `PublicWishListDTO` - данные публичных списков
+- `ProfileDTO` - profile data
+- `WishListDTO` - wish list data
+- `WishDTO` - wish data
+- `FriendsDTO` - friends data
+- `PublicWishListDTO` - public list data
 
-## 🎯 Система достижений
+## 🎯 Achievement System
 
-Приложение включает систему достижений для мотивации пользователей:
+The application includes an achievement system to motivate users:
 
-- **Регистрация** - за регистрацию на сайте
-- **Первый подарок** - за добавление первого желания
-- **Первое бронирование** - за первое бронирование подарка
-- **Первый друг** - за добавление первого друга
-- **Мастер подарков** - за 50+ добавленных подарков
-- **Мастер бронирований** - за 50+ забронированных подарков
-- **Душа компании** - за 10+ друзей
-- **Ветеран сайта** - за месяц регистрации на сайте
+- **Registration** - for registering on the site
+- **First Gift** - for adding the first wish
+- **First Reservation** - for the first gift reservation
+- **First Friend** - for adding the first friend
+- **Gift Master** - for 50+ added gifts
+- **Reservation Master** - for 50+ reserved gifts
+- **Social Butterfly** - for 10+ friends
+- **Site Veteran** - for a month of site registration
 
-## 🌐 Мультиязычность
+## 🌐 Multilingual Support
 
-Приложение поддерживает два языка:
-- **Русский** (по умолчанию)
-- **Английский**
+The application supports two languages:
+- **Russian** (default)
+- **English**
 
-Переключение языков доступно в навигационном меню.
+Language switching is available in the navigation menu.
 
-## 🎨 Дизайн
+## 🎨 Design
 
-- **Современный UI** с градиентами и анимациями
-- **Адаптивный дизайн** для всех устройств
-- **Glass morphism** эффекты
-- **Плавные переходы** и hover-эффекты
-- **Кастомные скроллбары**
-- **Модальные окна** с правильным z-index
+- **Modern UI** with gradients and animations
+- **Responsive design** for all devices
+- **Glass morphism** effects
+- **Smooth transitions** and hover effects
+- **Custom scrollbars**
+- **Modal windows** with proper z-index
 
-## 🔧 Разработка
+## 🔧 Development
 
-### Команды для разработки
+### Development Commands
 ```bash
-# Переход в папку с Docker файлами
+# Navigate to Docker folder
 cd docker
 
-# Запуск в режиме разработки
+# Run in development mode
 docker-compose exec app composer dev
 
-# Запуск тестов
+# Run tests
 docker-compose exec app composer test
 
-# Очистка кэша
+# Clear cache
 docker-compose exec app php artisan cache:clear
 
-# Просмотр логов
+# View logs
 docker-compose logs -f app
 ```
 
-### Структура проекта
+### Project Structure
 ```
 app/
 ├── DTOs/           # Data Transfer Objects
 ├── Http/
-│   ├── Controllers/    # Контроллеры
-│   └── Requests/       # Валидация запросов
-├── Models/         # Eloquent модели
-├── Services/       # Бизнес-логика
-└── Providers/      # Сервис-провайдеры
+│   ├── Controllers/    # Controllers
+│   └── Requests/       # Request validation
+├── Models/         # Eloquent models
+├── Services/       # Business logic
+└── Providers/      # Service providers
 
 resources/
-├── views/          # Blade шаблоны
-└── lang/           # Файлы локализации
+├── views/          # Blade templates
+└── lang/           # Localization files
 
 public/
-├── css/            # Стили
+├── css/            # Styles
 ├── js/             # JavaScript
-└── images/         # Изображения
+└── images/         # Images
 
 docker/
-├── docker-compose.yml  # Конфигурация Docker Compose
-├── Dockerfile          # Образ приложения
-├── supervisord.conf    # Конфигурация Supervisor
+├── docker-compose.yml  # Docker Compose configuration
+├── Dockerfile          # Application image
+├── supervisord.conf    # Supervisor configuration
 └── nginx/
-    └── default.conf    # Конфигурация Nginx
+    └── default.conf    # Nginx configuration
 ```
 
-## 🐛 Отладка
+## 🐛 Debugging
 
-### Полезные команды
+### Useful Commands
 ```bash
-# Переход в папку с Docker файлами
+# Navigate to Docker folder
 cd docker
 
-# Вход в контейнер приложения
+# Enter application container
 docker-compose exec app bash
 
-# Просмотр логов Laravel
+# View Laravel logs
 docker-compose exec app php artisan pail
 
-# Проверка статуса миграций
+# Check migration status
 docker-compose exec app php artisan migrate:status
 
-# Очистка всех кэшей
+# Clear all caches
 docker-compose exec app php artisan optimize:clear
 ```
 
-## 📝 Лицензия
+## 📝 License
 
-Этот проект распространяется под лицензией MIT. См. файл [LICENSE](LICENSE) для получения дополнительной информации.
+This project is distributed under the MIT license. See the [LICENSE](LICENSE) file for more information.
 
-## 🤝 Вклад в проект
+## 🤝 Contributing
 
-1. Форкните репозиторий
-2. Создайте ветку для новой функции (`git checkout -b feature/amazing-feature`)
-3. Зафиксируйте изменения (`git commit -m 'Add amazing feature'`)
-4. Отправьте в ветку (`git push origin feature/amazing-feature`)
-5. Откройте Pull Request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📞 Поддержка
+## 📞 Support
 
-Если у вас есть вопросы или предложения, создайте issue в репозитории проекта.
+If you have questions or suggestions, create an issue in the project repository.
 
 ---
 
-**Создано с ❤️ на Laravel**
+**Created with ❤️ on Laravel**

@@ -87,11 +87,19 @@ class WishListService
     public function getStatistics(int $userId): array
     {
         $wishLists = WishList::forUser($userId)->with('wishes')->get();
+        
+        $totalWishes = 0;
+        $totalReservedWishes = 0;
+        
+        foreach ($wishLists as $wishList) {
+            $totalWishes += $wishList->wishes->count();
+            $totalReservedWishes += $wishList->wishes->where('is_reserved', true)->count();
+        }
 
         return [
             'total_wish_lists' => $wishLists->count(),
-            'total_wishes' => $wishLists->sum('wishes_count'),
-            'total_reserved_wishes' => $wishLists->sum('reserved_wishes_count'),
+            'total_wishes' => $totalWishes,
+            'total_reserved_wishes' => $totalReservedWishes,
             'public_wish_lists' => $wishLists->whereNotNull('uuid')->count(),
         ];
     }
@@ -138,6 +146,7 @@ class WishListService
             'title' => ['required', 'string', 'max:' . self::MAX_TITLE_LENGTH],
             'description' => ['nullable', 'string', 'max:' . self::MAX_DESCRIPTION_LENGTH],
             'is_public' => ['boolean'],
+            'currency' => ['required', 'string', 'in:' . implode(',', WishList::getSupportedCurrencies())],
         ]);
 
         if ($validator->fails()) {
@@ -154,6 +163,7 @@ class WishListService
             'title' => ['sometimes', 'required', 'string', 'max:' . self::MAX_TITLE_LENGTH],
             'description' => ['sometimes', 'nullable', 'string', 'max:' . self::MAX_DESCRIPTION_LENGTH],
             'is_public' => ['sometimes', 'boolean'],
+            'currency' => ['sometimes', 'required', 'string', 'in:' . implode(',', WishList::getSupportedCurrencies())],
         ]);
 
         if ($validator->fails()) {

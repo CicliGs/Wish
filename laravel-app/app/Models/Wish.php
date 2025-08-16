@@ -96,13 +96,39 @@ class Wish extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        if (!$this->price || $this->price == 0) {
+        try {
+            // Additional safety check
+            if (!isset($this->price) || $this->price === null || $this->price === '') {
+                return '';
+            }
+
+            if (!$this->price || $this->price == 0) {
+                return '';
+            }
+
+            $currency = $this->getWishListCurrency();
+            $price = $this->getPriceAsFloat();
+            
+            // Check if price is valid before formatting
+            if ($price <= 0 || !is_numeric($price)) {
+                return '';
+            }
+            
+            // Force conversion to float and ensure it's valid
+            $price = (float) $price;
+            if (!is_finite($price) || $price <= 0) {
+                return '';
+            }
+            
+            return number_format($price, self::DECIMAL_PLACES) . ' ' . $currency;
+        } catch (\Exception $e) {
+            // Log the error and return empty string
+            \Log::error('Error formatting price', [
+                'price' => $this->price ?? 'null',
+                'error' => $e->getMessage()
+            ]);
             return '';
         }
-
-        $currency = $this->getCurrentUserCurrency();
-        $price = $this->getPriceAsFloat();
-        return number_format($price, self::DECIMAL_PLACES) . ' ' . $currency;
     }
 
     /**
@@ -114,8 +140,14 @@ class Wish extends Model
             return '';
         }
 
-        $currency = $user ? $user->currency : $this->getCurrentUserCurrency();
+        $currency = $this->getWishListCurrency();
         $price = $this->getPriceAsFloat();
+        
+        // Check if price is valid before formatting
+        if ($price <= 0 || !is_numeric($price)) {
+            return '';
+        }
+        
         return number_format($price, self::DECIMAL_PLACES) . ' ' . $currency;
     }
 
@@ -155,6 +187,7 @@ class Wish extends Model
             }
         }
         
+        // If we get here, return 0.0 as a float, not a string
         return 0.0;
     }
 
@@ -167,6 +200,23 @@ class Wish extends Model
             return auth()->user()->currency;
         }
 
+        return User::DEFAULT_CURRENCY;
+    }
+
+    /**
+     * Get wish list currency.
+     */
+    private function getWishListCurrency(): string
+    {
+        if ($this->wishList && $this->wishList->currency) {
+            return $this->wishList->currency;
+        }
+        
+        // Fallback to user currency if wish list currency is not available
+        if (auth()->check()) {
+            return auth()->user()->currency;
+        }
+        
         return User::DEFAULT_CURRENCY;
     }
 

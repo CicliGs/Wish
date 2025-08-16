@@ -46,7 +46,7 @@ class WishListController extends Controller
             $this->service->create($request->all(), Auth::id());
             return $this->redirectToIndex('wishlist_created');
         } catch (Exception $e) {
-            return $this->handleError($e, 'error_creating_list');
+            return $this->redirectToIndexWithError('error_creating_list', $e->getMessage());
         }
     }
 
@@ -71,7 +71,7 @@ class WishListController extends Controller
             $this->service->update($wishList, $request->all());
             return $this->redirectToIndex('wishlist_updated');
         } catch (Exception $e) {
-            return $this->handleError($e, 'error_updating_list');
+            return $this->redirectToIndexWithError('error_updating_list', $e->getMessage());
         }
     }
 
@@ -96,7 +96,7 @@ class WishListController extends Controller
             $this->service->delete($wishList);
             return $this->redirectToIndex('wishlist_deleted');
         } catch (Exception $e) {
-            return $this->handleError($e, 'error_deleting_list');
+            return $this->redirectToIndexWithError('error_deleting_list', $e->getMessage());
         }
     }
 
@@ -125,11 +125,11 @@ class WishListController extends Controller
     }
 
     /**
-     * Handle error and return back with error message.
+     * Redirect to index with error message.
      */
-    private function handleError(Exception $e, string $messageKey): RedirectResponse
+    private function redirectToIndexWithError(string $messageKey, string $errorMessage): RedirectResponse
     {
-        return back()->withInput()
-            ->with('error', __('messages.' . $messageKey) . $e->getMessage());
+        return redirect()->route('wish-lists.index')
+            ->with('error', __('messages.' . $messageKey) . $errorMessage);
     }
 }

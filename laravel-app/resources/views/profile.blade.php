@@ -12,9 +12,6 @@
                         {{ mb_substr($user->name, 0, 1) }}
                     </div>
                 @endif
-                <!-- <a href="{{ route('profile.edit') }}" class="profile-avatar-edit" title="{{ __('messages.edit_profile') }}">
-                    <i class="bi bi-camera"></i>
-                </a> -->
             </div>
             <div class="d-flex align-items-center gap-2 mb-3">
                 <h2 class="mb-0">{{ $user->name }}</h2>
@@ -48,20 +45,21 @@
     </div>
   @endif
 </div>
+
 <!-- Модальное окно со всеми достижениями -->
 <div class="modal fade" id="allAchievementsModal" tabindex="-1" aria-labelledby="allAchievementsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="allAchievementsModalLabel">{{ __('messages.all_achievements') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('messages.close') }}"></button>
       </div>
       <div class="modal-body">
         <div class="achievements-flex mb-2">
           @foreach($achievements as $ach)
             <div class="achievement-icon-wrapper d-flex flex-column align-items-center {{ $ach['received'] ? '' : 'opacity-50' }}" title="{{ $ach['title'] }}">
               <img src="{{ $ach['icon'] }}" alt="{{ $ach['title'] }}" class="achievement-icon" loading="lazy">
-              <div class="achievement-title mt-2 text-truncate fst-italic text-secondary"></div>
+              <div class="achievement-title mt-2 text-truncate fst-italic text-secondary">{{ $ach['title'] }}</div>
               <div class="mt-1">
                 @if($ach['received'])
                   <span class="badge bg-success">{{ __('messages.received') }}</span>
@@ -76,8 +74,8 @@
     </div>
   </div>
 </div>
-        <div class="row w-100 mb-2 mt-2 g-2">
-        <hr class="my-3" style="border-top: 1.5px solid #e0e0e0;">
+
+<div class="row w-100 mb-2 mt-2 g-2">
             <div class="col-6">
                 <a href="{{ route('wish-lists.index') }}" class="profile-widget-link">
                 <div class="p-3 text-center shadow-sm rounded-4 profile-widget" style="background: #fff; color: #222; font-weight: 600; border-radius: 16px;">
@@ -121,5 +119,71 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+@endpush
+
+@push('scripts')
+<script>
+// Ensure modal is properly initialized
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize achievement modal with Bootstrap 5
+    const achievementModal = document.getElementById('allAchievementsModal');
+    if (achievementModal) {
+        const modal = new bootstrap.Modal(achievementModal, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+        
+        // Add event listener for modal shown
+        achievementModal.addEventListener('shown.bs.modal', function() {
+            // Ensure proper z-index after modal is shown
+            this.style.zIndex = '9999';
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '9998';
+            }
+        });
+        
+        // Add event listener for modal show
+        achievementModal.addEventListener('show.bs.modal', function() {
+            // Ensure proper z-index before modal is shown
+            this.style.zIndex = '9999';
+        });
+    }
+    
+    // Force z-index on page load
+    function forceModalZIndex() {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.style.zIndex = '9999';
+        });
+        
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => {
+            backdrop.style.zIndex = '9998';
+        });
+    }
+    
+    // Emergency backdrop removal
+    function emergencyBackdropRemoval() {
+        const modals = document.querySelectorAll('.modal.show');
+        modals.forEach(modal => {
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop && backdrop.style.zIndex > modal.style.zIndex) {
+                backdrop.remove();
+            }
+        });
+    }
+    
+    // Run on page load
+    forceModalZIndex();
+    
+    // Run periodically to ensure z-index is maintained
+    setInterval(forceModalZIndex, 100);
+    
+    // Emergency backdrop removal
+    setInterval(emergencyBackdropRemoval, 50);
+});
+</script>
 @endpush
 @endsection

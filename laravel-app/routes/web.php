@@ -7,10 +7,10 @@ use App\Http\Controllers\WishController;
 use App\Http\Controllers\WishListController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LanguageController;
-use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\FriendsController;
+use Illuminate\Support\Facades\Redis;
 
 Route::get('/', function () {
     return view('welcome');
@@ -43,8 +43,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/friends/remove/{userId}', [ProfileController::class, 'removeFriend'])->name('friends.remove');
     Route::post('/friends/request/{userId}', [ProfileController::class, 'sendFriendRequest'])->name('friends.request');
     
-    // Settings route for currency update
-    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
 });
 
 Route::prefix('wish-lists/{wishList}')->group(function () {
@@ -67,3 +65,18 @@ Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/public/wish-list/{uuid}', [WishListController::class, 'public'])->name('wish-lists.public');
+
+Route::get('/cache/stats', [App\Http\Controllers\CacheController::class, 'stats'])->name('cache.stats');
+Route::get('/cache/detailed-stats', [App\Http\Controllers\CacheController::class, 'detailedStats'])->name('cache.detailed-stats');
+Route::post('/cache/clear-pages', [App\Http\Controllers\CacheController::class, 'clearPages'])->name('cache.clear-pages');
+Route::post('/cache/clear-database', [App\Http\Controllers\CacheController::class, 'clearDatabaseCache'])->name('cache.clear-database');
+Route::post('/cache/clear-type', [App\Http\Controllers\CacheController::class, 'clearCacheByType'])->name('cache.clear-type');
+Route::post('/cache/clear-all', [App\Http\Controllers\CacheController::class, 'clearAll'])->name('cache.clear-all');
+Route::get('/cache/status', [App\Http\Controllers\CacheController::class, 'status'])->name('cache.status');
+Route::get('/cache/test', [App\Http\Controllers\CacheController::class, 'test'])->name('cache.test');
+Route::get('/cache/overview', [App\Http\Controllers\CacheController::class, 'overview'])->name('cache.overview');
+
+// CSRF token route
+Route::get('/csrf-token', function() {
+    return response()->json(['token' => csrf_token()]);
+});

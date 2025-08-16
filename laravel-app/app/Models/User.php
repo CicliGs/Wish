@@ -153,8 +153,22 @@ class User extends Authenticatable
     public static function logout(Request $request): void
     {
         Auth::logout();
+        
         $request->session()->invalidate();
+        
         $request->session()->regenerateToken();
+        
+        $request->session()->flush();
+        
+        $request->session()->forget('remember_web');
+        
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user) {
+                cache()->forget('user_' . $user->id);
+                cache()->forget('user_permissions_' . $user->id);
+            }
+        }
     }
 
     /**

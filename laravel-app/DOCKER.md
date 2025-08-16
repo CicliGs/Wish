@@ -1,44 +1,44 @@
 # 🐳 Docker Quick Start
 
-## Быстрый запуск
+## Quick Launch
 
 ```bash
-# 1. Переход в папку с Docker файлами
+# 1. Navigate to Docker folder
 cd docker
 
-# 2. Копирование .env файла (если еще не скопирован)
+# 2. Copy .env file (if not already copied)
 cp ../.env .
 
-# 3. Запуск контейнеров
+# 3. Start containers
 docker-compose up -d --build
 
-# 4. Установка зависимостей
+# 4. Install dependencies
 docker-compose exec app composer install
 
-# 5. Настройка приложения
+# 5. Setup application
 docker-compose exec app php artisan key:generate
 docker-compose exec app php artisan migrate
 
-# 6. Доступ к приложению
+# 6. Access application
 # http://localhost:8080
 ```
 
-## Основные команды
+## Basic Commands
 
 ```bash
-# Запуск
+# Start
 docker-compose up -d
 
-# Остановка
+# Stop
 docker-compose down
 
-# Логи
+# Logs
 docker-compose logs -f
 
-# Вход в контейнер
+# Enter container
 docker-compose exec app bash
 ```
 
-## Подробная документация
+## Detailed Documentation
 
-См. [docker/README.md](docker/README.md) для полной документации по Docker. 
+See [docker/README.md](docker/README.md) for complete Docker documentation. 

@@ -2,7 +2,13 @@
 
 @section('content')
 <div class="container py-4">
-    <h1 class="mb-4">{{ $wishList->title }}</h1>
+    <div class="d-flex align-items-center mb-4">
+        <h1 class="mb-0">{{ $wishList->title }}</h1>
+        <span class="currency-badge ms-3">
+            <i class="bi bi-currency-exchange me-1"></i>
+            {{ $wishList->currency }}
+        </span>
+    </div>
     <p class="mb-4 text-muted">{{ $wishList->description }}</p>
     <div class="row g-4">
         @forelse($wishes as $wish)
@@ -43,7 +49,7 @@
                 </div>
             </div>
         @empty
-            <div class="col-12 text-center text-muted">Желаний пока нет</div>
+            <div class="col-12 text-center text-muted">{{ __('messages.no_wishes_yet') }}</div>
         @endforelse
     </div>
 </div>
@@ -54,11 +60,11 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="guestModalLabel">Зарегистрируйтесь, чтобы забронировать подарок</h5>
-        <button type="button" class="btn-close" onclick="closeModal('guestModal')" aria-label="Close"></button>
+        <h5 class="modal-title" id="guestModalLabel">{{ __('messages.register_to_reserve') }}</h5>
+        <button type="button" class="btn-close" onclick="closeModal('guestModal')" aria-label="{{ __('messages.close') }}"></button>
       </div>
       <div class="modal-body">
-        <p>Только зарегистрированные пользователи могут бронировать подарки и добавлять в друзья.</p>
+        <p>{{ __('messages.guests_cannot_reserve') }}</p>
         <div class="modal-footer">
             <a href="{{ route('register') }}" class="btn btn-dark w-100 mb-2">{{ __('messages.register') }}</a>
             <a href="{{ route('login') }}" class="btn btn-outline-secondary w-100">{{ __('messages.login') }}</a>
@@ -76,11 +82,11 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="friendModalLabel">Добавьте пользователя в друзья</h5>
-        <button type="button" class="btn-close" onclick="closeModal('friendModal')" aria-label="Close"></button>
+        <h5 class="modal-title" id="friendModalLabel">{{ __('messages.add_user_to_friends') }}</h5>
+        <button type="button" class="btn-close" onclick="closeModal('friendModal')" aria-label="{{ __('messages.close') }}"></button>
       </div>
       <div class="modal-body">
-        <p>Чтобы бронировать подарки и видеть больше информации, добавьте пользователя в друзья.</p>
+        <p>{{ __('messages.friends_can_reserve') }}</p>
         <div class="modal-footer">
             <form method="POST" action="{{ route('profile.sendFriendRequest', ['userId' => $user->id]) }}">
                 @csrf

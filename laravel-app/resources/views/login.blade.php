@@ -4,7 +4,7 @@
 <div class="container d-flex justify-content-center align-items-center auth-container">
     <div class="auth-card">
         <h1 class="auth-title">{{ __('messages.login') }}</h1>
-        <form action="{{ route('login') }}" method="POST">
+        <form action="{{ route('login') }}" method="POST" id="loginForm">
             @csrf
             <div class="mb-3">
                 <label for="email" class="form-label auth-form-label">{{ __('messages.email') }}</label>
@@ -27,14 +27,29 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
-            <button type="submit" class="btn btn-dark w-100 auth-btn">{{ __('messages.login') }}</button>
+        
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="alert-message">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    {{ session('error') }}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+            <button type="submit" class="btn btn-dark w-100 auth-btn" id="loginBtn">{{ __('messages.login') }}</button>
             <div class="mt-3 text-center">
                 {{ __('messages.no_account') }} <a href="{{ route('register') }}" class="auth-link">{{ __('messages.register') }}</a>
             </div>
         </form>
     </div>
 </div>
+
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
+@endpush
+
+@push('scripts')
+<script src="{{ asset('js/login.js') }}"></script>
 @endpush
 @endsection

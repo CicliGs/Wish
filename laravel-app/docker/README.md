@@ -1,154 +1,154 @@
 # 🐳 Docker Configuration
 
-Эта папка содержит все Docker файлы для запуска приложения WishList.
+This folder contains all Docker files for running the WishList application.
 
-## 📁 Структура
+## 📁 Structure
 
 ```
 docker/
-├── docker-compose.yml    # Конфигурация Docker Compose
-├── Dockerfile            # Образ приложения Laravel
-├── supervisord.conf      # Конфигурация Supervisor
+├── docker-compose.yml    # Docker Compose configuration
+├── Dockerfile            # Laravel application image
+├── supervisord.conf      # Supervisor configuration
 ├── nginx/
-│   └── default.conf      # Конфигурация Nginx
-├── .env                  # Переменные окружения (не в git)
-└── .gitignore           # Исключения для git
+│   └── default.conf      # Nginx configuration
+├── .env                  # Environment variables (not in git)
+└── .gitignore           # Git exclusions
 ```
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
-### 1. Подготовка
+### 1. Preparation
 ```bash
-# Скопируйте .env файл из корня проекта
+# Copy .env file from project root
 cp ../.env .
 
-# Отредактируйте .env при необходимости
+# Edit .env if necessary
 nano .env
 ```
 
-### 2. Запуск
+### 2. Launch
 ```bash
-# Сборка и запуск контейнеров
+# Build and run containers
 docker-compose up -d --build
 
-# Проверка статуса
+# Check status
 docker-compose ps
 ```
 
-### 3. Установка зависимостей
+### 3. Install Dependencies
 ```bash
-# Установка PHP зависимостей
+# Install PHP dependencies
 docker-compose exec app composer install
 
-# Генерация ключа приложения
+# Generate application key
 docker-compose exec app php artisan key:generate
 
-# Выполнение миграций
+# Run migrations
 docker-compose exec app php artisan migrate
 ```
 
-## 🔧 Управление контейнерами
+## 🔧 Container Management
 
-### Основные команды
+### Basic Commands
 ```bash
-# Запуск
+# Start
 docker-compose up -d
 
-# Остановка
+# Stop
 docker-compose down
 
-# Перезапуск
+# Restart
 docker-compose restart
 
-# Просмотр логов
+# View logs
 docker-compose logs -f
 
-# Логи конкретного сервиса
+# Logs for specific service
 docker-compose logs -f app
 docker-compose logs -f nginx
 docker-compose logs -f db
 ```
 
-### Работа с приложением
+### Working with Application
 ```bash
-# Вход в контейнер приложения
+# Enter application container
 docker-compose exec app bash
 
-# Выполнение artisan команд
+# Run artisan commands
 docker-compose exec app php artisan migrate
 docker-compose exec app php artisan cache:clear
 docker-compose exec app php artisan view:clear
 
-# Установка npm пакетов
+# Install npm packages
 docker-compose exec app npm install
 
-# Сборка assets
+# Build assets
 docker-compose exec app npm run build
 ```
 
-## 🌐 Доступ к сервисам
+## 🌐 Service Access
 
-- **Приложение**: http://localhost:8080
-- **База данных**: localhost:5432
-  - База: `laravel`
-  - Пользователь: `laravel`
-  - Пароль: `secret`
+- **Application**: http://localhost:8080
+- **Database**: localhost:5432
+  - Database: `laravel`
+  - User: `laravel`
+  - Password: `secret`
 
-## 🗄️ База данных
+## 🗄️ Database
 
-### Подключение к PostgreSQL
+### Connect to PostgreSQL
 ```bash
-# Через Docker
+# Through Docker
 docker-compose exec db psql -U laravel -d laravel
 
-# Или через внешний клиент
+# Or through external client
 psql -h localhost -p 5432 -U laravel -d laravel
 ```
 
-### Резервное копирование
+### Backup
 ```bash
-# Создание бэкапа
+# Create backup
 docker-compose exec db pg_dump -U laravel laravel > backup.sql
 
-# Восстановление
+# Restore
 docker-compose exec -T db psql -U laravel laravel < backup.sql
 ```
 
-## 🔍 Отладка
+## 🔍 Debugging
 
-### Проверка конфигурации
+### Configuration Check
 ```bash
-# Валидация docker-compose.yml
+# Validate docker-compose.yml
 docker-compose config
 
-# Проверка образов
+# Check images
 docker images
 
-# Проверка контейнеров
+# Check containers
 docker ps
 ```
 
-### Очистка
+### Cleanup
 ```bash
-# Остановка и удаление контейнеров
+# Stop and remove containers
 docker-compose down
 
-# Удаление образов
+# Remove images
 docker-compose down --rmi all
 
-# Удаление volumes
+# Remove volumes
 docker-compose down -v
 
-# Полная очистка
+# Full cleanup
 docker system prune -a
 ```
 
-## 📝 Переменные окружения
+## 📝 Environment Variables
 
-Основные переменные в `.env`:
+Main variables in `.env`:
 
 ```env
-# База данных
+# Database
 DB_CONNECTION=pgsql
 DB_HOST=db
 DB_PORT=5432
@@ -156,54 +156,54 @@ DB_DATABASE=laravel
 DB_USERNAME=laravel
 DB_PASSWORD=secret
 
-# Приложение
+# Application
 APP_PORT=8080
 APP_ENV=local
 APP_DEBUG=true
 APP_KEY=base64:...
 ```
 
-## 🛠️ Настройка
+## 🛠️ Configuration
 
-### Изменение портов
-Отредактируйте `.env` файл:
+### Change Ports
+Edit `.env` file:
 ```env
-APP_PORT=8080  # Порт для веб-приложения
-DB_PORT=5432   # Порт для базы данных
+APP_PORT=8080  # Port for web application
+DB_PORT=5432   # Port for database
 ```
 
-### Изменение версий
-Отредактируйте `docker-compose.yml`:
+### Change Versions
+Edit `docker-compose.yml`:
 ```yaml
 db:
-  image: postgres:16  # Версия PostgreSQL
+  image: postgres:16  # PostgreSQL version
 
 nginx:
-  image: nginx:alpine  # Версия Nginx
+  image: nginx:alpine  # Nginx version
 ```
 
-## 🚨 Устранение неполадок
+## 🚨 Troubleshooting
 
-### Проблемы с правами доступа
+### Permission Issues
 ```bash
-# Исправление прав на storage
+# Fix storage permissions
 docker-compose exec app chmod -R 775 storage bootstrap/cache
 ```
 
-### Проблемы с базой данных
+### Database Issues
 ```bash
-# Пересоздание базы
+# Recreate database
 docker-compose down -v
 docker-compose up -d db
 docker-compose exec app php artisan migrate:fresh
 ```
 
-### Проблемы с кэшем
+### Cache Issues
 ```bash
-# Очистка всех кэшей
+# Clear all caches
 docker-compose exec app php artisan optimize:clear
 ```
 
 ---
 
-**Примечание**: Все команды выполняются из папки `docker/` 
+**Note**: All commands are executed from the `docker/` folder 

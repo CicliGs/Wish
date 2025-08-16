@@ -13,6 +13,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class FriendService
 {
+    //TODO enum
     private const STATUS_ACCEPTED = 'accepted';
     private const STATUS_PENDING = 'pending';
     private const STATUS_DECLINED = 'declined';
@@ -41,7 +42,7 @@ class FriendService
     public function acceptRequestById(int $requestId, int $authUserId): void
     {
         $request = FriendRequest::findOrFail($requestId);
-        
+
         if (!$this->canAcceptRequest($request, $authUserId)) {
             throw new HttpException(403, __('messages.access_denied'));
         }
@@ -57,7 +58,7 @@ class FriendService
     public function declineRequestById(int $requestId, int $authUserId): void
     {
         $request = FriendRequest::findOrFail($requestId);
-        
+
         if (!$this->canDeclineRequest($request, $authUserId)) {
             throw new HttpException(403, __('messages.access_denied'));
         }
@@ -137,7 +138,7 @@ class FriendService
         $friends = $this->getFriends($user);
         $incoming = $this->getIncomingRequests($user);
         $outgoing = $this->getOutgoingRequests($user);
-        
+
         $selectedFriend = $selectedFriendId ? $friends->firstWhere('id', $selectedFriendId) : null;
 
         return new FriendsDTO(
@@ -220,7 +221,7 @@ class FriendService
         }
 
         if ($request->status === self::STATUS_PENDING) {
-            return $request->user_id === $from->id 
+            return $request->user_id === $from->id
                 ? __('messages.request_already_sent')
                 : __('messages.request_already_received');
         }
@@ -285,9 +286,9 @@ class FriendService
     private function acceptRequest(FriendRequest $request): void
     {
         $request->update(['status' => self::STATUS_ACCEPTED]);
-        
+
         $reverseRequest = $this->findExistingRequest($request->receiver_id, $request->user_id);
-        
+
         if ($reverseRequest) {
             $reverseRequest->update(['status' => self::STATUS_ACCEPTED]);
         } else {

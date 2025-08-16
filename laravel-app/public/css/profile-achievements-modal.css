@@ -1,0 +1,104 @@
+/* Стили для модального окна достижений */
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.achievement-item {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 12px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.achievement-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.achievement-icon {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.achievement-title {
+    font-size: 0.85rem;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+/* Исправляем z-index для модального окна */
+.modal-backdrop {
+    z-index: 1040;
+}
+
+.modal {
+    z-index: 1050;
+}
+
+.modal-dialog {
+    z-index: 1055;
+}
+
+.modal-content {
+    z-index: 1060;
+}
+
+.modal-header {
+    z-index: 1065;
+}
+
+.modal-body {
+    z-index: 1060;
+}
+
+.btn-close {
+    z-index: 1070;
+    position: relative;
+}
+
+/* Дополнительные стили для модального окна */
+.achievement-item .achievement-icon-wrapper {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    width: auto;
+    min-width: auto;
+}
+
+.achievement-item .achievement-icon-wrapper:hover {
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+.achievement-item .achievement-icon-wrapper::before {
+    display: none;
+}
+
+.achievement-item .achievement-icon-wrapper:hover::before {
+    display: none;
+}
+
+.achievement-item .achievement-icon-wrapper:hover .achievement-icon {
+    transform: none;
+    box-shadow: none;
+}
+
+.achievement-item .achievement-icon-wrapper:hover .achievement-title {
+    color: inherit;
+    font-weight: inherit;
+}
+
+.achievement-item .achievement-icon-wrapper .badge {
+    transform: none;
+}
+
+.achievement-item .achievement-icon-wrapper:hover .badge {
+    transform: none;
+} 

@@ -9,6 +9,7 @@ services:
       - ../:/var/www/html
     depends_on:
       - db
+      - redis
     environment:
       - DB_CONNECTION=${DB_CONNECTION}
       - DB_HOST=${DB_HOST}
@@ -16,6 +17,9 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - CACHE_STORE=${CACHE_STORE}
 
   db:
     image: postgres:16
@@ -30,6 +34,16 @@ services:
     ports:
       - "${DB_PORT}:5432"
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis-laravel
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes
+
   nginx:
     image: nginx:alpine
     container_name: nginx-laravel
@@ -43,4 +57,5 @@ services:
       - app
 
 volumes:
-  pgdata: 
+  pgdata:
+  redisdata: 

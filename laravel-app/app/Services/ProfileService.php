@@ -31,13 +31,10 @@ class ProfileService
      */
     public function getUserStatistics(int $userId): array
     {
-        $stats = $this->wishListService->getStatistics($userId);
+        $wishListStats = $this->wishListService->getStatistics($userId);
         $reservationStats = $this->reservationService->getUserReservationStatistics($userId);
 
-        return [
-            'stats' => $stats,
-            'reservationStats' => $reservationStats,
-        ];
+        return array_merge($wishListStats, $reservationStats);
     }
 
     /**
@@ -125,6 +122,7 @@ class ProfileService
         $friends = $friendService->getFriends($user);
         $incomingRequests = $friendService->getIncomingRequests($user);
         $outgoingRequests = $friendService->getOutgoingRequests($user);
+        $wishLists = $this->wishListService->findByUser($user->id);
 
         return new ProfileDTO(
             user: $user,
@@ -132,7 +130,8 @@ class ProfileService
             achievements: $achievements,
             friends: $friends,
             incomingRequests: $incomingRequests,
-            outgoingRequests: $outgoingRequests
+            outgoingRequests: $outgoingRequests,
+            wishLists: $wishLists
         );
     }
 

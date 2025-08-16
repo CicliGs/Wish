@@ -16,7 +16,6 @@ use Illuminate\Http\UploadedFile;
 
 class WishService
 {
-    private const MAX_FILE_SIZE = 2048;
     private const STORAGE_PATH = 'wishes';
 
     /**
@@ -25,14 +24,6 @@ class WishService
     public function findByWishList(int $wishListId): Collection
     {
         return Wish::forWishList($wishListId)->with('reservation.user')->get();
-    }
-
-    /**
-     * Find a wish by ID and wish list ID.
-     */
-    public function findByIdAndWishList(int $wishId, int $wishListId): ?Wish
-    {
-        return Wish::forWishList($wishListId)->find($wishId);
     }
 
     /**
@@ -85,7 +76,7 @@ class WishService
         if (!$wish->hasReservation()) {
             return false;
         }
-        
+
         $reservedByUser = $wish->getReservedByUser();
         if (!$reservedByUser || $reservedByUser->id !== $userId) {
             return false;
@@ -173,8 +164,8 @@ class WishService
      */
     public function canUnreserveWish(Wish $wish, int $userId): bool
     {
-        return $wish->is_reserved && 
-               $wish->reservation && 
+        return $wish->is_reserved &&
+               $wish->reservation &&
                $wish->reservation->user_id === $userId;
     }
 
@@ -203,7 +194,7 @@ class WishService
         if ($imageFile) {
             $data['image'] = $this->handleImageUpload($imageFile);
         }
-        
+
         $this->create($data, $wishListId);
     }
 

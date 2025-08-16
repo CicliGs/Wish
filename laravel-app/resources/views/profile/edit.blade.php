@@ -69,26 +69,6 @@
 @endpush
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const avatarInput = document.getElementById('avatar');
-    const previewSection = document.getElementById('avatar-preview');
-    const previewImage = document.getElementById('preview-image');
-
-    avatarInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                previewSection.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            previewSection.style.display = 'none';
-        }
-    });
-});
-</script>
+<script src="{{ asset('js/avatar-preview.js') }}"></script>
 @endpush
 @endsection 

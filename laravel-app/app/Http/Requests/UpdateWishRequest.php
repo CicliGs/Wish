@@ -27,7 +27,7 @@ class UpdateWishRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'url' => ['nullable', 'url', 'max:500'],
-            'image' => ['nullable', 'string', 'max:500'], // изменено с 'url' на 'string'
+            'image' => ['nullable', 'string', 'max:500'], // changed from 'url' to 'string'
             'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
         ];
     }

@@ -26,6 +26,7 @@ class WishList extends Model
         'description',
         'uuid',
         'is_public',
+        'currency',
     ];
 
     /**
@@ -38,6 +39,19 @@ class WishList extends Model
         'updated_at' => 'datetime',
         'is_public' => 'boolean',
     ];
+
+    /**
+     * Default currency for new wish lists.
+     */
+    public const DEFAULT_CURRENCY = 'BYN';
+
+    /**
+     * Get supported currencies.
+     */
+    public static function getSupportedCurrencies(): array
+    {
+        return ['BYN', 'USD', 'EUR', 'RUB'];
+    }
 
     /**
      * Boot the model and add event listeners.
