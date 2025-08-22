@@ -4,18 +4,46 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\MoneyHelper;
+use Closure;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use Money\Money;
 
+/**
+ * @property int $id
+ * @property int $wish_list_id
+ * @property string $title
+ * @property string|null $url
+ * @property string|null $image
+ * @property float|null $price
+ * @property bool $is_reserved
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ *
+ * @property-read WishList $wishList
+ * @property-read Reservation|null $reservation
+ *
+ * @method static Wish findOrFail($id, $columns = ['*'])
+ * @method static Wish|null find($id, $columns = ['*'])
+ * @method static Builder|Wish query()
+ * @method where(string $string, mixed $value)
+ * @method static whereIn(string $string, mixed[] $wishListIds)
+ * @method static forWishList(int $wishListId)
+ * @method static create(mixed[] $data)
+ * @method static whereHas(string $string, Closure $param)
+ */
 class Wish extends Model
 {
     use HasFactory;
 
-    private const DECIMAL_PLACES = 2;
+
 
     /**
      * The attributes that are mass assignable.
@@ -97,36 +125,18 @@ class Wish extends Model
     public function getFormattedPriceAttribute(): string
     {
         try {
-            // Additional safety check
-            if (!isset($this->price) || $this->price === null || $this->price === '') {
+            if (!$this->hasValidPrice()) {
                 return '';
             }
 
-            if (!$this->price || $this->price == 0) {
-                return '';
-            }
-
-            $currency = $this->getWishListCurrency();
-            $price = $this->getPriceAsFloat();
-            
-            // Check if price is valid before formatting
-            if ($price <= 0 || !is_numeric($price)) {
-                return '';
-            }
-            
-            // Force conversion to float and ensure it's valid
-            $price = (float) $price;
-            if (!is_finite($price) || $price <= 0) {
-                return '';
-            }
-            
-            return number_format($price, self::DECIMAL_PLACES) . ' ' . $currency;
-        } catch (\Exception $e) {
-            // Log the error and return empty string
-            \Log::error('Error formatting price', [
+            $money = $this->getMoneyObject();
+            return MoneyHelper::format($money);
+        } catch (Exception $e) {
+            Log::error('Error formatting price', [
                 'price' => $this->price ?? 'null',
                 'error' => $e->getMessage()
             ]);
+
             return '';
         }
     }
@@ -136,19 +146,47 @@ class Wish extends Model
      */
     public function getFormattedPriceForUser(?User $user = null): string
     {
-        if (!$this->price || $this->price == 0) {
+        try {
+            if (!$this->hasValidPrice()) {
+                return '';
+            }
+
+            $money = $this->getMoneyObject();
+            return MoneyHelper::format($money);
+        } catch (Exception $e) {
+            Log::error('Error formatting price for user', [
+                'price' => $this->price ?? 'null',
+                'user_id' => $user->id ?? 'null',
+                'error' => $e->getMessage()
+            ]);
+
             return '';
+        }
+    }
+
+    /**
+     * Check if wish has valid price.
+     */
+    private function hasValidPrice(): bool
+    {
+        if (!isset($this->price) || $this->price === null) {
+            return false;
         }
 
-        $currency = $this->getWishListCurrency();
         $price = $this->getPriceAsFloat();
-        
-        // Check if price is valid before formatting
-        if ($price <= 0 || !is_numeric($price)) {
-            return '';
-        }
-        
-        return number_format($price, self::DECIMAL_PLACES) . ' ' . $currency;
+
+        return $price > 0 && is_finite($price);
+    }
+
+    /**
+     * Get Money object for this wish.
+     */
+    private function getMoneyObject(): Money
+    {
+        $price = $this->getPriceAsFloat();
+        $currency = $this->getWishListCurrency();
+
+        return MoneyHelper::create($price, $currency);
     }
 
     /**
@@ -156,51 +194,30 @@ class Wish extends Model
      */
     private function getPriceAsFloat(): float
     {
-        // Handle null or empty values
-        if (empty($this->price) || $this->price === null) {
+        if ($this->price === null) {
             return 0.0;
         }
 
-        // If it's already a numeric value
         if (is_numeric($this->price)) {
             return (float) $this->price;
         }
-        
-        // If it's a string, try to extract numeric value
-        if (is_string($this->price)) {
-            // Remove any non-numeric characters except dots and minus
+
+        if (is_string($this->price) && $this->price !== '') {
             $cleaned = preg_replace('/[^0-9.-]/', '', $this->price);
-            
-            // Check if the cleaned string is numeric
             if (is_numeric($cleaned)) {
                 $floatValue = (float) $cleaned;
-                // Ensure the value is reasonable (not negative for price)
                 return $floatValue >= 0 ? $floatValue : 0.0;
             }
         }
 
-        // If it's an object (like from Laravel's decimal cast), try to convert to string first
         if (is_object($this->price)) {
             $stringValue = (string) $this->price;
             if (is_numeric($stringValue)) {
                 return (float) $stringValue;
             }
         }
-        
-        // If we get here, return 0.0 as a float, not a string
+
         return 0.0;
-    }
-
-    /**
-     * Get current user currency.
-     */
-    private function getCurrentUserCurrency(): string
-    {
-        if (auth()->check()) {
-            return auth()->user()->currency;
-        }
-
-        return User::DEFAULT_CURRENCY;
     }
 
     /**
@@ -211,13 +228,33 @@ class Wish extends Model
         if ($this->wishList && $this->wishList->currency) {
             return $this->wishList->currency;
         }
-        
-        // Fallback to user currency if wish list currency is not available
-        if (auth()->check()) {
+
+        if (auth()->check() && auth()->user()) {
             return auth()->user()->currency;
         }
-        
+
         return User::DEFAULT_CURRENCY;
+    }
+
+    /**
+     * Get Money object for this wish (public API).
+     */
+    public function getMoney(): ?Money
+    {
+        try {
+            if (!$this->hasValidPrice()) {
+                return null;
+            }
+
+            return $this->getMoneyObject();
+        } catch (Exception $e) {
+            Log::error('Error creating Money object', [
+                'price' => $this->price ?? 'null',
+                'error' => $e->getMessage()
+            ]);
+
+            return null;
+        }
     }
 
     /**
@@ -244,7 +281,7 @@ class Wish extends Model
         if (!$this->reservation) {
             return null;
         }
-        
+
         return $this->reservation->user;
     }
 

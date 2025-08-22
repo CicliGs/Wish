@@ -6,17 +6,21 @@ namespace App\Services;
 
 use App\DTOs\WishDTO;
 use App\DTOs\UserWishesDTO;
+use App\Http\Requests\StoreWishRequest;
+use App\Http\Requests\UpdateWishRequest;
 use App\Models\Wish;
 use App\Models\WishList;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\UploadedFile;
 
 class WishService
 {
     private const STORAGE_PATH = 'wishes';
+
+    public function __construct(
+        protected CacheService $cacheService
+    ) {}
 
     /**
      * Find wishes by wish list ID.
@@ -29,21 +33,29 @@ class WishService
     /**
      * Create a new wish.
      */
-    public function create(array $data, int $wishListId): Wish
+    public function create(StoreWishRequest $request, int $wishListId): Wish
     {
-        $this->validateCreateData($data);
+        $data = $request->getWishData();
         $data['wish_list_id'] = $wishListId;
 
-        return Wish::create($data);
+        $wish = Wish::create($data);
+
+        // Очищаем кеш пользователя после создания желания
+        $this->clearUserCacheByWishList($wishListId);
+
+        return $wish;
     }
 
     /**
      * Update an existing wish.
      */
-    public function update(Wish $wish, array $data): Wish
+    public function update(Wish $wish, UpdateWishRequest $request): Wish
     {
-        $this->validateUpdateData($data);
+        $data = $request->getWishData();
         $wish->update($data);
+
+        // Очищаем кеш пользователя после обновления желания
+        $this->clearUserCacheByWishList($wish->wish_list_id);
 
         return $wish->fresh();
     }
@@ -53,7 +65,15 @@ class WishService
      */
     public function delete(Wish $wish): bool
     {
-        return $wish->delete();
+        $wishListId = $wish->wish_list_id;
+        $result = $wish->delete();
+
+        // Очищаем кеш пользователя после удаления желания
+        if ($result) {
+            $this->clearUserCacheByWishList($wishListId);
+        }
+
+        return $result;
     }
 
     /**
@@ -189,30 +209,48 @@ class WishService
     /**
      * Create wish with image handling.
      */
-    public function createWithImage(array $data, int $wishListId, ?UploadedFile $imageFile = null): void
+    public function createWithImage(StoreWishRequest $request, int $wishListId, ?UploadedFile $imageFile = null): Wish
     {
+        // Handle image upload if provided
         if ($imageFile) {
-            $data['image'] = $this->handleImageUpload($imageFile);
+            $imagePath = $this->handleImageUpload($imageFile);
+            // We need to modify the request data to include the image path
+            $request->merge(['image' => $imagePath]);
         }
 
-        $this->create($data, $wishListId);
+        return $this->create($request, $wishListId);
     }
 
     /**
-     * Get index data for wish list.
+     * Get index data for wish list with caching.
      */
     public function getIndexData(int $wishListId, int $userId): WishDTO
     {
+        $cacheKey = "wishes_list_{$wishListId}_user_$userId";
+
+        // Попытка получить данные из кеша
+        $cachedData = $this->cacheService->getStaticContent($cacheKey);
+
+        if ($cachedData) {
+            return unserialize($cachedData);
+        }
+
+        // Если кеша нет, получаем данные и кешируем их
         $wishList = WishList::findOrFail($wishListId);
         $wishes = $this->findByWishList($wishListId);
         $stats = $this->getWishListStatistics($wishListId);
 
-        return new WishDTO(
+        $dto = new WishDTO(
             wishList: $wishList,
             wishes: $wishes,
             stats: $stats,
             userId: $userId
         );
+
+        // Кешируем данные на 30 минут (1800 секунд)
+        $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
+
+        return $dto;
     }
 
     /**
@@ -249,39 +287,7 @@ class WishService
         );
     }
 
-    /**
-     * Validate create data.
-     */
-    private function validateCreateData(array $data): void
-    {
-        $validator = Validator::make($data, [
-            'title' => ['required', 'string', 'max:255'],
-            'url' => ['nullable', 'url', 'max:500'],
-            'image' => ['nullable', 'string', 'max:500'],
-            'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
-        ]);
 
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-    }
-
-    /**
-     * Validate update data.
-     */
-    private function validateUpdateData(array $data): void
-    {
-        $validator = Validator::make($data, [
-            'title' => ['sometimes', 'required', 'string', 'max:255'],
-            'url' => ['sometimes', 'nullable', 'url', 'max:500'],
-            'image' => ['sometimes', 'nullable', 'string', 'max:500'],
-            'price' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
-        ]);
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-    }
 
     /**
      * Get user wishes.
@@ -301,5 +307,16 @@ class WishService
         return WishList::where('id', $wishListId)
             ->where('user_id', $userId)
             ->firstOrFail();
+    }
+
+    /**
+     * Clear user cache by wish list ID
+     */
+    private function clearUserCacheByWishList(int $wishListId): void
+    {
+        $wishList = WishList::find($wishListId);
+        if ($wishList && $wishList->user_id) {
+            $this->cacheService->clearUserCache($wishList->user_id);
+        }
     }
 }

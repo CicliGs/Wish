@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Wish;
 use App\Models\FriendRequest;
-use Carbon\Carbon;
 
 class AchievementsReceiver
 {
@@ -15,14 +14,6 @@ class AchievementsReceiver
     private const RESERVE_MASTER_THRESHOLD = 50;
     private const SOCIAL_BUTTERFLY_THRESHOLD = 10;
     private const VETERAN_MONTHS = 1;
-
-    /**
-     * Received upon registration (always true).
-     */
-    public function checkRegister(User $user): bool
-    {
-        return true;
-    }
 
     /**
      * First gift (has at least one wish).
@@ -113,4 +104,4 @@ class AchievementsReceiver
             })
             ->count();
     }
-} 
+}

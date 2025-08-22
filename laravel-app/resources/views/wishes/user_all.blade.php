@@ -8,7 +8,7 @@
             @push('styles')
             <link rel="stylesheet" href="{{ asset('css/wishes.css') }}">
             @endpush
-            <a href="{{ route('wishes.user', $user->id) }}" class="back-link">
+            <a href="{{ route('wishes.user', ['user' => $user->id]) }}" class="back-link">
                 <svg fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ __('messages.back') }}
             </a>

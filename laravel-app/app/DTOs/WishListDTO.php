@@ -7,13 +7,13 @@ namespace App\DTOs;
 use App\Models\WishList;
 use Illuminate\Database\Eloquent\Collection;
 
-class WishListDTO extends BaseDTO
+readonly class WishListDTO implements BaseDTO
 {
     public function __construct(
-        public readonly Collection $wishLists,
-        public readonly array $stats = [],
-        public readonly int $userId = 0,
-        public readonly ?WishList $wishList = null
+        public Collection $wishLists,
+        public array      $stats = [],
+        public int        $userId = 0,
+        public ?WishList  $wishList = null
     ) {}
 
     public function toArray(): array
@@ -33,11 +33,11 @@ class WishListDTO extends BaseDTO
 
     public static function fromArray(array $data): static
     {
-        return new static(
+        return new self(
             wishLists: $data['wishLists'],
             stats: $data['stats'] ?? [],
             userId: $data['userId'] ?? 0,
             wishList: $data['wishList'] ?? null,
         );
     }
-} 
+}

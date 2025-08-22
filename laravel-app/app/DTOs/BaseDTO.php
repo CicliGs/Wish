@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
-abstract class BaseDTO
+interface BaseDTO
 {
     /**
      * Convert DTO to array for view passing.
+     * 
+     * @return array<string, mixed>
      */
-    abstract public function toArray(): array;
+    public function toArray(): array;
 
     /**
      * Create DTO from array data.
+     * 
+     * @param array<string, mixed> $data
      */
-    abstract public static function fromArray(array $data): static;
+    public static function fromArray(array $data): static;
 } 

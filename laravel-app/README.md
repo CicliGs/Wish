@@ -223,3 +223,98 @@ If you have questions or suggestions, create an issue in the project repository.
 ---
 
 **Created with ❤️ on Laravel**
+
+# Laravel Application
+
+## Cache Service
+
+Приложение использует упрощенный кеш-сервис для кеширования только статических элементов страницы.
+
+### Возможности
+
+- **Кеширование статического HTML контента** (TTL: 24 часа)
+- **Кеширование изображений** (TTL: 7 дней)  
+- **Кеширование CSS/JS файлов** (TTL: 30 дней)
+- **Кеширование аватаров пользователей** (TTL: 7 дней)
+
+### Примеры использования
+
+```php
+use App\Services\CacheService;
+
+// Кеширование статического контента
+$cacheService->cacheStaticContent('welcome_header', $htmlContent);
+$headerContent = $cacheService->getStaticContent('welcome_header');
+
+// Кеширование изображений
+$cacheService->cacheImage('logo', ['path' => '/images/logo.png', 'alt' => 'Logo']);
+$logoData = $cacheService->getImage('logo');
+
+// Кеширование ассетов
+$cacheService->cacheAsset('main_css', ['path' => '/css/app.css', 'version' => '1.0.0']);
+$cssData = $cacheService->getAsset('main_css');
+
+// Кеширование аватаров
+$cacheService->cacheAvatar(123, ['path' => '/avatars/user123.jpg', 'size' => '150x150']);
+$avatarData = $cacheService->getAvatar(123);
+```
+
+### Команды Artisan
+
+```bash
+# Очистка всего кеша
+php artisan cache:clear-static --all
+
+# Очистка конкретного типа кеша
+php artisan cache:clear-static --type=static_content
+php artisan cache:clear-static --type=images
+php artisan cache:clear-static --type=assets
+php artisan cache:clear-static --type=avatars
+```
+
+### API Endpoints
+
+- `GET /cache/stats` - Статистика кеша
+- `GET /cache/status` - Статус кеша
+- `POST /cache/clear-all` - Очистка всего кеша
+
+### Веб-интерфейс
+
+Страница `/cache/stats` предоставляет:
+- Информацию о конфигурации кеша
+- Статус работы кеша
+- Кнопку для очистки всего кеша
+
+### Конфигурация
+
+Кеш использует Redis как драйвер по умолчанию. Настройки находятся в `.env` файле:
+
+```env
+CACHE_STORE=redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_CACHE_DB=1
+```
+
+## Docker
+
+Приложение работает в Docker контейнерах:
+
+- **Laravel App** - основное приложение
+- **PostgreSQL** - база данных
+- **Redis** - кеш и сессии
+- **Nginx** - веб-сервер
+
+### Запуск
+
+```bash
+cd docker
+docker-compose up -d
+```
+
+### Доступ
+
+- Приложение: http://localhost:8080
+- База данных: localhost:5432
+- Redis: localhost:6379

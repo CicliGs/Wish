@@ -98,7 +98,7 @@
                                                                     </form>
                                                                 </div>
                                                             @elseif($status === 'none')
-                                                                <form action="{{ route('friends.request', $user->id) }}" method="POST" class="d-inline">
+                                                                <form action="{{ route('friends.request', ['user' => $user->id]) }}" method="POST" class="d-inline">
                                                                     @csrf
                                                                     <button type="submit" class="btn btn-primary btn-sm status-btn">
                                                                         <i class="bi bi-person-plus-fill me-1"></i>

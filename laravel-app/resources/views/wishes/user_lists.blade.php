@@ -41,7 +41,7 @@
                                     </div>
                                 </div>
                                 <div class="d-flex flex-column gap-2">
-                                    <a href="{{ route('wishes.user.list', ['userId' => $user->id, 'wishListId' => $list->id]) }}" class="wishlist-btn btn-primary">{{ __('messages.view_gifts') }}</a>
+                                    <a href="{{ route('wishes.user.list', ['user' => $user->id, 'wishList' => $list->id]) }}" class="wishlist-btn btn-primary">{{ __('messages.view_gifts') }}</a>
                                 </div>
                             </div>
                         </div>

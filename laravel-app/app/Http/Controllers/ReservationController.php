@@ -6,32 +6,44 @@ namespace App\Http\Controllers;
 
 use App\Models\Wish;
 use App\Services\ReservationService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 
 class ReservationController extends Controller
 {
-    public function __construct(protected ReservationService $service) {}
+    use AuthorizesRequests;
+
+    public function __construct(protected ReservationService $service) 
+    {
+        $this->middleware('auth');
+    }
 
     /**
      * Reserve a wish.
+     * @throws AuthorizationException
      */
     public function reserve(int $wishId): RedirectResponse
     {
         $wish = $this->findWish($wishId);
-        $result = $this->service->reserve($wish, Auth::id());
+        $this->authorize('reserve', $wish);
+        
+        $result = $this->service->reserve($wish, auth()->id());
 
         return $this->handleReservationResult($result, 'wish_reserved');
     }
 
     /**
      * Unreserve a wish.
+     * @throws AuthorizationException
      */
     public function unreserve(int $wishId): RedirectResponse
     {
         $wish = $this->findWish($wishId);
-        $result = $this->service->unreserve($wish, Auth::id());
+        $this->authorize('unreserve', $wish);
+        
+        $result = $this->service->unreserve($wish, auth()->id());
 
         return $this->handleReservationResult($result, 'wish_unreserved');
     }
@@ -41,8 +53,8 @@ class ReservationController extends Controller
      */
     public function index(): View
     {
-        $reservations = $this->service->getUserReservations(Auth::id());
-        $statistics = $this->service->getUserReservationStatistics(Auth::id());
+        $reservations = $this->service->getUserReservations(auth()->id());
+        $statistics = $this->service->getUserReservationStatistics(auth()->id());
 
         return view('reservations.index', compact('reservations', 'statistics'));
     }
@@ -59,11 +71,12 @@ class ReservationController extends Controller
     }
 
     /**
-     * Find wish by ID.
+     * Find wish by ID with necessary relations.
      */
     private function findWish(int $wishId): Wish
     {
-        return Wish::findOrFail($wishId);
+        return Wish::with(['wishList', 'reservation.user'])
+            ->findOrFail($wishId);
     }
 
     /**

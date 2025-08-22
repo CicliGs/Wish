@@ -27,7 +27,7 @@
                                 @elseif($user->friend_status === 'pending')
                                     <span class="badge bg-warning text-dark">{{ __('messages.request_sent') }}</span>
                                 @else
-                                    <form action="{{ route('friends.request', $user->id) }}" method="POST" style="display: inline;">
+                                    <form action="{{ route('friends.request', ['user' => $user->id]) }}" method="POST" style="display: inline;">
                                         @csrf
                                         <button type="submit" class="btn btn-outline-success btn-sm">{{ __('messages.add_friend') }}</button>
                                     </form>

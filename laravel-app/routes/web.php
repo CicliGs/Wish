@@ -10,7 +10,6 @@ use App\Http\Controllers\LanguageController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\FriendsController;
-use Illuminate\Support\Facades\Redis;
 
 Route::get('/', function () {
     return view('welcome');
@@ -40,8 +39,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/friends/decline/{requestId}', [ProfileController::class, 'declineFriendRequest'])->name('friends.decline');
     Route::get('/friends', [FriendsController::class, 'index'])->name('friends.index');
     Route::get('/friends/search', [FriendsController::class, 'search'])->name('friends.search');
-    Route::post('/friends/remove/{userId}', [ProfileController::class, 'removeFriend'])->name('friends.remove');
-    Route::post('/friends/request/{userId}', [ProfileController::class, 'sendFriendRequest'])->name('friends.request');
+    Route::post('/friends/remove/{user}', [ProfileController::class, 'removeFriend'])->name('friends.remove');
+    Route::post('/friends/request/{user}', [ProfileController::class, 'sendFriendRequest'])->name('friends.request');
     
 });
 
@@ -55,8 +54,9 @@ Route::prefix('ajax')->group(function () {
     Route::post('wishes/{wish}/reserve', [WishController::class, 'reserveAjax'])->name('wishes.reserve.ajax');
 });
 
-Route::get('/user/{userId}/wishes', [WishController::class, 'showUser'])->name('wishes.user');
-Route::get('/user/{userId}/wish-list/{wishListId}', [WishController::class, 'showUserWishList'])->name('wishes.user.list');
+Route::get('/user/{user}/wishes', [WishController::class, 'showUser'])->name('wishes.user');
+Route::get('/user/{user}/wish-list/{wishList}', [WishController::class, 'showUserWishList'])->name('wishes.user.list');
+Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.user');
 
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('register', [RegisterController::class, 'register']);
@@ -66,15 +66,16 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/public/wish-list/{uuid}', [WishListController::class, 'public'])->name('wish-lists.public');
 
-Route::get('/cache/stats', [App\Http\Controllers\CacheController::class, 'stats'])->name('cache.stats');
-Route::get('/cache/detailed-stats', [App\Http\Controllers\CacheController::class, 'detailedStats'])->name('cache.detailed-stats');
-Route::post('/cache/clear-pages', [App\Http\Controllers\CacheController::class, 'clearPages'])->name('cache.clear-pages');
-Route::post('/cache/clear-database', [App\Http\Controllers\CacheController::class, 'clearDatabaseCache'])->name('cache.clear-database');
-Route::post('/cache/clear-type', [App\Http\Controllers\CacheController::class, 'clearCacheByType'])->name('cache.clear-type');
-Route::post('/cache/clear-all', [App\Http\Controllers\CacheController::class, 'clearAll'])->name('cache.clear-all');
-Route::get('/cache/status', [App\Http\Controllers\CacheController::class, 'status'])->name('cache.status');
-Route::get('/cache/test', [App\Http\Controllers\CacheController::class, 'test'])->name('cache.test');
-Route::get('/cache/overview', [App\Http\Controllers\CacheController::class, 'overview'])->name('cache.overview');
+// Cache management routes
+Route::prefix('cache')->group(function () {
+    Route::get('/stats', [App\Http\Controllers\CacheController::class, 'stats'])->name('cache.stats');
+    Route::get('/status', [App\Http\Controllers\CacheController::class, 'status'])->name('cache.status');
+    Route::post('/clear-static', [App\Http\Controllers\CacheController::class, 'clearStaticContent'])->name('cache.clear-static');
+    Route::post('/clear-images', [App\Http\Controllers\CacheController::class, 'clearImageCache'])->name('cache.clear-images');
+    Route::post('/clear-assets', [App\Http\Controllers\CacheController::class, 'clearAssetCache'])->name('cache.clear-assets');
+    Route::post('/clear-avatars', [App\Http\Controllers\CacheController::class, 'clearAvatarCache'])->name('cache.clear-avatars');
+    Route::post('/clear-all', [App\Http\Controllers\CacheController::class, 'clearAll'])->name('cache.clear-all');
+});
 
 // CSRF token route
 Route::get('/csrf-token', function() {

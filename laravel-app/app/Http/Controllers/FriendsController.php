@@ -4,36 +4,41 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use App\Services\FriendService;
-use App\Services\ProfileService;
-use App\DTOs\FriendsSearchDTO;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\Collection;
 
 class FriendsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Display friends page.
      */
     public function index(FriendService $friendService): View
     {
-        $user = Auth::user();
+        /** @var User $user */
+        $user = auth()->user();
         $selectedFriendId = $this->getSelectedFriendId();
         $friendsDTO = $friendService->getFriendsPageData($user, $selectedFriendId);
-        
+
         return view('friends.index', $friendsDTO->toArray());
     }
 
     /**
      * Search friends.
      */
-    public function search(Request $request, ProfileService $profileService): View
+    public function search(Request $request, FriendService $friendService): View
     {
         $query = $request->input('q');
-        $searchDTO = $this->createSearchDTO($query, $profileService);
-        
+        /** @var User $user */
+        $user = auth()->user();
+        $searchDTO = $friendService->searchFriendsWithStatus($query, $user);
+
         return view('friends.search', $searchDTO->toArray());
     }
 
@@ -45,16 +50,4 @@ class FriendsController extends Controller
         $selectedFriendId = request('friend_id');
         return $selectedFriendId ? (int) $selectedFriendId : null;
     }
-
-    /**
-     * Create search DTO for friends search.
-     */
-    private function createSearchDTO(?string $query, ProfileService $profileService): FriendsSearchDTO
-    {
-        if (!$query) {
-            return new FriendsSearchDTO(new Collection(), null);
-        }
-
-        return $profileService->searchFriendsWithStatus($query, Auth::user());
-    }
-} 
+}

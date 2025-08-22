@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
 
@@ -17,10 +16,10 @@ class LanguageController extends Controller
     /**
      * Switch language.
      */
-    public function switchLanguage(Request $request, string $locale): RedirectResponse
+    public function switchLanguage(string $locale): RedirectResponse
     {
         $locale = $this->validateLocale($locale);
-        
+
         $this->setLocale($locale);
 
         return redirect()->back();
@@ -31,8 +30,8 @@ class LanguageController extends Controller
      */
     private function validateLocale(string $locale): string
     {
-        return in_array($locale, self::SUPPORTED_LOCALES) 
-            ? $locale 
+        return in_array($locale, self::SUPPORTED_LOCALES)
+            ? $locale
             : self::DEFAULT_LOCALE;
     }
 

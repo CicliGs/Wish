@@ -62,10 +62,13 @@
           <p class="text-muted mb-3">{{ $selectedFriend->email }}</p>
           </div>
           </div>
-          <a href="{{ route('wishes.user', ['userId' => $selectedFriend->id]) }}" class="btn btn-outline-dark mb-3 w-100 d-flex justify-content-center align-items-center gap-2">
+          <a href="{{ route('wishes.user', ['user' => $selectedFriend->id]) }}" class="btn btn-outline-dark mb-3 w-100 d-flex justify-content-center align-items-center gap-2">
             <i class="bi bi-heart-fill"></i> {{ __('messages.view_wishes') }}
           </a>
-          <form action="{{ route('friends.remove', $selectedFriend->id) }}" method="POST" class="w-100" onsubmit="return confirm('{{ __('messages.confirm_remove_friend') }}')">
+          <a href="{{ route('profile.user', ['user' => $selectedFriend->id]) }}" class="btn btn-outline-primary mb-3 w-100 d-flex justify-content-center align-items-center gap-2">
+            <i class="bi bi-person-circle"></i> {{ __('messages.view_profile') }}
+          </a>
+          <form action="{{ route('friends.remove', ['user' => $selectedFriend->id]) }}" method="POST" class="w-100" onsubmit="return confirm('{{ __('messages.confirm_remove_friend') }}')">
             @csrf
             <button type="submit" class="btn btn-outline-danger w-100 d-flex justify-content-center gap-2">
               <i class="bi bi-person-x-fill"></i> {{ __('messages.remove_friend') }}

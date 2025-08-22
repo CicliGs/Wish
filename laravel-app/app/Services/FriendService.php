@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTOs\FriendsDTO;
+use App\DTOs\FriendsSearchDTO;
 use App\Models\FriendRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -155,8 +156,8 @@ class FriendService
     public function searchUsersWithFriendStatus(string $query, int $excludeUserId, User $currentUser): Collection
     {
         return User::where(function ($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%");
+                $q->where('name', 'like', "%$query%")
+                  ->orWhere('email', 'like', "%$query%");
             })
             ->where('id', '!=', $excludeUserId)
             ->limit(10)
@@ -165,6 +166,19 @@ class FriendService
                 $user->friend_status = $this->getFriendStatus($currentUser, $user->id);
                 return $user;
             });
+    }
+
+    /**
+     * Search friends with status and return DTO.
+     */
+    public function searchFriendsWithStatus(string $query, User $currentUser): FriendsSearchDTO
+    {
+        if (empty($query)) {
+            return new FriendsSearchDTO(new Collection(), null);
+        }
+
+        $users = $this->searchUsersWithFriendStatus($query, $currentUser->id, $currentUser);
+        return new FriendsSearchDTO($users, $query);
     }
 
     /**

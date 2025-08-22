@@ -5,18 +5,15 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Services\CacheService;
-use App\Services\DatabaseCacheService;
-use App\Services\PageCacheService;
-use Illuminate\Http\Request;
+use App\Services\CacheType;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 
 class CacheController extends Controller
 {
     public function __construct(
-        protected CacheService $cacheService,
-        protected DatabaseCacheService $databaseCacheService,
-        protected PageCacheService $pageCacheService
+        protected CacheService $cacheService
     ) {}
 
     /**
@@ -24,80 +21,9 @@ class CacheController extends Controller
      */
     public function stats(): View
     {
-        $dbStats = $this->databaseCacheService->getCacheStatistics();
-        $pageStats = $this->pageCacheService->getPageCacheStats();
-        $combinedStats = $this->cacheService->getCombinedStats($dbStats, $pageStats);
-        
-        return view('cache.stats', compact('combinedStats'));
-    }
+        $cacheStats = $this->cacheService->getCacheStats();
 
-    /**
-     * Show detailed cache statistics
-     */
-    public function detailedStats(): View
-    {
-        $dbStats = $this->databaseCacheService->getCacheStatistics();
-        $pageStats = $this->pageCacheService->getPageCacheStats();
-        $combinedStats = $this->cacheService->getCombinedStats($dbStats, $pageStats);
-        
-        return view('cache.detailed-stats', compact('combinedStats'));
-    }
-
-    /**
-     * Clear page cache
-     */
-    public function clearPages(Request $request): JsonResponse
-    {
-        $pattern = $request->input('pattern', 'page_cache:*');
-        $result = $this->cacheService->clearPageCacheWithResponse($pattern);
-
-        return response()->json($result);
-    }
-
-    /**
-     * Clear database query cache
-     */
-    public function clearDatabaseCache(): JsonResponse
-    {
-        $result = $this->cacheService->clearDatabaseCacheWithResponse();
-
-        return response()->json($result);
-    }
-
-    /**
-     * Clear specific type of cache
-     */
-    public function clearCacheByType(Request $request): JsonResponse
-    {
-        $type = $request->input('type');
-        
-        if (!$type) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cache type is required'
-            ], 400);
-        }
-
-        if (!$this->cacheService->validateCacheType($type)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid cache type'
-            ], 400);
-        }
-
-        $result = $this->cacheService->clearCacheByTypeWithResponse($type);
-
-        return response()->json($result);
-    }
-
-    /**
-     * Clear all cache
-     */
-    public function clearAll(): JsonResponse
-    {
-        $result = $this->cacheService->clearAllCacheWithResponse();
-
-        return response()->json($result);
+        return view('cache.stats', compact('cacheStats'));
     }
 
     /**
@@ -105,43 +31,137 @@ class CacheController extends Controller
      */
     public function status(): JsonResponse
     {
-        $status = $this->cacheService->getRedisStatus();
-        
-        if ($status['status'] === 'error') {
-            return response()->json($status, 500);
-        }
-        
-        return response()->json($status);
-    }
+        $stats = $this->cacheService->getCacheStats();
 
-    /**
-     * Test Redis connection
-     */
-    public function test(): JsonResponse
-    {
-        $result = $this->cacheService->testRedisConnection();
-        
-        if ($result['status'] === 'error') {
-            return response()->json($result, 500);
-        }
-        
-        return response()->json($result);
-    }
-
-    /**
-     * Get comprehensive cache overview
-     */
-    public function overview(): JsonResponse
-    {
-        $overview = $this->cacheService->getCacheOverview();
-        
-        if (empty($overview)) {
+        if (empty($stats)) {
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to get cache overview'
+                'status' => 'error',
+                'message' => 'Failed to get cache status'
             ], 500);
         }
 
-        return response()->json($overview);
+        return response()->json([
+            'status' => 'success',
+            'data' => $stats
+        ]);
+    }
+
+    /**
+     * Clear static content cache
+     */
+    public function clearStaticContent(): JsonResponse
+    {
+        try {
+            $success = $this->cacheService->clearCacheByType(CacheType::STATIC_CONTENT);
+
+        } catch (Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear static content cache: ' . $e->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'Static content cache cleared successfully' : 'Failed to clear static content cache'
+        ]);
+    }
+
+    /**
+     * Clear image cache
+     */
+    public function clearImageCache(): JsonResponse
+    {
+        try {
+            $success = $this->cacheService->clearCacheByType(CacheType::IMAGES);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear image cache: ' . $e->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'Image cache cleared successfully' : 'Failed to clear image cache'
+        ]);
+    }
+
+    /**
+     * Clear asset cache (CSS/JS)
+     */
+    public function clearAssetCache(): JsonResponse
+    {
+        try {
+            $success = $this->cacheService->clearCacheByType(CacheType::CSS_JS);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear asset cache: ' . $e->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'Asset cache cleared successfully' : 'Failed to clear asset cache'
+        ]);
+    }
+
+    /**
+     * Clear avatar cache
+     */
+    public function clearAvatarCache(): JsonResponse
+    {
+        try {
+            $success = $this->cacheService->clearCacheByType(CacheType::AVATARS);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear avatar cache: ' . $e->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'Avatar cache cleared successfully' : 'Failed to clear avatar cache'
+        ]);
+    }
+
+    /**
+     * Clear all cache
+     */
+    public function clearAll(): JsonResponse
+    {
+        $success = $this->cacheService->clearAllCache();
+
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'All cache cleared successfully' : 'Failed to clear all cache'
+        ]);
+    }
+
+    /**
+     * Clear cache by specific user
+     */
+    public function clearUserCache(int $userId): JsonResponse
+    {
+        try {
+            $success = $this->cacheService->clearUserCache($userId);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Failed to clear cache for user $userId: " . $e->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? "Cache for user $userId cleared successfully" : "Failed to clear cache for user $userId"
+        ]);
     }
 }

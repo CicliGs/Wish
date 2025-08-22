@@ -10,11 +10,16 @@ use Illuminate\Http\Request;
 class UserService
 {
     /**
-     * Register a new user.
+     * Register a new user and grant first achievement.
      */
     public function registerUser(array $data): User
     {
-        return User::register($data);
+        $user = User::register($data);
+        
+        // Автоматически выдаём достижение за регистрацию
+        $this->grantRegistrationAchievement($user);
+        
+        return $user;
     }
 
     /**
@@ -31,5 +36,16 @@ class UserService
     public function logout(Request $request): void
     {
         User::logout($request);
+    }
+
+    /**
+     * Grant registration achievement to new user.
+     */
+    private function grantRegistrationAchievement(User $user): void
+    {
+        $user->achievements()->create([
+            'achievement_key' => 'register',
+            'received_at' => now(),
+        ]);
     }
 }

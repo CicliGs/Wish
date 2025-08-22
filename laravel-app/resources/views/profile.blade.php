@@ -15,7 +15,9 @@
             </div>
             <div class="d-flex align-items-center gap-2 mb-3">
                 <h2 class="mb-0">{{ $user->name }}</h2>
+                @if($user->id === Auth::id())
                 <a href="{{ route('profile.edit') }}" class="btn btn-outline-dark btn-sm" title="{{ __('messages.edit_profile') }}"><i class="bi bi-pencil"></i></a>
+                @endif
             </div>
             <div class="mb-3 text-muted">{{ $user->email }}</div>
         </div>
@@ -46,8 +48,7 @@
   @endif
 </div>
 
-<!-- Модальное окно со всеми достижениями -->
-<div class="modal fade" id="allAchievementsModal" tabindex="-1" aria-labelledby="allAchievementsModalLabel" aria-hidden="true">
+<div class="modal fade" id="allAchievementsModal" tabindex="-1" aria-labelledby="allAchievementsModalLabel" aria-hidden="true" data-bs-backdrop="false">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -77,7 +78,6 @@
 
 <div class="row w-100 mb-2 mt-2 g-2">
             <div class="col-6">
-                <a href="{{ route('wish-lists.index') }}" class="profile-widget-link">
                 <div class="p-3 text-center shadow-sm rounded-4 profile-widget" style="background: #fff; color: #222; font-weight: 600; border-radius: 16px;">
                     <div style="font-size: 1.6rem;"><i class="bi bi-list-task me-1"></i>{{ $stats['total_wish_lists'] ?? 0 }}</div>
                     <div style="font-size: 0.98rem; color: #444;">{{ __('messages.lists') }}</div>
@@ -85,7 +85,6 @@
                 </a>
             </div>
             <div class="col-6">
-                <a href="{{ route('wishes.user', ['userId' => $user->id]) }}" class="profile-widget-link">
                 <div class="p-3 text-center shadow-sm rounded-4 profile-widget" style="background: #fff; color: #222; font-weight: 600; border-radius: 16px;">
                     <div style="font-size: 1.6rem;"><i class="bi bi-gift-fill me-1"></i>{{ $stats['total_wishes'] ?? 0 }}</div>
                     <div style="font-size: 0.98rem; color: #444;">{{ __('messages.wishes') }}</div>
@@ -93,7 +92,6 @@
                 </a>
             </div>
             <div class="col-6 mt-2">
-                <a href="{{ route('friends.index') }}" class="profile-widget-link">
                 <div class="p-3 text-center shadow-sm rounded-4 profile-widget" style="background: #fff; color: #222; font-weight: 600; border-radius: 16px;">
                     <div style="font-size: 1.6rem;"><i class="bi bi-people-fill me-1"></i>{{ isset($friends) ? $friends->count() : 0 }}</div>
                     <div style="font-size: 0.98rem; color: #444;">{{ __('messages.friends_count') }}</div>
@@ -101,7 +99,6 @@
                 </a>
             </div>
             <div class="col-6 mt-2">
-                <a href="{{ route('wish-lists.index', ['reserved' => 1]) }}" class="profile-widget-link">
                 <div class="p-3 text-center shadow-sm rounded-4 profile-widget" style="background: #fff; color: #222; font-weight: 600; border-radius: 16px;">
                     <div style="font-size: 1.6rem;"><i class="bi bi-bookmark-heart-fill me-1"></i>{{ $stats['total_reserved_wishes'] ?? 0 }}</div>
                     <div style="font-size: 0.98rem; color: #444;">{{ __('messages.reserved') }}</div>
@@ -110,10 +107,12 @@
             </div>
         </div>
         <hr class="my-3" style="border-top: 1.5px solid #e0e0e0;">
+        @if($user->id === Auth::id())
         <form method="POST" action="{{ route('logout') }}" class="mb-0">
             @csrf
             <button type="submit" class="btn btn-outline-danger w-100">{{ __('messages.logout_account') }}</button>
         </form>
+        @endif
     </div>
 </div>
 @push('styles')
@@ -129,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const achievementModal = document.getElementById('allAchievementsModal');
     if (achievementModal) {
         const modal = new bootstrap.Modal(achievementModal, {
-            backdrop: true,
+            backdrop: false,
             keyboard: true,
             focus: true
         });
@@ -138,10 +137,6 @@ document.addEventListener('DOMContentLoaded', function() {
         achievementModal.addEventListener('shown.bs.modal', function() {
             // Ensure proper z-index after modal is shown
             this.style.zIndex = '9999';
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-                backdrop.style.zIndex = '9998';
-            }
         });
         
         // Add event listener for modal show
@@ -157,22 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modals.forEach(modal => {
             modal.style.zIndex = '9999';
         });
-        
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => {
-            backdrop.style.zIndex = '9998';
-        });
-    }
-    
-    // Emergency backdrop removal
-    function emergencyBackdropRemoval() {
-        const modals = document.querySelectorAll('.modal.show');
-        modals.forEach(modal => {
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop && backdrop.style.zIndex > modal.style.zIndex) {
-                backdrop.remove();
-            }
-        });
     }
     
     // Run on page load
@@ -180,9 +159,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Run periodically to ensure z-index is maintained
     setInterval(forceModalZIndex, 100);
-    
-    // Emergency backdrop removal
-    setInterval(emergencyBackdropRemoval, 50);
 });
 </script>
 @endpush

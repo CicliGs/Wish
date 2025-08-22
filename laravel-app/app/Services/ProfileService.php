@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
-use App\Services\WishListService;
-use App\Services\ReservationService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Database\Eloquent\Collection;
-use App\Services\AchievementsReceiver;
 use App\DTOs\ProfileDTO;
-use App\DTOs\FriendsSearchDTO;
+use Illuminate\Validation\ValidationException;
 
 class ProfileService
 {
@@ -23,49 +20,42 @@ class ProfileService
     public function __construct(
         private readonly WishListService $wishListService,
         private readonly ReservationService $reservationService,
-        private readonly AchievementsReceiver $achievementsReceiver
+        private readonly AchievementsReceiver $achievementsReceiver,
+        private readonly CacheService $cacheService
     ) {}
 
-    /**
-     * Get user statistics.
-     */
     public function getUserStatistics(int $userId): array
     {
-        $wishListStats = $this->wishListService->getStatistics($userId);
-        $reservationStats = $this->reservationService->getUserReservationStatistics($userId);
-
-        return array_merge($wishListStats, $reservationStats);
+        return array_merge(
+            $this->wishListService->getStatistics($userId),
+            $this->reservationService->getUserReservationStatistics($userId)
+        );
     }
 
     /**
-     * Update user avatar with validation.
+     * @throws ValidationException
      */
     public function updateAvatar(User $user, UploadedFile $avatarFile): void
     {
         $this->validateAvatar($avatarFile);
-        
+
         $path = $avatarFile->store(self::AVATAR_STORAGE_PATH, 'public');
-        $user->avatar = '/storage/' . $path;
-        $user->save();
+        $user->update(['avatar' => '/storage/' . $path]);
+
+        $this->cacheService->clearUserCache($user->id);
     }
 
-    /**
-     * Search users (by name or email), excluding current user.
-     */
     public function searchUsers(string $query, int $excludeUserId, int $limit = self::DEFAULT_SEARCH_LIMIT): Collection
     {
         return User::where(function ($queryBuilder) use ($query) {
-                $queryBuilder->where('name', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%");
+                $queryBuilder->where('name', 'like', "%$query%")
+                  ->orWhere('email', 'like', "%$query%");
             })
             ->where('id', '!=', $excludeUserId)
             ->limit($limit)
             ->get();
     }
 
-    /**
-     * Add friend (if not already friends and not referring to self).
-     */
     public function addFriend(User $user, int $friendId): void
     {
         if ($this->canAddFriend($user, $friendId)) {
@@ -73,96 +63,76 @@ class ProfileService
         }
     }
 
-    /**
-     * Remove friend.
-     */
     public function removeFriend(User $user, int $friendId): void
     {
         $user->friends()->detach($friendId);
     }
 
-    /**
-     * Get user achievements.
-     */
     public function getAchievements(User $user): array
     {
-        $achievementsConfig = config('achievements');
-        $result = [];
-
-        foreach ($achievementsConfig as $achievement) {
+        return collect(config('achievements'))->map(function ($achievement) use ($user) {
             $achievementKey = $achievement['key'];
-            $checker = $achievement['checker'] ?? null;
             $received = $user->hasAchievement($achievementKey);
 
-            if (!$received && $checker && method_exists($this->achievementsReceiver, $checker)) {
-                $received = $this->achievementsReceiver->{$checker}($user);
-                if ($received) {
-                    $this->createUserAchievement($user, $achievementKey);
+            if (!$received && !($achievement['auto_grant'] ?? false)) {
+                $checker = $achievement['checker'] ?? null;
+                if ($checker && method_exists($this->achievementsReceiver, $checker)) {
+                    $received = $this->achievementsReceiver->{$checker}($user);
+                    if ($received) {
+                        $this->createUserAchievement($user, $achievementKey);
+                    }
                 }
             }
 
-            $result[] = [
+            return [
                 'key' => $achievementKey,
                 'title' => __('messages.achievement_' . $achievementKey),
                 'icon' => $achievement['icon'],
                 'received' => $received,
             ];
-        }
-
-        return $result;
+        })->toArray();
     }
 
     /**
-     * Get profile data.
-     */
-    public function getProfileData(User $user, FriendService $friendService): ProfileDTO
-    {
-        $stats = $this->getUserStatistics($user->id);
-        $achievements = $this->getAchievements($user);
-        $friends = $friendService->getFriends($user);
-        $incomingRequests = $friendService->getIncomingRequests($user);
-        $outgoingRequests = $friendService->getOutgoingRequests($user);
-        $wishLists = $this->wishListService->findByUser($user->id);
-
-        return new ProfileDTO(
-            user: $user,
-            stats: $stats,
-            achievements: $achievements,
-            friends: $friends,
-            incomingRequests: $incomingRequests,
-            outgoingRequests: $outgoingRequests,
-            wishLists: $wishLists
-        );
-    }
-
-    /**
-     * Update user name.
+     * @throws ValidationException
      */
     public function updateUserName(User $user, string $name): void
     {
         $this->validateUserName($name);
         $user->update(['name' => $name]);
+        $this->cacheService->clearUserCache($user->id);
     }
 
-    /**
-     * Search friends with status.
-     */
-    public function searchFriendsWithStatus(string $query, User $currentUser): FriendsSearchDTO
+    public function getWishLists(int $userId): Collection
     {
-        $users = app(FriendService::class)
-            ->searchUsersWithFriendStatus($query, $currentUser->id, $currentUser);
-        
-        $friendStatuses = $this->buildFriendStatuses($users);
-            
-        return new FriendsSearchDTO(
-            users: $users,
-            query: $query,
-            friendStatuses: $friendStatuses
+        return $this->wishListService->findByUser($userId);
+    }
+
+    public function getProfileData(User $user, FriendService $friendService): ProfileDTO
+    {
+        $cacheKey = "user_profile_$user->id";
+        $cachedData = $this->cacheService->getStaticContent($cacheKey);
+
+        if ($cachedData) {
+            return unserialize($cachedData);
+        }
+
+        $dto = new ProfileDTO(
+            user: $user,
+            stats: $this->getUserStatistics($user->id),
+            friends: $friendService->getFriends($user),
+            incomingRequests: $friendService->getIncomingRequests($user),
+            outgoingRequests: $friendService->getOutgoingRequests($user),
+            achievements: $this->getAchievements($user),
+            wishLists: $this->wishListService->findByUser($user->id)
         );
+
+        $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 900);
+        return $dto;
     }
 
     /**
-     * Validate avatar file.
+     * @throws ValidationException
      */
     private function validateAvatar(UploadedFile $avatarFile): void
     {
@@ -172,17 +142,11 @@ class ProfileService
         )->validate();
     }
 
-    /**
-     * Check if user can add friend.
-     */
     private function canAddFriend(User $user, int $friendId): bool
     {
         return $user->id !== $friendId && !$user->friends()->where('friend_id', $friendId)->exists();
     }
 
-    /**
-     * Create user achievement.
-     */
     private function createUserAchievement(User $user, string $achievementKey): void
     {
         $user->achievements()->create([
@@ -192,7 +156,7 @@ class ProfileService
     }
 
     /**
-     * Validate user name.
+     * @throws ValidationException
      */
     private function validateUserName(string $name): void
     {
@@ -200,17 +164,5 @@ class ProfileService
             ['name' => $name],
             ['name' => 'required|string|max:255']
         )->validate();
-    }
-
-    /**
-     * Build friend statuses array.
-     */
-    private function buildFriendStatuses(Collection $users): array
-    {
-        $friendStatuses = [];
-        foreach ($users as $user) {
-            $friendStatuses[$user->id] = $user->friend_status ?? 'none';
-        }
-        return $friendStatuses;
     }
 }

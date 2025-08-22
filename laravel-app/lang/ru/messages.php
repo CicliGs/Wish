@@ -284,4 +284,5 @@ return [
     'request_sent' => 'Заявка отправлена',
     'qr_code_not_available' => 'Генерация QR-кода недоступна',
     'open_link' => 'Открыть ссылку',
+    'view_profile' => 'Посмотреть профиль',
 ]; 

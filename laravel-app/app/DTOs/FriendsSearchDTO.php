@@ -6,12 +6,12 @@ namespace App\DTOs;
 
 use Illuminate\Database\Eloquent\Collection;
 
-class FriendsSearchDTO extends BaseDTO
+readonly class FriendsSearchDTO implements BaseDTO
 {
     public function __construct(
-        public readonly Collection $users,
-        public readonly ?string $query,
-        public readonly array $friendStatuses = []
+        public Collection $users,
+        public ?string    $query,
+        public array      $friendStatuses = []
     ) {}
 
     public function toArray(): array
@@ -25,10 +25,10 @@ class FriendsSearchDTO extends BaseDTO
 
     public static function fromArray(array $data): static
     {
-        return new static(
+        return new self(
             users: $data['users'],
             query: $data['query'] ?? null,
             friendStatuses: $data['friendStatuses'] ?? [],
         );
     }
-} 
+}

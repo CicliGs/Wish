@@ -8,6 +8,7 @@ use App\DTOs\WishListDTO;
 use App\DTOs\PublicWishListDTO;
 use App\Models\WishList;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
@@ -17,128 +18,131 @@ class WishListService
     private const MAX_TITLE_LENGTH = 255;
     private const MAX_DESCRIPTION_LENGTH = 1000;
 
-    /**
-     * Find wish lists by user ID.
-     */
+    public function __construct(
+        protected CacheService $cacheService
+    ) {}
+
     public function findByUser(int $userId): Collection
     {
         return WishList::forUser($userId)->with('wishes')->get();
     }
 
-    /**
-     * Find a wish list by ID and user ID.
-     */
     public function findByIdAndUser(int $id, int $userId): ?WishList
     {
         return WishList::forUser($userId)->find($id);
     }
 
     /**
-     * Create a new wish list.
+     * @throws ValidationException
      */
     public function create(array $data, int $userId): WishList
     {
         $this->validateCreateData($data);
         $data['user_id'] = $userId;
 
-        return WishList::create($data);
+        $wishList = WishList::create($data);
+        $this->cacheService->clearUserCache($userId);
+
+        return $wishList;
     }
 
     /**
-     * Update an existing wish list.
+     * @throws ValidationException
      */
     public function update(WishList $wishList, array $data): WishList
     {
-        $this->validateUpdateData($data, $wishList);
+        $this->validateUpdateData($data);
         $wishList->update($data);
+        $this->cacheService->clearUserCache($wishList->user_id);
 
         return $wishList->fresh();
     }
 
-    /**
-     * Delete a wish list.
-     */
     public function delete(WishList $wishList): bool
     {
-        return $wishList->delete();
+        $userId = $wishList->user_id;
+        $result = $wishList->delete();
+
+        if ($result) {
+            $this->cacheService->clearUserCache($userId);
+        }
+
+        return $result;
     }
 
-    /**
-     * Find public wish list by UUID.
-     */
     public function findPublic(string $uuid): ?WishList
     {
         return WishList::public()->where('uuid', $uuid)->with('wishes')->first();
     }
 
-    /**
-     * Generate a new UUID for a wish list.
-     */
     public function regenerateUuid(WishList $wishList): WishList
     {
         $wishList->update(['uuid' => (string) Str::uuid()]);
-
         return $wishList->fresh();
     }
 
-    /**
-     * Get user statistics.
-     */
     public function getStatistics(int $userId): array
     {
         $wishLists = WishList::forUser($userId)->with('wishes')->get();
-        
-        $totalWishes = 0;
-        $totalReservedWishes = 0;
-        
-        foreach ($wishLists as $wishList) {
-            $totalWishes += $wishList->wishes->count();
-            $totalReservedWishes += $wishList->wishes->where('is_reserved', true)->count();
-        }
 
         return [
             'total_wish_lists' => $wishLists->count(),
-            'total_wishes' => $totalWishes,
-            'total_reserved_wishes' => $totalReservedWishes,
+            'total_wishes' => $wishLists->sum(fn($wishList) => $wishList->wishes->count()),
+            'total_reserved_wishes' => $wishLists->sum(fn($wishList) => $wishList->wishes->where('is_reserved', true)->count()),
             'public_wish_lists' => $wishLists->whereNotNull('uuid')->count(),
         ];
     }
 
-    /**
-     * Get data for public wish list view.
-     */
     public function getPublicWishListData(string $uuid): PublicWishListDTO
     {
-        $wishList = $this->findPublic($uuid);
-        
-        if (!$wishList) {
-            throw new \Illuminate\Database\Eloquent\ModelNotFoundException();
+        $cacheKey = "public_wishlist_$uuid";
+        $cachedData = $this->cacheService->getStaticContent($cacheKey);
+
+        if ($cachedData) {
+            return unserialize($cachedData);
         }
 
-        return new PublicWishListDTO(
+        $wishList = $this->findPublic($uuid);
+
+        if (!$wishList) {
+            throw new ModelNotFoundException();
+        }
+
+        $currentUser = auth()->user();
+        $dto = new PublicWishListDTO(
             wishList: $wishList,
+            user: $wishList->user,
             wishes: $wishList->wishes,
-            user: $wishList->user
+            isGuest: !auth()->check(),
+            isFriend: $currentUser && $currentUser->friends()->where('friend_id', $wishList->user_id)->exists(),
+            isOwner: auth()->id() === $wishList->user_id
         );
+
+        $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
+        return $dto;
     }
 
-    /**
-     * Get index data for wish lists.
-     */
     public function getIndexData(int $userId): WishListDTO
     {
-        $wishLists = $this->findByUser($userId);
-        $stats = $this->getStatistics($userId);
+        $cacheKey = "user_wishlists_$userId";
+        $cachedData = $this->cacheService->getStaticContent($cacheKey);
 
-        return new WishListDTO(
-            wishLists: $wishLists,
-            stats: $stats,
+        if ($cachedData) {
+            return unserialize($cachedData);
+        }
+
+        $dto = new WishListDTO(
+            wishLists: $this->findByUser($userId),
+            stats: $this->getStatistics($userId),
             userId: $userId
         );
+
+        $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 3600);
+        return $dto;
     }
 
     /**
-     * Validate create data.
+     * @throws ValidationException
      */
     private function validateCreateData(array $data): void
     {
@@ -155,9 +159,9 @@ class WishListService
     }
 
     /**
-     * Validate update data.
+     * @throws ValidationException
      */
-    private function validateUpdateData(array $data, WishList $wishList): void
+    private function validateUpdateData(array $data): void
     {
         $validator = Validator::make($data, [
             'title' => ['sometimes', 'required', 'string', 'max:' . self::MAX_TITLE_LENGTH],

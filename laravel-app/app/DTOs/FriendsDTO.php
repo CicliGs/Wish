@@ -7,13 +7,13 @@ namespace App\DTOs;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
-class FriendsDTO extends BaseDTO
+readonly class FriendsDTO implements BaseDTO
 {
     public function __construct(
-        public readonly Collection $friends,
-        public readonly Collection $incomingRequests,
-        public readonly Collection $outgoingRequests,
-        public readonly ?User $selectedFriend
+        public Collection $friends,
+        public Collection $incomingRequests,
+        public Collection $outgoingRequests,
+        public ?User      $selectedFriend
     ) {}
 
     public function toArray(): array
@@ -28,11 +28,11 @@ class FriendsDTO extends BaseDTO
 
     public static function fromArray(array $data): static
     {
-        return new static(
+        return new self(
             friends: $data['friends'],
             incomingRequests: $data['incomingRequests'],
             outgoingRequests: $data['outgoingRequests'],
             selectedFriend: $data['selectedFriend'] ?? null,
         );
     }
-} 
+}

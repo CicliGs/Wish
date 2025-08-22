@@ -1,39 +1,39 @@
-function loadRedisStatus() {
+function loadCacheStatus() {
     fetch('/cache/status')
         .then(response => response.json())
         .then(data => {
             const statusDiv = document.getElementById('redis-status');
-            if (data.status === 'connected') {
+            if (data.status === 'success') {
                 statusDiv.className = 'redis-status redis-connected fade-in';
                 statusDiv.innerHTML = `
                     <div class="text-center w-100">
                         <div class="status-indicator status-connected mb-3">
                             <i class="bi bi-check-circle-fill"></i>
-                            Подключено
+                            ${window.cacheTranslations?.cache_working || 'Кеш работает'}
                         </div>
                         <div class="stats-grid">
                             <div class="stat-item">
-                                <div class="stat-label">Версия</div>
+                                <div class="stat-label">${window.cacheTranslations?.driver_label || 'Драйвер'}</div>
                                 <div class="stat-value">
-                                    <span class="stat-badge badge-info">${data.redis_version}</span>
+                                    <span class="stat-badge badge-info">${data.data.driver}</span>
                                 </div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-label">Клиенты</div>
+                                <div class="stat-label">${window.cacheTranslations?.store_label || 'Хранилище'}</div>
                                 <div class="stat-value">
-                                    <span class="stat-badge badge-primary">${data.connected_clients}</span>
+                                    <span class="stat-badge badge-primary">${data.data.store}</span>
                                 </div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-label">Память</div>
+                                <div class="stat-label">${window.cacheTranslations?.prefix_label || 'Префикс'}</div>
                                 <div class="stat-value">
-                                    <span class="stat-badge badge-warning">${data.used_memory_human}</span>
+                                    <span class="stat-badge badge-warning">${data.data.prefix}</span>
                                 </div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-label">Время работы</div>
+                                <div class="stat-label">${window.cacheTranslations?.description_label || 'Описание'}</div>
                                 <div class="stat-value">
-                                    <span class="stat-badge badge-secondary">${formatUptime(data.uptime_in_seconds)}</span>
+                                    <span class="stat-badge badge-secondary">${data.data.description}</span>
                                 </div>
                             </div>
                         </div>
@@ -45,9 +45,9 @@ function loadRedisStatus() {
                     <div class="text-center">
                         <div class="status-indicator status-error mb-3">
                             <i class="bi bi-exclamation-triangle-fill"></i>
-                            Ошибка подключения
+                            ${window.cacheTranslations?.status_error || 'Ошибка получения статуса'}
                         </div>
-                        <p class="text-danger">${data.message}</p>
+                        <p class="text-danger">${data.message || (window.cacheTranslations?.failed_to_get_status || 'Не удалось получить статус кеша')}</p>
                     </div>
                 `;
             }
@@ -59,49 +59,131 @@ function loadRedisStatus() {
                 <div class="text-center">
                     <div class="status-indicator status-error mb-3">
                         <i class="bi bi-exclamation-triangle-fill"></i>
-                        Не удалось подключиться
+                        ${window.cacheTranslations?.connection_failed || 'Не удалось подключиться'}
                     </div>
-                    <p class="text-danger">Не удалось подключиться к Redis</p>
+                    <p class="text-danger">${window.cacheTranslations?.failed_to_get_status || 'Не удалось получить статус кеша'}</p>
                 </div>
             `;
         });
 }
 
-function formatUptime(seconds) {
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
-    if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-}
-
-function clearPageCache() {
+function clearStaticCache() {
     const button = event.target;
     const originalText = button.innerHTML;
     
     button.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Очистка...';
     button.disabled = true;
     
-    fetch('/cache/clear-pages', {
+    fetch('/cache/clear-static', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ pattern: 'page_cache:*' })
+        }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification('Кэш страниц очищен', 'success');
+            showNotification('Кеш статического контента очищен', 'success');
         } else {
-            showNotification('Не удалось очистить кэш страниц', 'error');
+            showNotification('Не удалось очистить кеш статического контента', 'error');
         }
     })
     .catch(error => {
-        showNotification('Ошибка при очистке кэша', 'error');
+        showNotification('Ошибка при очистке кеша статического контента', 'error');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function clearImageCache() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Очистка...';
+    button.disabled = true;
+    
+    fetch('/cache/clear-images', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Кеш изображений очищен', 'success');
+        } else {
+            showNotification('Не удалось очистить кеш изображений', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Ошибка при очистке кеша изображений', 'error');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function clearAssetCache() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Очистка...';
+    button.disabled = true;
+    
+    fetch('/cache/clear-assets', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Кеш ассетов (CSS/JS) очищен', 'success');
+        } else {
+            showNotification('Не удалось очистить кеш ассетов', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Ошибка при очистке кеша ассетов', 'error');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function clearAvatarCache() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Очистка...';
+    button.disabled = true;
+    
+    fetch('/cache/clear-avatars', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Кеш аватаров очищен', 'success');
+        } else {
+            showNotification('Не удалось очистить кеш аватаров', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Ошибка при очистке кеша аватаров', 'error');
     })
     .finally(() => {
         button.innerHTML = originalText;
@@ -116,13 +198,12 @@ function clearAllCache() {
     button.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Очистка...';
     button.disabled = true;
     
-    fetch('/cache/clear-pages', {
+    fetch('/cache/clear-all', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ pattern: '*' })
+        }
     })
     .then(response => response.json())
     .then(data => {
@@ -159,10 +240,10 @@ function showNotification(message, type) {
     }, 3000);
 }
 
-// Load Redis status when page loads
+// Load cache status when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    loadRedisStatus();
+    loadCacheStatus();
     
     // Refresh status every 30 seconds
-    setInterval(loadRedisStatus, 30000);
+    setInterval(loadCacheStatus, 30000);
 }); 

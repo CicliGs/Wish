@@ -7,16 +7,16 @@ namespace App\DTOs;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
-class ProfileDTO extends BaseDTO
+readonly class ProfileDTO implements BaseDTO
 {
     public function __construct(
-        public readonly User $user,
-        public readonly array $stats,
-        public readonly Collection $friends,
-        public readonly Collection $incomingRequests,
-        public readonly Collection $outgoingRequests,
-        public readonly array $achievements,
-        public readonly Collection $wishLists
+        public User       $user,
+        public array      $stats,
+        public Collection $friends,
+        public Collection $incomingRequests,
+        public Collection $outgoingRequests,
+        public array      $achievements,
+        public Collection $wishLists
     ) {}
 
     public function toArray(): array
@@ -34,7 +34,7 @@ class ProfileDTO extends BaseDTO
 
     public static function fromArray(array $data): static
     {
-        return new static(
+        return new self(
             user: $data['user'],
             stats: $data['stats'],
             friends: $data['friends'],
@@ -44,4 +44,4 @@ class ProfileDTO extends BaseDTO
             wishLists: $data['wishLists'],
         );
     }
-} 
+}

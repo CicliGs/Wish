@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\MoneyHelper;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,17 +12,29 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $avatar
+ * @property string $currency
+ * @property Carbon|null $email_verified_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @method static create(array $data)
+ * @method static findOrFail(int $userId)
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    public const DEFAULT_CURRENCY = 'BYN';
-    private const SUPPORTED_CURRENCIES = ['BYN', 'USD', 'EUR', 'RUB'];
+    public const DEFAULT_CURRENCY = 'USD';
 
     /**
      * The attributes that are mass assignable.
@@ -130,7 +143,7 @@ class User extends Authenticatable
     {
         $data['password'] = Hash::make($data['password']);
         $data['currency'] = $data['currency'] ?? self::DEFAULT_CURRENCY;
-        
+
         return self::create($data);
     }
 
@@ -143,7 +156,7 @@ class User extends Authenticatable
             $request->session()->regenerate();
             return true;
         }
-        
+
         return false;
     }
 
@@ -153,20 +166,22 @@ class User extends Authenticatable
     public static function logout(Request $request): void
     {
         Auth::logout();
-        
+
         $request->session()->invalidate();
-        
+
         $request->session()->regenerateToken();
-        
+
         $request->session()->flush();
-        
+
         $request->session()->forget('remember_web');
-        
+
         if (Auth::check()) {
             $user = Auth::user();
-            if ($user) {
-                cache()->forget('user_' . $user->id);
-                cache()->forget('user_permissions_' . $user->id);
+            if ($user instanceof self) {
+                /** @var int $userId */
+                $userId = $user->id;
+                cache()->forget('user_' . $userId);
+                cache()->forget('user_permissions_' . $userId);
             }
         }
     }
@@ -184,7 +199,11 @@ class User extends Authenticatable
      */
     public function hasReservedWish(Wish $wish): bool
     {
-        return $wish->reservation && $wish->reservation->user_id === $this->id;
+        /** @var int $wishReservationUserId */
+        $wishReservationUserId = $wish->reservation->user_id ?? null;
+        $userId = $this->id;
+
+        return $wish->reservation && $wishReservationUserId === $userId;
     }
 
     /**
@@ -224,8 +243,8 @@ class User extends Authenticatable
      */
     public function setCurrencyAttribute(string $currency): void
     {
-        $this->attributes['currency'] = in_array($currency, self::SUPPORTED_CURRENCIES) 
-            ? $currency 
+        $this->attributes['currency'] = MoneyHelper::isValidCurrency($currency)
+            ? $currency
             : self::DEFAULT_CURRENCY;
     }
 
@@ -234,7 +253,7 @@ class User extends Authenticatable
      */
     public static function getSupportedCurrencies(): array
     {
-        return self::SUPPORTED_CURRENCIES;
+        return array_keys(MoneyHelper::getSupportedCurrencies());
     }
 
     /**
@@ -242,6 +261,6 @@ class User extends Authenticatable
      */
     public static function isCurrencySupported(string $currency): bool
     {
-        return in_array($currency, self::SUPPORTED_CURRENCIES);
+        return MoneyHelper::isValidCurrency($currency);
     }
 }

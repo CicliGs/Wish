@@ -8,15 +8,15 @@ use App\Models\WishList;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
-class PublicWishListDTO extends BaseDTO
+readonly class PublicWishListDTO implements BaseDTO
 {
     public function __construct(
-        public readonly WishList $wishList,
-        public readonly User $user,
-        public readonly Collection $wishes,
-        public readonly bool $isGuest,
-        public readonly bool $isFriend,
-        public readonly bool $isOwner
+        public WishList   $wishList,
+        public User       $user,
+        public Collection $wishes,
+        public bool       $isGuest,
+        public bool       $isFriend,
+        public bool       $isOwner
     ) {}
 
     public function toArray(): array
@@ -33,7 +33,7 @@ class PublicWishListDTO extends BaseDTO
 
     public static function fromArray(array $data): static
     {
-        return new static(
+        return new self(
             wishList: $data['wishList'],
             user: $data['user'],
             wishes: $data['wishes'],
@@ -42,4 +42,4 @@ class PublicWishListDTO extends BaseDTO
             isOwner: $data['isOwner'],
         );
     }
-} 
+}

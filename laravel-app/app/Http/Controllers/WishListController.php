@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\WishList;
 use App\Services\WishListService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,9 @@ class WishListController extends Controller
 {
     use AuthorizesRequests;
 
-    public function __construct(protected WishListService $service) {}
+    public function __construct(
+        protected WishListService $service
+    ) {}
 
     /**
      * Display user wish lists.
@@ -25,7 +28,7 @@ class WishListController extends Controller
     public function index(): View
     {
         $wishListDTO = $this->service->getIndexData(Auth::id());
-        
+
         return view('wishlists.index', $wishListDTO->toArray());
     }
 
@@ -44,14 +47,18 @@ class WishListController extends Controller
     {
         try {
             $this->service->create($request->all(), Auth::id());
-            return $this->redirectToIndex('wishlist_created');
+
         } catch (Exception $e) {
+
             return $this->redirectToIndexWithError('error_creating_list', $e->getMessage());
         }
+
+        return $this->redirectToIndex('wishlist_created');
     }
 
     /**
      * Display wish list edit form.
+     * @throws AuthorizationException
      */
     public function edit(WishList $wishList): View
     {
@@ -62,6 +69,7 @@ class WishListController extends Controller
 
     /**
      * Update wish list.
+     * @throws AuthorizationException
      */
     public function update(Request $request, WishList $wishList): RedirectResponse
     {
@@ -69,10 +77,13 @@ class WishListController extends Controller
 
         try {
             $this->service->update($wishList, $request->all());
-            return $this->redirectToIndex('wishlist_updated');
+
         } catch (Exception $e) {
+
             return $this->redirectToIndexWithError('error_updating_list', $e->getMessage());
         }
+
+        return $this->redirectToIndex('wishlist_updated');
     }
 
     /**
@@ -81,12 +92,13 @@ class WishListController extends Controller
     public function public(string $uuid): View
     {
         $publicWishListDTO = $this->service->getPublicWishListData($uuid);
-        
+
         return view('wishlists.public', $publicWishListDTO->toArray());
     }
 
     /**
      * Delete wish list.
+     * @throws AuthorizationException
      */
     public function destroy(WishList $wishList): RedirectResponse
     {
@@ -94,25 +106,12 @@ class WishListController extends Controller
 
         try {
             $this->service->delete($wishList);
-            return $this->redirectToIndex('wishlist_deleted');
+
         } catch (Exception $e) {
+
             return $this->redirectToIndexWithError('error_deleting_list', $e->getMessage());
         }
-    }
-
-    /**
-     * Regenerate UUID for wish list.
-     */
-    public function regenerateUuid(WishList $wishList): RedirectResponse
-    {
-        $this->authorize('update', $wishList);
-
-        try {
-            $this->service->regenerateUuid($wishList);
-            return back()->with('success', __('messages.uuid_regenerated'));
-        } catch (Exception $e) {
-            return back()->with('error', __('messages.error_regenerating_uuid') . $e->getMessage());
-        }
+        return $this->redirectToIndex('wishlist_deleted');
     }
 
     /**

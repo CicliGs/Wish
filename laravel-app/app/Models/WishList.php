@@ -4,13 +4,33 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\MoneyHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $title
+ * @property string|null $description
+ * @property string $uuid
+ * @property bool $is_public
+ * @property string $currency
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property mixed $user
+ * @property mixed $wishes
+ * @method static forUser(int $userId)
+ * @method static create(array $data)
+ * @method static where(string $string, int $userId)
+ * @method static findOrFail(int $wishListId)
+ * @method static find(int $wishListId)
+ */
 class WishList extends Model
 {
     use HasFactory;
@@ -43,14 +63,18 @@ class WishList extends Model
     /**
      * Default currency for new wish lists.
      */
-    public const DEFAULT_CURRENCY = 'BYN';
+    public const DEFAULT_CURRENCY = 'USD';
 
     /**
      * Get supported currencies.
      */
     public static function getSupportedCurrencies(): array
     {
-        return ['BYN', 'USD', 'EUR', 'RUB'];
+        return array_keys(MoneyHelper::getSupportedCurrencies());
+    }
+
+    public static function public()
+    {
     }
 
     /**

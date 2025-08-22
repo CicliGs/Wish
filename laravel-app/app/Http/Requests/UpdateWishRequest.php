@@ -9,6 +9,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class UpdateWishRequest extends FormRequest
 {
+    use MoneyValidationTrait;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -20,33 +21,35 @@ class UpdateWishRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
-        return [
+        return array_merge([
             'title' => ['required', 'string', 'max:255'],
             'url' => ['nullable', 'url', 'max:500'],
-            'image' => ['nullable', 'string', 'max:500'], // changed from 'url' to 'string'
+            'image' => ['nullable', 'string', 'max:500'],
             'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
-        ];
+        ], $this->getMoneyRules());
     }
 
     /**
      * Get custom messages for validator errors.
+     *
+     * @return array<string, mixed>
      */
     public function messages(): array
     {
-        return [
-            'title.required' => 'Название желания обязательно для заполнения.',
-            'title.max' => 'Название не может быть длиннее 255 символов.',
-            'url.url' => 'Ссылка должна быть валидным URL.',
-            'url.max' => 'Ссылка не может быть длиннее 500 символов.',
-            'image.max' => 'Ссылка на изображение не может быть длиннее 500 символов.',
-            'price.numeric' => 'Цена должна быть числом.',
-            'price.min' => 'Цена не может быть отрицательной.',
-            'price.max' => 'Цена не может быть больше 999999.99.',
-        ];
+        return array_merge([
+            'title.required' => __('validation.wish.title.required'),
+            'title.max' => __('validation.wish.title.max'),
+            'url.url' => __('validation.wish.url.url'),
+            'url.max' => __('validation.wish.url.max'),
+            'image.max' => __('validation.wish.image.max'),
+            'price.numeric' => __('validation.wish.price.numeric'),
+            'price.min' => __('validation.wish.price.min'),
+            'price.max' => __('validation.wish.price.max'),
+        ], $this->getMoneyMessages());
     }
 
     /**
@@ -54,11 +57,58 @@ class UpdateWishRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        /** @var string|null $price */
+        $price = $this->input('price');
+        $normalizedPrice = $this->validatePrice($price);
+        $currency = $this->getCurrencyForValidation();
+
+        /** @var string|null $title */
+        $title = $this->input('title');
+        /** @var string|null $url */
+        $url = $this->input('url');
+        /** @var string|null $image */
+        $image = $this->input('image');
+
         $this->merge([
-            'title' => trim($this->title),
-            'url' => $this->url ? trim($this->url) : null,
-            'image' => $this->image ? trim($this->image) : null,
-            'price' => $this->price ? (float) $this->price : null,
+            'title' => $title ? trim($title) : null,
+            'url' => $url ? trim($url) : null,
+            'image' => $image ? trim($image) : null,
+            'price' => $normalizedPrice,
+            'currency' => $currency,
         ]);
+    }
+
+    /**
+     * Get validated and processed data for the wish.
+     *
+     * @return array<string, mixed>
+     */
+    public function getWishData(): array
+    {
+        return [
+            'title' => $this->validated('title'),
+            'url' => $this->validated('url'),
+            'image' => $this->validated('image'),
+            'price' => $this->validated('price'),
+        ];
+    }
+
+    /**
+     * Get the currency for this wish.
+     */
+    public function getWishCurrency(): ?string
+    {
+        return $this->validated('currency');
+    }
+
+    /**
+     * Check if request has valid Money data.
+     */
+    public function hasValidMoneyData(): bool
+    {
+        $price = $this->validated('price');
+        $currency = $this->validated('currency');
+
+        return $this->validateMoneyPrice($price, $currency);
     }
 }

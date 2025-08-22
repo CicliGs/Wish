@@ -7,7 +7,6 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
-use App\Models\FriendRequest;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,7 +23,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // View Composer для навигации
         View::composer('layouts.app', function ($view) {
             if (Auth::check()) {
                 $incomingRequestsCount = Auth::user()->incomingRequests()->where('status', 'pending')->count();

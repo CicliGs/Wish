@@ -287,4 +287,5 @@ return [
     'no_description' => 'No description',
     'show_qr_code' => 'Show QR Code',
     'edit_wishlist' => 'Edit Wish List',
+    'view_profile' => 'View Profile',
 ]; 
