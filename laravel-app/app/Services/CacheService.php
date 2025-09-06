@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Config;
 
 class CacheService
 {
-    private const CACHE_KEYS_TTL = 86400; // 24 hours
+    private const CACHE_KEYS_TTL = 86400;
     private const CACHE_KEYS_STORAGE = 'cache_keys';
 
     public function cacheStaticContent(string $key, string $content, ?int $ttl = null): bool
@@ -56,19 +56,34 @@ class CacheService
 
     public function clearAllCache(): bool
     {
-        try {
+        return $this->executeSafely(function () {
             Cache::flush();
-            Log::info('All cache cleared');
             return true;
-        } catch (Exception $e) {
-            $this->logError('Failed to clear all cache', ['error' => $e->getMessage()]);
-            return false;
-        }
+        }, 'Failed to clear all cache');
+    }
+
+    public function clearCacheByType(CacheType $type): bool
+    {
+        return $this->executeSafely(function () use ($type) {
+            $pattern = $this->buildCacheKey($type, '*');
+            $keys = $this->getCacheKeysByPattern($pattern);
+            $this->deleteKeys($keys);
+            return true;
+        }, "Failed to clear cache for type: {$type->value}");
+    }
+
+    public function clearUserCache(int $userId): bool
+    {
+        return $this->executeSafely(function () use ($userId) {
+            $userKeys = $this->getUserCacheKeys($userId);
+            $this->deleteKeys($userKeys);
+            return true;
+        }, "Failed to clear cache for user: $userId");
     }
 
     public function getCacheStats(): array
     {
-        try {
+        return $this->executeSafely(function () {
             return [
                 'driver' => Config::get('cache.default'),
                 'store' => Config::get('cache.stores.' . Config::get('cache.default') . '.driver'),
@@ -76,158 +91,64 @@ class CacheService
                 'ttl_settings' => $this->buildTtlSettings(),
                 'description' => 'Caching static page elements for performance',
             ];
-        } catch (Exception $e) {
-            $this->logError('Failed to get cache stats', ['error' => $e->getMessage()]);
-            return [];
-        }
+        }, 'Failed to get cache stats') ?? [];
     }
 
     public function hasCache(CacheType $type, string $key): bool
     {
-        try {
+        return $this->executeSafely(function () use ($type, $key) {
             return Cache::has($this->buildCacheKey($type, $key));
-        } catch (Exception $e) {
-            $this->logError('Failed to check cache existence', [
-                'type' => $type->value,
-                'key' => $key,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
+        }, 'Failed to check cache existence', [
+            'type' => $type->value,
+            'key' => $key
+        ]) ?? false;
     }
 
     public function getCacheTTL(CacheType $type, string $key): ?int
     {
-        try {
+        return $this->executeSafely(function () use ($type, $key) {
             $cacheKey = $this->buildCacheKey($type, $key);
 
             if (!Cache::has($cacheKey)) {
                 return null;
             }
 
-            // Возвращаем настроенный TTL для данного типа кеша
             return $type->getTTL();
-        } catch (Exception $e) {
-            $this->logError('Failed to get cache TTL', [
-                'type' => $type->value,
-                'key' => $key,
-                'error' => $e->getMessage()
-            ]);
-            return null;
-        }
+        }, 'Failed to get cache TTL', [
+            'type' => $type->value,
+            'key' => $key
+        ]);
     }
 
     private function cache(CacheType $type, $key, $data, ?int $ttl = null): bool
     {
-        try {
+        return $this->executeSafely(function () use ($type, $key, $data, $ttl) {
             $ttl = $ttl ?? $type->getTTL();
             $cacheKey = $this->buildCacheKey($type, $key);
 
             Cache::put($cacheKey, $data, $ttl);
             $this->trackCacheKey($cacheKey);
 
-            Log::info("$type->value cached", [
-                'key' => $key,
-                'ttl' => $ttl,
-                'type' => $type->value
-            ]);
-
             return true;
-        } catch (Exception $e) {
-            $this->logError("Failed to cache $type->value", [
-                'key' => $key,
-                'type' => $type->value,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
+        }, "Failed to cache {$type->value}", [
+            'key' => $key,
+            'type' => $type->value
+        ]) ?? false;
     }
 
     private function get(CacheType $type, $key)
     {
-        try {
+        return $this->executeSafely(function () use ($type, $key) {
             return Cache::get($this->buildCacheKey($type, $key));
-        } catch (Exception $e) {
-            $this->logError("Failed to get $type->value", [
-                'key' => $key,
-                'type' => $type->value,
-                'error' => $e->getMessage()
-            ]);
-            return null;
-        }
+        }, "Failed to get {$type->value}", [
+            'key' => $key,
+            'type' => $type->value
+        ]);
     }
 
     private function buildCacheKey(CacheType $type, $key): string
     {
         return $type->getPrefix() . ":$key";
-    }
-
-    private function logError(string $message, array $context = []): void
-    {
-        Log::error($message, $context);
-    }
-
-    private function trackCacheKey(string $cacheKey): void
-    {
-        try {
-            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
-
-            if (!in_array($cacheKey, $keys, true)) {
-                $keys[] = $cacheKey;
-                Cache::put(self::CACHE_KEYS_STORAGE, $keys, self::CACHE_KEYS_TTL);
-            }
-        } catch (Exception $e) {
-            Log::warning('Failed to track cache key', [
-                'key' => $cacheKey,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    public function clearCacheByType(CacheType $type): bool
-    {
-        try {
-            $prefix = $type->getPrefix();
-            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
-            $keysToDelete = $this->filterKeysByPrefix($keys, $prefix);
-
-            $this->deleteKeys($keysToDelete);
-            $this->updateCacheKeys(array_diff($keys, $keysToDelete));
-
-            Log::info("Cache cleared for type: $type->value", [
-                'deleted_keys' => count($keysToDelete)
-            ]);
-
-            return true;
-        } catch (Exception $e) {
-            $this->logError("Failed to clear cache for type: $type->value", [
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
-    }
-
-    public function clearUserCache(int $userId): bool
-    {
-        try {
-            $userPrefix = "user_$userId";
-            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
-            $keysToDelete = $this->filterKeysByPattern($keys, $userPrefix);
-
-            $this->deleteKeys($keysToDelete);
-            $this->updateCacheKeys(array_diff($keys, $keysToDelete));
-
-            Log::info("Cache cleared for user: $userId", [
-                'deleted_keys' => count($keysToDelete)
-            ]);
-
-            return true;
-        } catch (Exception $e) {
-            $this->logError("Failed to clear cache for user: $userId", [
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
     }
 
     private function buildTtlSettings(): array
@@ -240,14 +161,37 @@ class CacheService
         ];
     }
 
-    private function filterKeysByPrefix(array $keys, string $prefix): array
+    private function trackCacheKey(string $cacheKey): void
     {
-        return array_filter($keys, fn($key) => str_starts_with($key, $prefix));
+        $this->executeSafely(function () use ($cacheKey) {
+            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
+
+            if (!in_array($cacheKey, $keys, true)) {
+                $keys[] = $cacheKey;
+                Cache::put(self::CACHE_KEYS_STORAGE, $keys, self::CACHE_KEYS_TTL);
+            }
+        }, 'Failed to track cache key', ['key' => $cacheKey]);
     }
 
-    private function filterKeysByPattern(array $keys, string $pattern): array
+    private function getCacheKeysByPattern(string $pattern): array
     {
-        return array_filter($keys, fn($key) => str_contains($key, $pattern));
+        return $this->executeSafely(function () use ($pattern) {
+            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
+            return array_filter($keys, fn($key) => fnmatch($pattern, $key));
+        }, 'Failed to get cache keys by pattern', ['pattern' => $pattern]) ?? [];
+    }
+
+    private function getUserCacheKeys(int $userId): array
+    {
+        return $this->executeSafely(function () use ($userId) {
+            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
+            return array_filter($keys, function($key) use ($userId) {
+                return str_contains($key, "user_$userId") ||
+                       str_contains($key, "user_wishlists_$userId") ||
+                       str_contains($key, "user_profile_$userId") ||
+                       (str_contains($key, "wishes_list_") && str_contains($key, "_user_$userId"));
+            });
+        }, 'Failed to get user cache keys', ['user_id' => $userId]) ?? [];
     }
 
     private function deleteKeys(array $keys): void
@@ -257,8 +201,18 @@ class CacheService
         }
     }
 
-    private function updateCacheKeys(array $keys): void
+    private function executeSafely(callable $operation, string $errorMessage, array $context = [])
     {
-        Cache::put(self::CACHE_KEYS_STORAGE, $keys, self::CACHE_KEYS_TTL);
+        try {
+            return $operation();
+        } catch (Exception $e) {
+            $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]));
+            return null;
+        }
+    }
+
+    private function logError(string $message, array $context = []): void
+    {
+        Log::error($message, $context);
     }
 }

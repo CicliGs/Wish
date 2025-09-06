@@ -114,20 +114,24 @@ function refreshStats() {
 }
 
 function showError(message) {
-    // Create error notification
-    const notification = document.createElement('div');
-    notification.className = 'alert alert-danger position-fixed';
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.innerHTML = `
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        ${message}
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
+    if (window.systemNotifications) {
+        window.systemNotifications.error(message);
+    } else {
+        // Fallback для обратной совместимости
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-danger position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            ${message}
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
 }
 
 // Load stats when page loads

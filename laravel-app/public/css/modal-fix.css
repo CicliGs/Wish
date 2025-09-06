@@ -1,31 +1,32 @@
 /* Modal Fixes for Bootstrap 5 - AGGRESSIVE OVERRIDE */
-.modal,
-.modal.show,
-.modal[style*="z-index"] {
+/* Исключаем модальное окно уведомлений из глобальных правил */
+.modal:not(#notificationsModal),
+.modal.show:not(#notificationsModal),
+.modal[style*="z-index"]:not(#notificationsModal) {
     z-index: 9999 !important;
 }
 
-.modal-backdrop,
-.modal-backdrop.show,
-.modal-backdrop[style*="z-index"] {
+.modal-backdrop:not(#notificationsModal + .modal-backdrop),
+.modal-backdrop.show:not(#notificationsModal + .modal-backdrop),
+.modal-backdrop[style*="z-index"]:not(#notificationsModal + .modal-backdrop) {
     z-index: 9998 !important;
 }
 
-.modal-content,
-.modal-content[style*="z-index"] {
+.modal-content:not(#notificationsModal .modal-content),
+.modal-content[style*="z-index"]:not(#notificationsModal .modal-content) {
     z-index: 10000 !important;
     position: relative !important;
 }
 
-.modal-dialog,
-.modal-dialog[style*="z-index"] {
+.modal-dialog:not(#notificationsModal .modal-dialog),
+.modal-dialog[style*="z-index"]:not(#notificationsModal .modal-dialog) {
     z-index: 10001 !important;
 }
 
-.btn-close,
-.modal .btn-close,
-.modal-header .btn-close,
-button.btn-close {
+.btn-close:not(#notificationsModal .btn-close),
+.modal .btn-close:not(#notificationsModal .btn-close),
+.modal-header .btn-close:not(#notificationsModal .btn-close),
+button.btn-close:not(#notificationsModal .btn-close) {
     z-index: 10002 !important;
     position: relative !important;
     cursor: pointer !important;
@@ -66,6 +67,28 @@ button.btn-close {
 
 #allAchievementsModal .btn-close {
     z-index: 10002 !important;
+}
+
+/* Specific fix for notifications modal - ensure it's above navbar */
+#notificationsModal,
+#notificationsModal.show {
+    z-index: 1050 !important;
+}
+
+#notificationsModal .modal-content {
+    z-index: 1055 !important;
+}
+
+#notificationsModal .modal-dialog {
+    z-index: 1055 !important;
+}
+
+#notificationsModal .btn-close {
+    z-index: 1056 !important;
+}
+
+#notificationsModal + .modal-backdrop {
+    z-index: 1045 !important;
 }
 
 /* Override any inline styles */
@@ -212,51 +235,51 @@ html body button.btn-close {
     z-index: 10002 !important;
 }
 
-/* Force all modals to be above everything */
-*[class*="modal"] {
+/* Force all modals to be above everything (except notifications modal) */
+*[class*="modal"]:not([id*="notificationsModal"]) {
     z-index: 9999 !important;
 }
 
-*[class*="modal-backdrop"] {
+*[class*="modal-backdrop"]:not([id*="notificationsModal"] + *) {
     z-index: 9998 !important;
 }
 
 /* ATTRIBUTE SELECTOR OVERRIDE - MAXIMUM PRIORITY */
-[class*="modal"]:not([class*="modal-backdrop"]) {
+[class*="modal"]:not([class*="modal-backdrop"]):not([id*="notificationsModal"]) {
     z-index: 9999 !important;
 }
 
-[class*="modal-backdrop"] {
+[class*="modal-backdrop"]:not([id*="notificationsModal"] + *) {
     z-index: 9998 !important;
 }
 
-/* Force z-index with attribute selectors */
-[class*="modal-content"] {
+/* Force z-index with attribute selectors (except notifications modal) */
+[class*="modal-content"]:not([id*="notificationsModal"] *) {
     z-index: 10000 !important;
 }
 
-[class*="modal-dialog"] {
+[class*="modal-dialog"]:not([id*="notificationsModal"] *) {
     z-index: 10001 !important;
 }
 
-[class*="btn-close"] {
+[class*="btn-close"]:not([id*="notificationsModal"] *) {
     z-index: 10002 !important;
 }
 
-/* Bootstrap 5 specific overrides */
-.fade.modal {
+/* Bootstrap 5 specific overrides (except notifications modal) */
+.fade.modal:not(#notificationsModal) {
     z-index: 9999 !important;
 }
 
-.fade.modal-backdrop {
+.fade.modal-backdrop:not(#notificationsModal + .modal-backdrop) {
     z-index: 9998 !important;
 }
 
-.show.modal {
+.show.modal:not(#notificationsModal) {
     z-index: 9999 !important;
 }
 
-.show.modal-backdrop {
+.show.modal-backdrop:not(#notificationsModal + .modal-backdrop) {
     z-index: 9998 !important;
 }
 
@@ -268,21 +291,21 @@ html body button.btn-close {
     visibility: hidden !important;
 }
 
-/* Force modal to be visible and clickable */
-.modal.show {
+/* Force modal to be visible and clickable (except notifications modal) */
+.modal.show:not(#notificationsModal) {
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
 }
 
-/* Ensure modal content is above everything */
-.modal.show .modal-content {
+/* Ensure modal content is above everything (except notifications modal) */
+.modal.show:not(#notificationsModal) .modal-content {
     position: relative !important;
     z-index: 10000 !important;
 }
 
-/* Force close button to be clickable */
-.modal.show .btn-close {
+/* Force close button to be clickable (except notifications modal) */
+.modal.show:not(#notificationsModal) .btn-close {
     position: relative !important;
     z-index: 10002 !important;
     pointer-events: auto !important;

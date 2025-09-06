@@ -63,28 +63,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to show alerts (reuse existing alert system)
 function showAlert(type, message) {
-    const alertContainer = document.querySelector('.container');
-    if (!alertContainer) return;
-    
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.style.zIndex = '10002'; // Ensure alerts appear above everything
-    alertDiv.innerHTML = `
-        <div class="alert-message">
-            <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2"></i>
-            ${message}
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-    
-    alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
-    
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
-        }
-    }, 3000);
+    if (window.systemNotifications) {
+        window.systemNotifications.show(message, type);
+    } else {
+        // Fallback для обратной совместимости
+        const alertContainer = document.querySelector('.container');
+        if (!alertContainer) return;
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.style.zIndex = '10002'; // Ensure alerts appear above everything
+        alertDiv.innerHTML = `
+            <div class="alert-message">
+                <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 3000);
+    }
 }
 
 // Function to get currency icon

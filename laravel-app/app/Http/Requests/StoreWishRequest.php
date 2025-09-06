@@ -10,6 +10,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 class StoreWishRequest extends FormRequest
 {
     use MoneyValidationTrait;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -58,16 +59,12 @@ class StoreWishRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        /** @var string|null $price */
         $price = $this->input('price');
         $normalizedPrice = $this->validatePrice($price);
         $currency = $this->getCurrencyForValidation();
 
-        /** @var string|null $title */
         $title = $this->input('title');
-        /** @var string|null $url */
         $url = $this->input('url');
-        /** @var string|null $image */
         $image = $this->input('image');
 
         $this->merge([
@@ -82,34 +79,22 @@ class StoreWishRequest extends FormRequest
     /**
      * Get validated and processed data for the wish.
      *
-     * @return array<string, mixed>
+     * @return array{title: string, url: string|null, image: string|null, price: float|null}
      */
     public function getWishData(): array
     {
-        return [
+        $data = [
             'title' => $this->validated('title'),
             'url' => $this->validated('url'),
-            'image' => $this->validated('image'),
             'price' => $this->validated('price'),
         ];
-    }
 
-    /**
-     * Get the currency for this wish.
-     */
-    public function getWishCurrency(): ?string
-    {
-        return $this->validated('currency');
-    }
+        if ($this->hasFile('image_file')) {
+            $data['image'] = null;
+        } else {
+            $data['image'] = $this->validated('image');
+        }
 
-    /**
-     * Check if request has valid Money data.
-     */
-    public function hasValidMoneyData(): bool
-    {
-        $price = $this->validated('price');
-        $currency = $this->validated('currency');
-
-        return $this->validateMoneyPrice($price, $currency);
+        return $data;
     }
 }

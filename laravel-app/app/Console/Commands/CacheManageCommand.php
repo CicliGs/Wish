@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -13,8 +15,8 @@ class CacheManageCommand extends Command
      * The name and signature of the console command.
      */
     protected $signature = 'cache:manage
-                            {action : Action to perform (clear, stats, clear-type, clear-user)}
-                            {--type= : Cache type to clear (static_content, images, css_js, avatars)}
+                            {action : Action to perform (clear|stats|clear-type|clear-user)}
+                            {--type= : Cache type to clear (static_content|images|css_js|avatars)}
                             {--user= : User ID to clear cache for}';
 
     /**
@@ -35,19 +37,22 @@ class CacheManageCommand extends Command
     {
         $action = $this->argument('action');
 
-        switch ($action) {
-            case 'clear':
-                return $this->clearAllCache();
-            case 'stats':
-                return $this->showCacheStats();
-            case 'clear-type':
-                return $this->clearCacheByType();
-            case 'clear-user':
-                return $this->clearUserCache();
-            default:
-                $this->error("Unknown action: $action");
-                return 1;
-        }
+        return match ($action) {
+            'clear' => $this->clearAllCache(),
+            'stats' => $this->showCacheStats(),
+            'clear-type' => $this->clearCacheByType(),
+            'clear-user' => $this->clearUserCache(),
+            default => $this->handleUnknownAction($action),
+        };
+    }
+
+    /**
+     * Handle unknown action
+     */
+    private function handleUnknownAction(string $action): int
+    {
+        $this->error("Unknown action: $action");
+        return self::FAILURE;
     }
 
     /**
@@ -61,10 +66,10 @@ class CacheManageCommand extends Command
 
         if ($success) {
             $this->info('All cache cleared successfully!');
-            return 0;
+            return self::SUCCESS;
         } else {
             $this->error('Failed to clear cache!');
-            return 1;
+            return self::FAILURE;
         }
     }
 
@@ -80,7 +85,7 @@ class CacheManageCommand extends Command
 
         if (empty($stats)) {
             $this->error('Failed to get cache statistics!');
-            return 1;
+            return self::FAILURE;
         }
 
         $this->table(
@@ -102,7 +107,7 @@ class CacheManageCommand extends Command
         $this->newLine();
         $this->info($stats['description'] ?? 'No description available');
 
-        return 0;
+        return self::SUCCESS;
     }
 
     /**
@@ -115,7 +120,7 @@ class CacheManageCommand extends Command
         if (!$type) {
             $this->error('Please specify cache type with --type option');
             $this->info('Available types: static_content, images, css_js, avatars');
-            return 1;
+            return self::FAILURE;
         }
 
         try {
@@ -123,7 +128,7 @@ class CacheManageCommand extends Command
         } catch (Exception) {
             $this->error("Invalid cache type: $type");
             $this->info('Available types: static_content, images, css_js, avatars');
-            return 1;
+            return self::FAILURE;
         }
 
         $this->info("Clearing $type cache...");
@@ -132,10 +137,10 @@ class CacheManageCommand extends Command
 
         if ($success) {
             $this->info("$type cache cleared successfully!");
-            return 0;
+            return self::SUCCESS;
         } else {
             $this->error("Failed to clear $type cache!");
-            return 1;
+            return self::FAILURE;
         }
     }
 
@@ -148,12 +153,12 @@ class CacheManageCommand extends Command
 
         if (!$userId) {
             $this->error('Please specify user ID with --user option');
-            return 1;
+            return self::FAILURE;
         }
 
         if (!is_numeric($userId)) {
             $this->error('User ID must be a number');
-            return 1;
+            return self::FAILURE;
         }
 
         $this->info("Clearing cache for user $userId...");
@@ -162,10 +167,10 @@ class CacheManageCommand extends Command
 
         if ($success) {
             $this->info("Cache for user $userId cleared successfully!");
-            return 0;
+            return self::SUCCESS;
         } else {
             $this->error("Failed to clear cache for user $userId!");
-            return 1;
+            return self::FAILURE;
         }
     }
 }

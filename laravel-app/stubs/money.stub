@@ -1,0 +1,46 @@
+<?php
+
+namespace Money;
+
+class Money
+{
+    public function __construct(string|int $amount, Currency $currency) {}
+    
+    public function getCurrency(): Currency {}
+    
+    public function getAmount(): string {}
+    
+    public static function create(float|string $amount, string $currencyCode): self {}
+}
+
+class Currency
+{
+    public function __construct(string $code) {}
+    
+    public function getCode(): string {}
+}
+
+namespace Money\Formatter;
+
+class DecimalMoneyFormatter
+{
+    public function __construct(\Money\Currencies\CurrencyList $currencies) {}
+    
+    public function format(\Money\Money $money): string {}
+}
+
+namespace Money\Currencies;
+
+interface CurrencyList
+{
+    public function contains(\Money\Currency $currency): bool;
+    
+    public function subunitFor(\Money\Currency $currency): int;
+}
+
+class ISOCurrencies implements CurrencyList
+{
+    public function contains(\Money\Currency $currency): bool {}
+    
+    public function subunitFor(\Money\Currency $currency): int {}
+}

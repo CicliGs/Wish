@@ -32,4 +32,18 @@
 
 .currency-badge i {
     font-size: 0.8rem;
+}
+
+/* Modal z-index hierarchy */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Ensure notifications modal is above navbar */
+body.modal-open #notificationsModal {
+    z-index: 1050 !important;
+}
+
+body.modal-open .navbar {
+    z-index: 1029 !important;
 } 

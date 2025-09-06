@@ -39,7 +39,6 @@ class MoneyHelper
         $currency = new Currency($currencyCode);
         $subunit = self::$currencies->subunitFor($currency);
 
-        // Convert float to minor units (cents)
         $minorUnits = (int) round($amount * (10 ** $subunit));
 
         return new Money($minorUnits, $currency);

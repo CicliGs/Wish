@@ -12,8 +12,10 @@
     <link rel="stylesheet" href="{{ asset('css/buttons.css') }}">
     <link rel="stylesheet" href="{{ asset('css/navbar.css') }}">
     <link rel="stylesheet" href="{{ asset('css/modal-fix.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/notifications-dropdown.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/system-notifications.css') }}">
     @stack('styles')
-    
+
     <script>
         // Обновляем CSRF токен при каждой загрузке страницы
         window.Laravel = {!! json_encode([
@@ -27,11 +29,11 @@
         <a class="navbar-brand" href="/">
             <img src="{{ asset('images/logo2.png') }}" alt="Виш-лист">
         </a>
-        
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        
+
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-center">
                 @auth
@@ -59,11 +61,50 @@
                             {{ __('messages.profile') }}
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('cache.stats') ? 'active' : '' }}" href="{{ route('cache.stats') }}">
-                            <i class="bi bi-speedometer2 me-1"></i>
-                            {{ __('messages.cache_stats') }}
-                        </a>
+{{--                    <li class="nav-item">--}}
+{{--                        <a class="nav-link {{ request()->routeIs('cache.stats') ? 'active' : '' }}" href="{{ route('cache.stats') }}">--}}
+{{--                            <i class="bi bi-speedometer2 me-1"></i>--}}
+{{--                            {{ __('messages.cache_stats') }}--}}
+{{--                        </a>--}}
+{{--                    </li>--}}
+                    <li class="nav-item position-relative">
+                        <div class="dropdown">
+                            <button class="btn btn-link nav-link dropdown-toggle" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell-fill me-1"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle notification-badge rounded-circle" id="notificationCount" style="font-size:0.7em; min-width: 18px; height: 18px; display: none; align-items: center; justify-content: center;">
+                                    <span class="visually-hidden">Уведомления</span>
+                                    <span id="notificationCountText">0</span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end notifications-dropdown" aria-labelledby="notificationsDropdown">
+                                <div class="dropdown-header d-flex align-items-center justify-content-between">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-bell-fill me-2"></i>
+                                        {{ __('messages.notifications') }}
+                                    </h6>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <div class="notifications-container">
+                                    <div id="notificationsList" class="notifications-list">
+                                        <!-- Notifications will be loaded here -->
+                                    </div>
+                                    <div id="notificationsEmpty" class="text-center text-muted py-3">
+                                        <i class="bi bi-bell-slash" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                                        <p class="mt-2 mb-1 small">{{ __('messages.no_new_notifications') }}</p>
+                                        <p class="text-muted small mb-0">
+                                            {{ __('messages.notifications_will_appear') }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-footer text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="markAllReadBtn" style="display: none;">
+                                        <i class="bi bi-check-all me-1"></i>
+                                        {{ __('messages.mark_all_as_read') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -131,22 +172,18 @@
 
 <div class="container">
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <div class="alert-message">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                {{ session('success') }}
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                window.systemNotifications.success('{{ session('success') }}');
+            });
+        </script>
     @endif
     @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <div class="alert-message">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                {{ session('error') }}
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                window.systemNotifications.error('{{ session('error') }}');
+            });
+        </script>
     @endif
 </div>
 
@@ -158,6 +195,8 @@
 <script src="{{ asset('js/modal-fix.js') }}"></script>
 <script src="{{ asset('js/app-layout.js') }}"></script>
 <script src="{{ asset('js/modal.js') }}"></script>
+<script src="{{ asset('js/notifications.js') }}?v={{ filemtime(public_path('js/notifications.js')) }}"></script>
+<script src="{{ asset('js/system-notifications.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 @stack('scripts')
 </body>

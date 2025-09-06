@@ -41,6 +41,16 @@ class WishListController extends Controller
     }
 
     /**
+     * Display the specified wish list.
+     */
+    public function show(WishList $wishList): View
+    {
+        $this->authorize('view', $wishList);
+
+        return view('wishlists.show', compact('wishList'));
+    }
+
+    /**
      * Store new wish list.
      */
     public function store(Request $request): RedirectResponse
@@ -104,13 +114,6 @@ class WishListController extends Controller
     {
         $this->authorize('delete', $wishList);
 
-        try {
-            $this->service->delete($wishList);
-
-        } catch (Exception $e) {
-
-            return $this->redirectToIndexWithError('error_deleting_list', $e->getMessage());
-        }
         return $this->redirectToIndex('wishlist_deleted');
     }
 

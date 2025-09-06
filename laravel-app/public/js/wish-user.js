@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Show success message
-                showAlert('success', data.message);
+                showAlert('success', data.success);
                 
                 // Update button to unreserve
                 button.className = 'wish-btn btn-danger w-100 unreserve-btn';
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Re-enable button
                 button.disabled = false;
             } else {
-                showAlert('error', data.message);
+                showAlert('error', data.error);
                 // Re-enable button
                 button.disabled = false;
                 button.textContent = 'Зарезервировать';
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Show success message
-                showAlert('success', data.message);
+                showAlert('success', data.success);
                 
                 // Update button to reserve
                 button.className = 'wish-btn btn-success w-100 reserve-btn';
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Re-enable button
                 button.disabled = false;
             } else {
-                showAlert('error', data.message);
+                showAlert('error', data.error);
                 // Re-enable button
                 button.disabled = false;
                 button.textContent = 'Отменить резерв';
@@ -130,32 +130,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Function to show alerts
+    // Function to show alerts using system notifications
     function showAlert(type, message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
-        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        alertDiv.innerHTML = `
-            <div class="alert-message">
-                <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2"></i>
-                ${message}
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-        
-        document.body.appendChild(alertDiv);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.classList.add('closing');
-                setTimeout(() => {
-                    if (alertDiv.parentNode) {
-                        alertDiv.remove();
-                    }
-                }, 300);
-            }
-        }, 5000);
+        if (window.systemNotifications) {
+            window.systemNotifications.show(message, type);
+        } else {
+            // Fallback для обратной совместимости
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <div class="alert-message">
+                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.classList.add('closing');
+                    setTimeout(() => {
+                        if (alertDiv.parentNode) {
+                            alertDiv.remove();
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
     }
 
     // Wish data for modals

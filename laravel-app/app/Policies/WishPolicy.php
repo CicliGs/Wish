@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Wish;
+use Illuminate\Support\Facades\Auth;
 
 class WishPolicy
 {
@@ -22,7 +23,6 @@ class WishPolicy
      */
     public function view(User $user, Wish $wish): bool
     {
-        // User can view wishes from their own wish lists or public wish lists
         return $this->isOwner($user, $wish) || $wish->wishList->is_public;
     }
 
@@ -55,7 +55,6 @@ class WishPolicy
      */
     public function reserve(User $user, Wish $wish): bool
     {
-        // Cannot reserve own wishes and wish must be available
         return !$this->isOwner($user, $wish) && $this->isAvailable($wish);
     }
 
@@ -88,10 +87,7 @@ class WishPolicy
      */
     private function isOwner(User $user, Wish $wish): bool
     {
-        $userId = $user->id;
-        $wishListUserId = $wish->wishList->user_id;
-
-        return $userId === $wishListUserId;
+        return $user->id === $wish->wishList->user_id;
     }
 
     /**
@@ -111,9 +107,6 @@ class WishPolicy
             return false;
         }
 
-        $userId = $user->id;
-        $reservationUserId = $wish->reservation->user_id;
-
-        return $userId === $reservationUserId;
+        return $user->id === $wish->reservation->user_id;
     }
 }

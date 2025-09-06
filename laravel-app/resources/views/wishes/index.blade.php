@@ -36,9 +36,9 @@
                 @forelse($wishes as $wish)
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                         <div class="wish-card">
-                            @if($wish->image)
+                            @if($wish->hasImage())
                                 <a href="#" class="wish-image-link" data-wish-id="{{ $wish->id }}">
-                                    <img src="{{ $wish->image }}" alt="image" class="wish-card-img">
+                                    <img src="{{ $wish->image_url }}" alt="image" class="wish-card-img">
                                 </a>
                             @endif
                             <div class="wish-card-body d-flex flex-column">
@@ -123,7 +123,7 @@ window.wishData = {
     @foreach($wishes as $wish)
         {{ $wish->id }}: {
             title: "{{ addslashes($wish->title) }}",
-            image: "{{ $wish->image }}",
+            image: "{{ $wish->image_url }}",
             price: "{{ $wish->price }}",
             formattedPrice: "{{ $wish->formatted_price }}",
             url: "{{ $wish->url }}",

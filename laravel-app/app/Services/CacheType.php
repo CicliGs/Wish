@@ -12,9 +12,9 @@ enum CacheType: string
     public function getTTL(): int
     {
         return match ($this) {
-            self::STATIC_CONTENT => 86400,      // 24 hours
-            self::IMAGES, self::AVATARS => 604800,              // 7 days
-            self::CSS_JS => 2592000,             // 30 days
+            self::STATIC_CONTENT => 86400,
+            self::IMAGES, self::AVATARS => 604800,
+            self::CSS_JS => 2592000,
         };
     }
 

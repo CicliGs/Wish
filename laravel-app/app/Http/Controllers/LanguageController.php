@@ -18,9 +18,7 @@ class LanguageController extends Controller
      */
     public function switchLanguage(string $locale): RedirectResponse
     {
-        $locale = $this->validateLocale($locale);
-
-        $this->setLocale($locale);
+        $this->setLocale($this->validateLocale($locale));
 
         return redirect()->back();
     }

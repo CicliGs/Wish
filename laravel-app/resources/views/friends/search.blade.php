@@ -20,8 +20,8 @@
                         <div class="input-group">
                             <input type="text" 
                                    class="form-control form-control-lg" 
-                                   name="q" 
-                                   value="{{ request('q') }}" 
+                                   name="search" 
+                                   value="{{ request('search') }}" 
                                    placeholder="{{ __('messages.search_friends_placeholder') }}"
                                    autocomplete="off">
                             <button class="btn btn-primary" type="submit">
@@ -31,7 +31,7 @@
                     </form>
 
                     <!-- Search Results -->
-                    @if(request('q'))
+                    @if(request('search'))
                         @if($users && $users->count() > 0)
                             <div class="row g-3">
                                 @foreach($users as $user)
@@ -255,4 +255,8 @@
 }
 </style>
 @endpush
-@endsection ё
+
+@push('scripts')
+<script src="{{ asset('js/friends-search.js') }}"></script>
+@endpush
+@endsection

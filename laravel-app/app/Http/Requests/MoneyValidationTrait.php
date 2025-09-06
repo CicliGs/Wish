@@ -47,7 +47,6 @@ trait MoneyValidationTrait
 
     protected function getCurrencyForValidation(): ?string
     {
-        /** @var string|null $currency */
         $currency = $this->input('currency');
         if ($this->has('currency') && $currency) {
             return $currency;
@@ -55,15 +54,11 @@ trait MoneyValidationTrait
 
         $wishList = $this->route('wishList');
         if ($wishList instanceof WishList) {
-            /** @var string $wishListCurrency */
-            $wishListCurrency = $wishList->currency;
-            return $wishListCurrency;
+            return $wishList->currency;
         }
 
         if (auth()->check() && auth()->user()) {
-            /** @var string $userCurrency */
-            $userCurrency = auth()->user()->currency;
-            return $userCurrency;
+            return auth()->user()->currency;
         }
 
         return null;

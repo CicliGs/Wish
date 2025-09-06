@@ -2,13 +2,11 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\WishController;
 use App\Http\Controllers\WishListController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LanguageController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\FriendsController;
 
 Route::get('/', function () {
@@ -28,7 +26,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('wishes/{wish}', [WishController::class, 'destroy'])->name('wishes.destroy');
     });
 
-    Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::get('/profile', [ProfileController::class, 'showCurrent'])->name('profile');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/profile/avatar', [ProfileController::class, 'editAvatar'])->name('profile.avatar.edit');
@@ -41,22 +39,31 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/friends/search', [FriendsController::class, 'search'])->name('friends.search');
     Route::post('/friends/remove/{user}', [ProfileController::class, 'removeFriend'])->name('friends.remove');
     Route::post('/friends/request/{user}', [ProfileController::class, 'sendFriendRequest'])->name('friends.request');
-    
+
 });
 
-Route::prefix('wish-lists/{wishList}')->group(function () {
+Route::middleware('auth')->prefix('wish-lists/{wishList}')->group(function () {
     Route::post('wishes/{wish}/unreserve', [WishController::class, 'unreserve'])->name('wishes.unreserve');
     Route::post('wishes/{wish}/reserve', [WishController::class, 'reserve'])->name('wishes.reserve');
 });
 
-Route::prefix('ajax')->group(function () {
+Route::middleware('auth')->prefix('ajax')->group(function () {
     Route::post('wishes/{wish}/unreserve', [WishController::class, 'unreserveAjax'])->name('wishes.unreserve.ajax');
     Route::post('wishes/{wish}/reserve', [WishController::class, 'reserveAjax'])->name('wishes.reserve.ajax');
 });
 
-Route::get('/user/{user}/wishes', [WishController::class, 'showUser'])->name('wishes.user');
-Route::get('/user/{user}/wish-list/{wishList}', [WishController::class, 'showUserWishList'])->name('wishes.user.list');
-Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.user');
+Route::middleware('auth')->group(function () {
+    Route::get('/user/{user}/wishes', [WishController::class, 'showUser'])->name('wishes.user');
+    Route::get('/user/{user}/wish-list/{wishList}', [WishController::class, 'showUserWishList'])->name('wishes.user.list');
+    Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.user');
+});
+
+// Notification Routes
+Route::middleware('auth')->prefix('notifications')->group(function () {
+    Route::get('/unread', [App\Http\Controllers\NotificationController::class, 'getUnreadNotifications'])->name('notifications.unread');
+    Route::post('/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+});
 
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('register', [RegisterController::class, 'register']);
@@ -81,3 +88,7 @@ Route::prefix('cache')->group(function () {
 Route::get('/csrf-token', function() {
     return response()->json(['token' => csrf_token()]);
 });
+
+
+
+

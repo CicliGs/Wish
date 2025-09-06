@@ -12,6 +12,10 @@ use Exception;
 
 class ReservationService
 {
+    public function __construct(
+        protected CacheService $cacheService
+    ) {}
+
     /**
      * Reserve a wish for a user.
      */
@@ -26,6 +30,9 @@ class ReservationService
                 $this->createReservation($wish, $userId);
                 $this->updateWishReservationStatus($wish, true);
             });
+
+            $this->cacheService->clearUserCache($userId);
+            $this->cacheService->clearUserCache($wish->wishList->user_id);
 
         } catch (Exception $e) {
             return __('messages.error_reserving_wish') . $e->getMessage();
@@ -50,6 +57,9 @@ class ReservationService
                 $this->deleteReservation($reservation);
                 $this->updateWishReservationStatus($wish, false);
             });
+
+            $this->cacheService->clearUserCache($userId);
+            $this->cacheService->clearUserCache($wish->wishList->user_id);
 
         } catch (Exception $e) {
             return __('messages.error_unreserving_wish') . $e->getMessage();
@@ -100,7 +110,7 @@ class ReservationService
             'total_value' => $reservations->sum(function ($reservation) {
                 return $reservation->wish->price ?? 0;
             }),
-            'total_reserved_wishes' => $reservations->count(), // Added for compatibility
+            'total_reserved_wishes' => $reservations->count(),
         ];
     }
 

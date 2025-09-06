@@ -5,45 +5,18 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Support\MoneyHelper;
-use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Money\Money;
 
-/**
- * @property int $id
- * @property int $wish_list_id
- * @property string $title
- * @property string|null $url
- * @property string|null $image
- * @property float|null $price
- * @property bool $is_reserved
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- *
- * @property-read WishList $wishList
- * @property-read Reservation|null $reservation
- *
- * @method static Wish findOrFail($id, $columns = ['*'])
- * @method static Wish|null find($id, $columns = ['*'])
- * @method static Builder|Wish query()
- * @method where(string $string, mixed $value)
- * @method static whereIn(string $string, mixed[] $wishListIds)
- * @method static forWishList(int $wishListId)
- * @method static create(mixed[] $data)
- * @method static whereHas(string $string, Closure $param)
- */
 class Wish extends Model
 {
     use HasFactory;
-
-
 
     /**
      * The attributes that are mass assignable.
@@ -151,8 +124,7 @@ class Wish extends Model
                 return '';
             }
 
-            $money = $this->getMoneyObject();
-            return MoneyHelper::format($money);
+            return MoneyHelper::format($this->getMoneyObject());
         } catch (Exception $e) {
             Log::error('Error formatting price for user', [
                 'price' => $this->price ?? 'null',
@@ -173,9 +145,8 @@ class Wish extends Model
             return false;
         }
 
-        $price = $this->getPriceAsFloat();
 
-        return $price > 0 && is_finite($price);
+        return $this->getPriceAsFloat() > 0 && is_finite($this->getPriceAsFloat());
     }
 
     /**
@@ -183,10 +154,7 @@ class Wish extends Model
      */
     private function getMoneyObject(): Money
     {
-        $price = $this->getPriceAsFloat();
-        $currency = $this->getWishListCurrency();
-
-        return MoneyHelper::create($price, $currency);
+        return MoneyHelper::create($this->getPriceAsFloat(), $this->getWishListCurrency());
     }
 
     /**
@@ -291,6 +259,7 @@ class Wish extends Model
     public function reserveForUser(int $userId): bool
     {
         if ($this->is_reserved) {
+
             return false;
         }
 
@@ -306,6 +275,7 @@ class Wish extends Model
     public function dereserve(): bool
     {
         if (!$this->is_reserved) {
+
             return false;
         }
 
@@ -313,6 +283,26 @@ class Wish extends Model
         $this->update(['is_reserved' => false]);
 
         return true;
+    }
+
+    /**
+     * Check if wish has image.
+     */
+    public function hasImage(): bool
+    {
+        return !empty($this->image);
+    }
+
+    /**
+     * Get image URL attribute.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->hasImage()) {
+            return null;
+        }
+
+        return $this->image;
     }
 
     /**

@@ -15,10 +15,7 @@ class ReservationController extends Controller
 {
     use AuthorizesRequests;
 
-    public function __construct(protected ReservationService $service) 
-    {
-        $this->middleware('auth');
-    }
+    public function __construct(protected ReservationService $service) {}
 
     /**
      * Reserve a wish.

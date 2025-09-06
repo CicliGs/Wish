@@ -8,7 +8,7 @@
             @push('styles')
             <link rel="stylesheet" href="{{ asset('css/wishes.css') }}">
             @endpush
-            <a href="{{ route('wish-lists.index') }}" class="back-link">
+            <a href="{{ route('wishes.user', ['user' => $user->id]) }}" class="back-link">
                 <svg fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ __('messages.back') }}
             </a>
@@ -25,11 +25,11 @@
                     @foreach($wishes as $wish)
                         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                             <div class="wish-card">
-                                @if($wish->image)
-                                    <a href="#" class="wish-image-link" data-wish-id="{{ $wish->id }}">
-                                        <img src="{{ $wish->image }}" alt="image" class="wish-card-img">
-                                    </a>
-                                @endif
+                                                            @if($wish->hasImage())
+                                <a href="#" class="wish-image-link" data-wish-id="{{ $wish->id }}">
+                                    <img src="{{ $wish->image_url }}" alt="image" class="wish-card-img">
+                                </a>
+                            @endif
                                 <div class="wish-card-body d-flex flex-column">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
                                         <h5 class="wish-card-title">{{ $wish->title }}</h5>
@@ -48,7 +48,7 @@
                                         </a>
                                     @endif
                                     <div class="mt-auto">
-                                        @if(!$wish->is_reserved && auth()->check() && auth()->id() !== $wishList->user_id)
+                                        @if(!$wish->is_reserved && auth()->check() && auth()->id() !== $selectedWishList->user_id)
                                             <button type="button" class="wish-btn btn-success w-100 reserve-btn" data-wish-id="{{ $wish->id }}">
                                                 {{ __('messages.reserve') }}
                                             </button>
@@ -121,7 +121,7 @@ const wishData = {
     @foreach($wishes as $wish)
         {{ $wish->id }}: {
             title: "{{ addslashes($wish->title) }}",
-            image: "{{ $wish->image }}",
+            image: "{{ $wish->image_url }}",
             price: "{{ $wish->price }}",
             formattedPrice: "{{ $wish->formatted_price }}",
             url: "{{ $wish->url }}",

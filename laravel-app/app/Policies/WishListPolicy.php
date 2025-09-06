@@ -70,9 +70,6 @@ class WishListPolicy
      */
     private function isOwner(User $user, WishList $wishList): bool
     {
-        $userId = $user->id;
-        $wishListUserId = $wishList->user_id;
-
-        return $userId === $wishListUserId;
+        return $user->id === $wishList->user_id;
     }
 }

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class WishListService
 {
@@ -52,8 +53,17 @@ class WishListService
     public function update(WishList $wishList, array $data): WishList
     {
         $this->validateUpdateData($data);
+        
+        $wasPublic = $wishList->is_public;
+        $willBePublic = $data['is_public'] ?? $wasPublic;
+        
         $wishList->update($data);
         $this->cacheService->clearUserCache($wishList->user_id);
+        
+        if ($wasPublic !== $willBePublic && $wishList->uuid) {
+            $publicCacheKey = "public_wishlist_" . $wishList->uuid;
+            Cache::forget("static_content:" . $publicCacheKey);
+        }
 
         return $wishList->fresh();
     }
@@ -61,13 +71,29 @@ class WishListService
     public function delete(WishList $wishList): bool
     {
         $userId = $wishList->user_id;
-        $result = $wishList->delete();
+        
+        try {
+            $result = $wishList->delete();
 
-        if ($result) {
-            $this->cacheService->clearUserCache($userId);
+            if ($result) {
+                $this->cacheService->clearUserCache($userId);
+                
+                if ($wishList->uuid) {
+                    $publicCacheKey = "public_wishlist_" . $wishList->uuid;
+                    Cache::forget("static_content:" . $publicCacheKey);
+                }
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            \Log::error('Error deleting wish list', [
+                'wish_list_id' => $wishList->id,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
-
-        return $result;
     }
 
     public function findPublic(string $uuid): ?WishList
@@ -83,7 +109,7 @@ class WishListService
 
     public function getStatistics(int $userId): array
     {
-        $wishLists = WishList::forUser($userId)->with('wishes')->get();
+        $wishLists = $this->findByUser($userId);
 
         return [
             'total_wish_lists' => $wishLists->count(),
@@ -131,9 +157,12 @@ class WishListService
             return unserialize($cachedData);
         }
 
+        $wishLists = $this->findByUser($userId);
+        $stats = $this->getStatistics($userId);
+
         $dto = new WishListDTO(
-            wishLists: $this->findByUser($userId),
-            stats: $this->getStatistics($userId),
+            wishLists: $wishLists,
+            stats: $stats,
             userId: $userId
         );
 

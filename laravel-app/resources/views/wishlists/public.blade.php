@@ -14,9 +14,9 @@
         @forelse($wishes as $wish)
             <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                 <div class="card h-100 shadow-sm wish-card d-flex flex-column justify-content-between" style="border-radius: 16px; background: #fff;">
-                    @if($wish->image)
-                        <img src="{{ $wish->image }}" alt="image" class="card-img-top wish-img" style="max-height: 180px; object-fit: cover; border-radius: 16px 16px 0 0;">
-                    @endif
+                                    @if($wish->hasImage())
+                    <img src="{{ $wish->image_url }}" alt="image" class="card-img-top wish-img" style="max-height: 180px; object-fit: cover; border-radius: 16px 16px 0 0;">
+                @endif
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <h5 class="card-title mb-0 wish-title" style="font-weight: 700; color: #222;">{{ $wish->title }}</h5>

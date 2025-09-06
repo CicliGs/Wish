@@ -45,4 +45,8 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
 @endpush
+
+@push('scripts')
+<script src="{{ asset('js/register.js') }}"></script>
+@endpush
 @endsection

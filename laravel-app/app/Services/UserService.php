@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 
 class UserService
 {
@@ -15,27 +14,26 @@ class UserService
     public function registerUser(array $data): User
     {
         $user = User::register($data);
-        
-        // Автоматически выдаём достижение за регистрацию
+
         $this->grantRegistrationAchievement($user);
-        
+
         return $user;
     }
 
     /**
      * Process user login.
      */
-    public function processLogin(array $credentials, Request $request, bool $remember = false): bool
+    public function processLogin(array $credentials, bool $remember = false): bool
     {
-        return User::tryLogin($credentials, $request, $remember);
+        return User::tryLogin($credentials, $remember);
     }
 
     /**
      * Logout user.
      */
-    public function logout(Request $request): void
+    public function logout(): void
     {
-        User::logout($request);
+        User::logout();
     }
 
     /**

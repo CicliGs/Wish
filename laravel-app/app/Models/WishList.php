@@ -10,27 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
-/**
- * @property int $id
- * @property int $user_id
- * @property string $title
- * @property string|null $description
- * @property string $uuid
- * @property bool $is_public
- * @property string $currency
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property mixed $user
- * @property mixed $wishes
- * @method static forUser(int $userId)
- * @method static create(array $data)
- * @method static where(string $string, int $userId)
- * @method static findOrFail(int $wishListId)
- * @method static find(int $wishListId)
- */
 class WishList extends Model
 {
     use HasFactory;
@@ -73,10 +54,6 @@ class WishList extends Model
         return array_keys(MoneyHelper::getSupportedCurrencies());
     }
 
-    public static function public()
-    {
-    }
-
     /**
      * Boot the model and add event listeners.
      */
@@ -86,6 +63,16 @@ class WishList extends Model
             if (empty($wishList->uuid)) {
                 $wishList->uuid = (string) Str::uuid();
             }
+        });
+
+        static::deleting(function (WishList $wishList) {
+            $wishList->wishes()->delete();
+
+            $wishList->wishes()->each(function ($wish) {
+                if ($wish->reservation) {
+                    $wish->reservation()->delete();
+                }
+            });
         });
     }
 

@@ -37,11 +37,11 @@
                             <p class="wishlist-card-description">{{ $wishList->description }}</p>
                             <div class="wishlist-card-stats">
                                 <div class="wishlist-stat">
-                                    <span class="wishlist-stat-number">{{ $wishList->wishes_count }}</span>
+                                    <span class="wishlist-stat-number">{{ $wishList->wishes->count() }}</span>
                                     <div class="wishlist-stat-label">{{ __('messages.wishes') }}</div>
                                 </div>
                                 <div class="wishlist-stat">
-                                    <span class="wishlist-stat-number">{{ $wishList->reserved_wishes_count }}</span>
+                                    <span class="wishlist-stat-number">{{ $wishList->wishes->where('is_reserved', true)->count() }}</span>
                                     <div class="wishlist-stat-label">{{ __('messages.reserved') }}</div>
                                 </div>
                             </div>

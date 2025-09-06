@@ -1,0 +1,311 @@
+/* Красивый выпадающий список уведомлений */
+.notifications-dropdown {
+    width: 400px;
+    max-width: 90vw;
+    max-height: 500px;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    animation: dropdownSlideIn 0.3s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.notifications-dropdown .dropdown-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    border-bottom: none;
+    text-align: center;
+}
+
+.notifications-dropdown .dropdown-header h6 {
+    font-weight: 600;
+    margin: 0;
+}
+
+.notifications-dropdown .dropdown-divider {
+    margin: 0;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.notifications-dropdown .dropdown-footer {
+    padding: 15px 20px;
+    background: rgba(248, 250, 252, 0.5);
+}
+
+.notifications-container {
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.notifications-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifications-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.notifications-container::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 3px;
+}
+
+.notifications-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.notification-item {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    transform: translateX(5px);
+}
+
+.notification-item.unread {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+    border-left: 4px solid #ffc107;
+}
+
+.notification-item.unread:hover {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.1));
+}
+
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(135deg, #ffc107, #ffca2c);
+    border-radius: 0 2px 2px 0;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.notification-message {
+    color: #495057;
+    margin: 0;
+    line-height: 1.4;
+    font-size: 0.9rem;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+    white-space: nowrap;
+    opacity: 0.8;
+}
+
+.notification-content {
+    margin: 10px 0;
+    padding: 8px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.notification-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.notification-wish-title {
+    color: #495057;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.notification-wish-list {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.wish-list-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.wish-list-link:hover {
+    color: #5a67d8;
+    text-decoration: underline;
+}
+
+.notification-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.mark-read-btn {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    color: #667eea;
+}
+
+.mark-read-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-1px);
+}
+
+.notification-badge {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.notification-item.unread .notification-badge {
+    background: linear-gradient(135deg, #ffc107, #ffca2c);
+    color: #212529;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+/* Анимация для новых уведомлений */
+@keyframes notificationPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.notification-item.new {
+    animation: notificationPulse 0.6s ease-in-out;
+}
+
+/* Стили для пустого состояния */
+.notifications-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: #6c757d;
+}
+
+.notifications-empty i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .notifications-dropdown {
+        width: calc(100vw - 40px);
+        max-width: none;
+        margin: 0 20px;
+    }
+    
+    .notification-item {
+        padding: 12px 15px;
+    }
+    
+    .notification-header {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .notification-time {
+        align-self: flex-start;
+    }
+    
+    .notification-actions {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .notification-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Стили для кнопки "Отметить все как прочитанные" */
+#markAllReadBtn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+#markAllReadBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+}
+
+/* Анимация загрузки */
+.notifications-loading {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+}
+
+.notifications-loading .spinner-border {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: #667eea;
+}

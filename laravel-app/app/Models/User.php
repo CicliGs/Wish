@@ -12,23 +12,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\Request;
 
-/**
- * @property int $id
- * @property string $name
- * @property string $email
- * @property string|null $avatar
- * @property string $currency
- * @property Carbon|null $email_verified_at
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @method static create(array $data)
- * @method static findOrFail(int $userId)
- */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -117,7 +103,7 @@ class User extends Authenticatable
      */
     public function outgoingRequests(): HasMany
     {
-        return $this->hasMany(FriendRequest::class, 'user_id');
+        return $this->hasMany(FriendRequest::class, 'sender_id');
     }
 
     /**
@@ -125,7 +111,7 @@ class User extends Authenticatable
      */
     public function sentRequests(): HasMany
     {
-        return $this->hasMany(FriendRequest::class, 'user_id');
+        return $this->hasMany(FriendRequest::class, 'sender_id');
     }
 
     /**
@@ -150,10 +136,10 @@ class User extends Authenticatable
     /**
      * Try to login user.
      */
-    public static function tryLogin(array $credentials, Request $request, bool $remember = false): bool
+    public static function tryLogin(array $credentials, bool $remember = false): bool
     {
         if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
+            request()->session()->regenerate();
             return true;
         }
 
@@ -163,22 +149,21 @@ class User extends Authenticatable
     /**
      * Logout user.
      */
-    public static function logout(Request $request): void
+    public static function logout(): void
     {
         Auth::logout();
 
-        $request->session()->invalidate();
+        request()->session()->invalidate();
 
-        $request->session()->regenerateToken();
+        request()->session()->regenerateToken();
 
-        $request->session()->flush();
+        request()->session()->flush();
 
-        $request->session()->forget('remember_web');
+        request()->session()->forget('remember_web');
 
         if (Auth::check()) {
             $user = Auth::user();
             if ($user instanceof self) {
-                /** @var int $userId */
                 $userId = $user->id;
                 cache()->forget('user_' . $userId);
                 cache()->forget('user_permissions_' . $userId);
@@ -199,7 +184,6 @@ class User extends Authenticatable
      */
     public function hasReservedWish(Wish $wish): bool
     {
-        /** @var int $wishReservationUserId */
         $wishReservationUserId = $wish->reservation->user_id ?? null;
         $userId = $this->id;
 

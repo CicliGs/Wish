@@ -463,13 +463,24 @@ html {
     z-index: 1050;
 }
 
-/* Ensure navbar and dropdowns are always on top */
+/* Ensure navbar and dropdowns are above content but below modals */
 .navbar {
-    z-index: 10000;
+    z-index: 1030;
+    position: relative;
 }
 
 .navbar .dropdown-menu {
-    z-index: 10001 !important;
+    z-index: 1031 !important;
+}
+
+/* Ensure navbar doesn't interfere with modals */
+.navbar:not(.modal-open .navbar) {
+    z-index: 1030;
+}
+
+/* When modal is open, ensure navbar stays below */
+body.modal-open .navbar {
+    z-index: 1029 !important;
 }
 
 /* Ensure dropdowns appear above other elements */

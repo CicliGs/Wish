@@ -1,0 +1,112 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Observers;
+
+use App\DTOs\NotificationDTO;
+use App\Jobs\ProcessNotificationJob;
+use App\Models\Wish;
+use App\Services\NotificationService;
+use Illuminate\Support\Facades\Log;
+
+readonly class WishObserver
+{
+    public function __construct(
+        private NotificationService $notificationService
+    ) {}
+
+    /**
+     * Handle the Wish "created" event.
+     */
+    public function created(Wish $wish): void
+    {
+        try {
+            $this->notifyFriendsAboutNewWish($wish);
+        } catch (\Exception $e) {
+            Log::error('Error in WishObserver::created:', [
+                'wish_id' => $wish->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Handle the Wish "updated" event.
+     */
+    public function updated(Wish $wish): void
+    {
+        //
+    }
+
+    /**
+     * Handle the Wish "deleted" event.
+     */
+    public function deleted(Wish $wish): void
+    {
+        //
+    }
+
+    /**
+     * Handle the Wish "restored" event.
+     */
+    public function restored(Wish $wish): void
+    {
+        //
+    }
+
+    /**
+     * Handle the Wish "force deleted" event.
+     */
+    public function forceDeleted(Wish $wish): void
+    {
+        //
+    }
+
+    /**
+     * Уведомляем друзей о новом подарке
+     */
+    private function notifyFriendsAboutNewWish(Wish $wish): void
+    {
+        try {
+            $wishList = $wish->wishList;
+            if (!$wishList) {
+                Log::warning('WishObserver: WishList not found for wish', ['wish_id' => $wish->id]);
+                return;
+            }
+
+            $user = $wishList->user;
+            if (!$user) {
+                Log::warning('WishObserver: User not found for wishList', [
+                    'wish_id' => $wish->id,
+                    'wish_list_id' => $wishList->id
+                ]);
+                return;
+            }
+
+            $friends = $this->notificationService->getUserFriends($user->id);
+            if (empty($friends)) {
+                return;
+            }
+
+            foreach ($friends as $friend) {
+                $notificationDTO = NotificationDTO::forNewWish(
+                    userId: $friend['id'],
+                    friendId: $user->id,
+                    wishId: $wish->id,
+                    friendName: $user->name,
+                    wishTitle: $wish->title
+                );
+
+                ProcessNotificationJob::dispatch($notificationDTO);
+            }
+        } catch (\Exception $e) {
+            Log::error('WishObserver: Error in notifyFriendsAboutNewWish', [
+                'wish_id' => $wish->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+}

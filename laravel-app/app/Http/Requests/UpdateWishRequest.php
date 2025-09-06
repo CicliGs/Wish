@@ -57,16 +57,12 @@ class UpdateWishRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        /** @var string|null $price */
         $price = $this->input('price');
         $normalizedPrice = $this->validatePrice($price);
         $currency = $this->getCurrencyForValidation();
 
-        /** @var string|null $title */
         $title = $this->input('title');
-        /** @var string|null $url */
         $url = $this->input('url');
-        /** @var string|null $image */
         $image = $this->input('image');
 
         $this->merge([
@@ -81,7 +77,7 @@ class UpdateWishRequest extends FormRequest
     /**
      * Get validated and processed data for the wish.
      *
-     * @return array<string, mixed>
+     * @return array{title: string, url: string|null, image: string|null, price: float|null}
      */
     public function getWishData(): array
     {
@@ -95,6 +91,8 @@ class UpdateWishRequest extends FormRequest
 
     /**
      * Get the currency for this wish.
+     *
+     * @return string|null
      */
     public function getWishCurrency(): ?string
     {
@@ -103,6 +101,8 @@ class UpdateWishRequest extends FormRequest
 
     /**
      * Check if request has valid Money data.
+     *
+     * @return bool
      */
     public function hasValidMoneyData(): bool
     {

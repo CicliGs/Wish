@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Wish;
 use App\Models\FriendRequest;
+use Illuminate\Support\Facades\DB;
 
 class AchievementsReceiver
 {
@@ -69,6 +70,7 @@ class AchievementsReceiver
     public function checkVeteran(User $user): bool
     {
         $veteranDate = now()->subMonths(self::VETERAN_MONTHS);
+
         return $user->created_at->lt($veteranDate);
     }
 
@@ -78,6 +80,7 @@ class AchievementsReceiver
     private function getUserWishCount(User $user): int
     {
         $wishListIds = $user->wishLists()->pluck('id')->toArray();
+
         return Wish::whereIn('wish_list_id', $wishListIds)->count();
     }
 
@@ -86,10 +89,13 @@ class AchievementsReceiver
      */
     private function hasAcceptedFriends(User $user): bool
     {
-        return FriendRequest::where(function ($query) use ($user) {
-            $query->where('user_id', $user->id)
-                  ->orWhere('receiver_id', $user->id);
-        })->where('status', 'accepted')->exists();
+        return DB::table('friends')
+            ->where('status', 'accepted')
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhere('friend_id', $user->id);
+            })
+            ->exists();
     }
 
     /**
@@ -97,10 +103,11 @@ class AchievementsReceiver
      */
     private function getAcceptedFriendsCount(User $user): int
     {
-        return FriendRequest::where('status', 'accepted')
+        return DB::table('friends')
+            ->where('status', 'accepted')
             ->where(function ($query) use ($user) {
                 $query->where('user_id', $user->id)
-                    ->orWhere('receiver_id', $user->id);
+                      ->orWhere('friend_id', $user->id);
             })
             ->count();
     }
