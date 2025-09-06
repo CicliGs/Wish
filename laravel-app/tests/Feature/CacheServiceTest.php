@@ -92,7 +92,6 @@ class CacheServiceTest extends TestCase
         
         $ttl = $this->cacheService->getCacheTTL(CacheType::STATIC_CONTENT, $key);
         
-        // Для ArrayStore TTL может быть null
         if (config('cache.default') === 'array') {
             $this->assertNull($ttl);
         } else {
@@ -104,15 +103,12 @@ class CacheServiceTest extends TestCase
     /** @test */
     public function it_can_clear_cache_by_type()
     {
-        // Кешируем данные разных типов
         $this->cacheService->cacheStaticContent('test1', 'content1');
         $this->cacheService->cacheImage('test2', ['path' => '/test.jpg']);
         
-        // Проверяем, что данные закешированы
         $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, 'test1'));
         $this->assertTrue($this->cacheService->hasCache(CacheType::IMAGES, 'test2'));
         
-        // Очищаем кеш статического контента
         $result = $this->cacheService->clearCacheByType(CacheType::STATIC_CONTENT);
         
         $this->assertTrue($result);
@@ -125,15 +121,12 @@ class CacheServiceTest extends TestCase
     {
         $userId = 123;
         
-        // Кешируем данные пользователя
         $this->cacheService->cacheStaticContent("user_{$userId}_profile", 'profile data');
         $this->cacheService->cacheStaticContent("user_{$userId}_wishes", 'wishes data');
         
-        // Проверяем, что данные закешированы
         $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, "user_{$userId}_profile"));
         $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, "user_{$userId}_wishes"));
         
-        // Очищаем кеш пользователя
         $result = $this->cacheService->clearUserCache($userId);
         
         $this->assertTrue($result);
@@ -157,15 +150,12 @@ class CacheServiceTest extends TestCase
     /** @test */
     public function it_can_clear_all_cache()
     {
-        // Кешируем данные разных типов
         $this->cacheService->cacheStaticContent('test1', 'content1');
         $this->cacheService->cacheImage('test2', ['path' => '/test.jpg']);
         
-        // Проверяем, что данные закешированы
         $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, 'test1'));
         $this->assertTrue($this->cacheService->hasCache(CacheType::IMAGES, 'test2'));
         
-        // Очищаем весь кеш
         $result = $this->cacheService->clearAllCache();
         
         $this->assertTrue($result);
