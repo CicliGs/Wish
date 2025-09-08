@@ -44,4 +44,27 @@ readonly class ProfileDTO implements BaseDTO
             wishLists: $data['wishLists'],
         );
     }
+
+    /**
+     * Create DTO from user with all related data.
+     */
+    public static function fromUserWithData(
+        User $user,
+        array $stats,
+        Collection $friends,
+        Collection $incomingRequests,
+        Collection $outgoingRequests,
+        array $achievements,
+        Collection $wishLists
+    ): static {
+        return new self(
+            user: $user,
+            stats: $stats,
+            friends: $friends,
+            incomingRequests: $incomingRequests,
+            outgoingRequests: $outgoingRequests,
+            achievements: $achievements,
+            wishLists: $wishLists
+        );
+    }
 }

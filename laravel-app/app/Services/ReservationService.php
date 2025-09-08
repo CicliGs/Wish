@@ -89,16 +89,6 @@ class ReservationService
     }
 
     /**
-     * Check if a user has reserved a specific wish.
-     */
-    public function hasUserReservedWish(int $userId, int $wishId): bool
-    {
-        return Reservation::where('user_id', $userId)
-            ->where('wish_id', $wishId)
-            ->exists();
-    }
-
-    /**
      * Get user reservation statistics.
      */
     public function getUserReservationStatistics(int $userId): array

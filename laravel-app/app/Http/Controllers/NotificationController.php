@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MarkNotificationAsReadRequest;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
@@ -33,30 +33,15 @@ class NotificationController extends Controller
     /**
      * Mark notification as read
      */
-    public function markAsRead(Request $request): JsonResponse
+    public function markAsRead(MarkNotificationAsReadRequest $request): JsonResponse
     {
-        $request->validate([
-            'notification_id' => 'required|integer|exists:notifications,id'
-        ]);
+        $result = $this->notificationService->markNotificationAsReadForUser(
+            $request->input('notification_id'),
+            Auth::id()
+        );
 
-        $notificationId = $request->input('notification_id');
-        $userId = Auth::id();
-
-        $notification = $this->notificationService->getNotificationForUser($notificationId, $userId);
-
-        if (!$notification) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Notification not found or not accessible'
-            ], 404);
-        }
-
-        $success = $this->notificationService->markAsRead($notificationId);
-
-        return response()->json([
-            'success' => $success,
-            'message' => $success ? 'Notification marked as read' : 'Failed to mark notification as read'
-        ]);
+        $statusCode = $result['success'] ? 200 : 404;
+        return response()->json($result, $statusCode);
     }
 
     /**

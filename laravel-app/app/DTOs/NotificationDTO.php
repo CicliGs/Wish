@@ -43,7 +43,7 @@ readonly class NotificationDTO implements BaseDTO
     }
 
     /**
-     * Создает DTO для уведомления о новом подарке друга
+     * Create a DTO for notification about new wish friend
      */
     public static function forNewWish(
         int $userId,
@@ -53,7 +53,7 @@ readonly class NotificationDTO implements BaseDTO
         string $wishTitle
     ): static {
         $message = "{$friendName} добавил новый подарок: {$wishTitle}";
-        
+
         return new self(
             userId: $userId,
             friendId: $friendId,

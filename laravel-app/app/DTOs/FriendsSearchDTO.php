@@ -31,4 +31,28 @@ readonly class FriendsSearchDTO implements BaseDTO
             friendStatuses: $data['friendStatuses'] ?? [],
         );
     }
+
+    /**
+     * Create DTO from search results.
+     */
+    public static function fromSearchResults(Collection $users, ?string $query = null, array $friendStatuses = []): static
+    {
+        return new self(
+            users: $users,
+            query: $query,
+            friendStatuses: $friendStatuses
+        );
+    }
+
+    /**
+     * Create empty DTO for empty search.
+     */
+    public static function empty(): static
+    {
+        return new self(
+            users: new Collection(),
+            query: null,
+            friendStatuses: []
+        );
+    }
 }

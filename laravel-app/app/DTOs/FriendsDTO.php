@@ -35,4 +35,21 @@ readonly class FriendsDTO implements BaseDTO
             selectedFriend: $data['selectedFriend'] ?? null,
         );
     }
+
+    /**
+     * Create DTO from friends data.
+     */
+    public static function fromFriendsData(
+        Collection $friends,
+        Collection $incomingRequests,
+        Collection $outgoingRequests,
+        ?User $selectedFriend = null
+    ): static {
+        return new self(
+            friends: $friends,
+            incomingRequests: $incomingRequests,
+            outgoingRequests: $outgoingRequests,
+            selectedFriend: $selectedFriend
+        );
+    }
 }

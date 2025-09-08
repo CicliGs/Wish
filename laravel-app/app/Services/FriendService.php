@@ -126,35 +126,21 @@ class FriendService
 
         $selectedFriend = $selectedFriendId ? $friends->firstWhere('id', $selectedFriendId) : null;
 
-        return new FriendsDTO(
-            friends: $friends,
-            incomingRequests: $incoming,
-            outgoingRequests: $outgoing,
-            selectedFriend: $selectedFriend
-        );
+        return FriendsDTO::fromFriendsData($friends, $incoming, $outgoing, $selectedFriend);
     }
 
     /**
      * Search users with friendship status information.
-     * 
-     * @param string $searchTerm Search term for name or email
-     * @param int $excludeUserId User ID to exclude from search
-     * @param User $currentUser Current authenticated user
-     * @return Collection Collection of users with friend status
      */
     public function searchUsersWithFriendStatus(string $searchTerm, int $excludeUserId, User $currentUser): Collection
     {
         $users = $this->findUsersBySearchTerm($searchTerm, $excludeUserId);
-        
+
         return $this->enrichUsersWithFriendStatus($users, $currentUser);
     }
 
     /**
      * Find users by search term.
-     * 
-     * @param string $searchTerm Search term for name or email
-     * @param int $excludeUserId User ID to exclude from search
-     * @return Collection Collection of users
      */
     private function findUsersBySearchTerm(string $searchTerm, int $excludeUserId): Collection
     {
@@ -169,10 +155,6 @@ class FriendService
 
     /**
      * Enrich users collection with friend status information.
-     * 
-     * @param Collection $users Collection of users
-     * @param User $currentUser Current authenticated user
-     * @return Collection Collection of users with friend status
      */
     private function enrichUsersWithFriendStatus(Collection $users, User $currentUser): Collection
     {
@@ -190,14 +172,14 @@ class FriendService
         $searchTerm = trim($searchTerm);
 
         if (empty($searchTerm)) {
-            return new FriendsSearchDTO(new Collection(), null);
+            return FriendsSearchDTO::empty();
         }
 
         $users = $this->searchUsersWithFriendStatus($searchTerm, $currentUser->id, $currentUser);
 
         $friendStatuses = $this->buildFriendStatusesMap($users);
 
-        return new FriendsSearchDTO($users, $searchTerm, $friendStatuses);
+        return FriendsSearchDTO::fromSearchResults($users, $searchTerm, $friendStatuses);
     }
 
     /**
@@ -267,21 +249,15 @@ class FriendService
     }
 
     /**
-     * Handle declined request.
+     * Handle declined request by deleting it and allowing new request.
      */
     private function handleDeclinedRequest(FriendRequest $request, User $sender, int $receiverId): bool
     {
-        DB::transaction(function () use ($request, $sender, $receiverId) {
-            if ($request->sender_id === $sender->id) {
-                // If sender is trying to send request again, just delete the declined request
-                $request->delete();
-            } else {
-                // If receiver is trying to send request, delete the declined request
-                $request->delete();
-            }
-        });
+        // Delete the declined request to allow new request
+        $request->delete();
 
-        return true;
+        // Create new request
+        return $this->createNewRequest($sender->id, $receiverId);
     }
 
     /**
@@ -321,34 +297,51 @@ class FriendService
      */
     private function acceptRequest(FriendRequest $request): void
     {
-        $request->update(['status' => FriendRequestStatus::ACCEPTED->value]);
-
-        $reverseRequest = $this->findExistingRequest($request->receiver_id, $request->sender_id);
-
-        if ($reverseRequest) {
-            $reverseRequest->update(['status' => FriendRequestStatus::ACCEPTED->value]);
-        } else {
-            $this->createNewRequest($request->receiver_id, $request->sender_id);
-        }
-
-        // Create friendship record in friends table
-        $this->createFriendship($request->sender_id, $request->receiver_id);
+        DB::transaction(function () use ($request) {
+            $this->updateRequestStatus($request, FriendRequestStatus::ACCEPTED);
+            $this->updateReverseRequestStatus($request);
+            $this->createFriendship($request->sender_id, $request->receiver_id);
+        });
     }
 
     /**
-     * Delete friend requests between users.
+     * Update request status.
+     */
+    private function updateRequestStatus(FriendRequest $request, FriendRequestStatus $status): void
+    {
+        $request->update(['status' => $status->value]);
+    }
+
+    /**
+     * Update reverse request status if exists.
+     */
+    private function updateReverseRequestStatus(FriendRequest $request): void
+    {
+        $reverseRequest = $this->findExistingRequest($request->receiver_id, $request->sender_id);
+
+        if ($reverseRequest) {
+            $this->updateRequestStatus($reverseRequest, FriendRequestStatus::ACCEPTED);
+        }
+    }
+
+    /**
+     * Delete all friend requests between two users.
      */
     private function deleteFriendRequests(int $userId, int $friendId): void
     {
-        FriendRequest::whereRaw('(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)', [
-            $userId, $friendId, $friendId, $userId
-        ])->delete();
+        FriendRequest::where(function ($query) use ($userId, $friendId) {
+            $query->where('sender_id', $userId)
+                  ->where('receiver_id', $friendId);
+        })->orWhere(function ($query) use ($userId, $friendId) {
+            $query->where('sender_id', $friendId)
+                  ->where('receiver_id', $userId);
+        })->delete();
     }
 
     /**
      * Get friend IDs for a user.
      */
-    private function getFriendIds(int $userId): \Illuminate\Support\Collection
+    private function getFriendIds(int $userId): array
     {
         return DB::table('friends')
             ->where('status', FriendRequestStatus::ACCEPTED->value)
@@ -361,7 +354,8 @@ class FriendService
                 return $friendship->user_id == $userId ? $friendship->friend_id : $friendship->user_id;
             })
             ->unique()
-            ->values();
+            ->values()
+            ->toArray();
     }
 
     /**
@@ -395,9 +389,16 @@ class FriendService
      */
     private function deleteFriendship(int $userId, int $friendId): void
     {
-        DB::table('friends')->whereRaw('(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)', [
-            $userId, $friendId, $friendId, $userId
-        ])->delete();
+        DB::table('friends')
+            ->where(function ($query) use ($userId, $friendId) {
+                $query->where('user_id', $userId)
+                      ->where('friend_id', $friendId);
+            })
+            ->orWhere(function ($query) use ($userId, $friendId) {
+                $query->where('user_id', $friendId)
+                      ->where('friend_id', $userId);
+            })
+            ->delete();
     }
 
     /**

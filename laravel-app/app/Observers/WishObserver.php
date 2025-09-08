@@ -8,6 +8,7 @@ use App\DTOs\NotificationDTO;
 use App\Jobs\ProcessNotificationJob;
 use App\Models\Wish;
 use App\Services\NotificationService;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 readonly class WishObserver
@@ -23,7 +24,7 @@ readonly class WishObserver
     {
         try {
             $this->notifyFriendsAboutNewWish($wish);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error in WishObserver::created:', [
                 'wish_id' => $wish->id,
                 'error' => $e->getMessage(),
@@ -52,14 +53,6 @@ readonly class WishObserver
      * Handle the Wish "restored" event.
      */
     public function restored(Wish $wish): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Wish "force deleted" event.
-     */
-    public function forceDeleted(Wish $wish): void
     {
         //
     }
@@ -101,7 +94,7 @@ readonly class WishObserver
 
                 ProcessNotificationJob::dispatch($notificationDTO);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('WishObserver: Error in notifyFriendsAboutNewWish', [
                 'wish_id' => $wish->id,
                 'error' => $e->getMessage(),

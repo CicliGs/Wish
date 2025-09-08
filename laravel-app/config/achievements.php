@@ -4,7 +4,7 @@ return [
         'key' => 'register',
         'title' => 'Регистрация на сайте',
         'icon' => '/images/First_registration.png',
-        'auto_grant' => true, // Выдаётся автоматически при регистрации
+        'auto_grant' => true,
     ],
     [
         'key' => 'gift',

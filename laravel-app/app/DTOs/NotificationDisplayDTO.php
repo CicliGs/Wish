@@ -49,7 +49,7 @@ readonly class NotificationDisplayDTO implements BaseDTO
     }
 
     /**
-     * Создает DTO из модели уведомления
+     * Create a collection DTO from model notification
      */
     public static function fromNotification(Notification $notification): static
     {
@@ -66,7 +66,7 @@ readonly class NotificationDisplayDTO implements BaseDTO
     }
 
     /**
-     * Создает коллекцию DTO из коллекции уведомлений
+     * Create a collection DTO
      */
     public static function fromNotificationCollection(\Illuminate\Database\Eloquent\Collection $notifications): \Illuminate\Support\Collection
     {

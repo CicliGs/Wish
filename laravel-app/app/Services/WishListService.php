@@ -9,8 +9,7 @@ use App\DTOs\PublicWishListDTO;
 use App\Models\WishList;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 
@@ -28,17 +27,11 @@ class WishListService
         return WishList::forUser($userId)->with('wishes')->get();
     }
 
-    public function findByIdAndUser(int $id, int $userId): ?WishList
-    {
-        return WishList::forUser($userId)->find($id);
-    }
-
     /**
-     * @throws ValidationException
+     * Create a new wish list.
      */
     public function create(array $data, int $userId): WishList
     {
-        $this->validateCreateData($data);
         $data['user_id'] = $userId;
 
         $wishList = WishList::create($data);
@@ -48,18 +41,16 @@ class WishListService
     }
 
     /**
-     * @throws ValidationException
+     * Update an existing wish list.
      */
     public function update(WishList $wishList, array $data): WishList
     {
-        $this->validateUpdateData($data);
-        
         $wasPublic = $wishList->is_public;
         $willBePublic = $data['is_public'] ?? $wasPublic;
-        
+
         $wishList->update($data);
         $this->cacheService->clearUserCache($wishList->user_id);
-        
+
         if ($wasPublic !== $willBePublic && $wishList->uuid) {
             $publicCacheKey = "public_wishlist_" . $wishList->uuid;
             Cache::forget("static_content:" . $publicCacheKey);
@@ -68,43 +59,62 @@ class WishListService
         return $wishList->fresh();
     }
 
+    /**
+     * Delete a wish list and clear related caches.
+     */
     public function delete(WishList $wishList): bool
     {
-        $userId = $wishList->user_id;
-        
         try {
             $result = $wishList->delete();
 
             if ($result) {
-                $this->cacheService->clearUserCache($userId);
-                
-                if ($wishList->uuid) {
-                    $publicCacheKey = "public_wishlist_" . $wishList->uuid;
-                    Cache::forget("static_content:" . $publicCacheKey);
-                }
+                $this->clearRelatedCaches($wishList);
             }
 
             return $result;
         } catch (\Exception $e) {
-            \Log::error('Error deleting wish list', [
+            $this->logError('Error deleting wish list', [
                 'wish_list_id' => $wishList->id,
-                'user_id' => $userId,
+                'user_id' => $wishList->user_id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
+
             throw $e;
         }
+    }
+
+    /**
+     * Clear caches related to the wish list.
+     */
+    private function clearRelatedCaches(WishList $wishList): void
+    {
+        $this->cacheService->clearUserCache($wishList->user_id);
+
+        if ($wishList->uuid) {
+            $this->clearPublicCache($wishList->uuid);
+        }
+    }
+
+    /**
+     * Clear public cache for wish list.
+     */
+    private function clearPublicCache(string $uuid): void
+    {
+        $publicCacheKey = "public_wishlist_" . $uuid;
+        Cache::forget("static_content:" . $publicCacheKey);
+    }
+
+    /**
+     * Centralized error logging method.
+     */
+    private function logError(string $message, array $context = []): void
+    {
+        Log::error($message, $context);
     }
 
     public function findPublic(string $uuid): ?WishList
     {
         return WishList::public()->where('uuid', $uuid)->with('wishes')->first();
-    }
-
-    public function regenerateUuid(WishList $wishList): WishList
-    {
-        $wishList->update(['uuid' => (string) Str::uuid()]);
-        return $wishList->fresh();
     }
 
     public function getStatistics(int $userId): array
@@ -134,15 +144,7 @@ class WishListService
             throw new ModelNotFoundException();
         }
 
-        $currentUser = auth()->user();
-        $dto = new PublicWishListDTO(
-            wishList: $wishList,
-            user: $wishList->user,
-            wishes: $wishList->wishes,
-            isGuest: !auth()->check(),
-            isFriend: $currentUser && $currentUser->friends()->where('friend_id', $wishList->user_id)->exists(),
-            isOwner: auth()->id() === $wishList->user_id
-        );
+        $dto = PublicWishListDTO::fromWishList($wishList);
 
         $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
         return $dto;
@@ -160,47 +162,10 @@ class WishListService
         $wishLists = $this->findByUser($userId);
         $stats = $this->getStatistics($userId);
 
-        $dto = new WishListDTO(
-            wishLists: $wishLists,
-            stats: $stats,
-            userId: $userId
-        );
+        $dto = WishListDTO::fromWishLists($wishLists, $userId, $stats);
 
         $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 3600);
         return $dto;
     }
 
-    /**
-     * @throws ValidationException
-     */
-    private function validateCreateData(array $data): void
-    {
-        $validator = Validator::make($data, [
-            'title' => ['required', 'string', 'max:' . self::MAX_TITLE_LENGTH],
-            'description' => ['nullable', 'string', 'max:' . self::MAX_DESCRIPTION_LENGTH],
-            'is_public' => ['boolean'],
-            'currency' => ['required', 'string', 'in:' . implode(',', WishList::getSupportedCurrencies())],
-        ]);
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-    }
-
-    /**
-     * @throws ValidationException
-     */
-    private function validateUpdateData(array $data): void
-    {
-        $validator = Validator::make($data, [
-            'title' => ['sometimes', 'required', 'string', 'max:' . self::MAX_TITLE_LENGTH],
-            'description' => ['sometimes', 'nullable', 'string', 'max:' . self::MAX_DESCRIPTION_LENGTH],
-            'is_public' => ['sometimes', 'boolean'],
-            'currency' => ['sometimes', 'required', 'string', 'in:' . implode(',', WishList::getSupportedCurrencies())],
-        ]);
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-    }
 }

@@ -44,4 +44,17 @@ readonly class WishDTO implements BaseDTO
             wish: $data['wish'] ?? null,
         );
     }
+
+    /**
+     * Create DTO from wish list data.
+     */
+    public static function fromWishListData(WishList $wishList, Collection $wishes, int $userId, array $stats = []): static
+    {
+        return new self(
+            wishList: $wishList,
+            wishes: $wishes,
+            stats: $stats,
+            userId: $userId
+        );
+    }
 }

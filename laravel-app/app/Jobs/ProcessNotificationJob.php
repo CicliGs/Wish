@@ -21,9 +21,9 @@ class ProcessNotificationJob implements ShouldQueue
     private const DEFAULT_TRIES = 3;
     private const DEFAULT_MAX_EXCEPTIONS = 3;
 
-    protected $timeout;
-    protected $tries;
-    protected $maxExceptions;
+    private $timeout;
+    private $tries;
+    private $maxExceptions;
 
     /**
      * Create a new job instance.
@@ -36,6 +36,8 @@ class ProcessNotificationJob implements ShouldQueue
 
     /**
      * Execute the job.
+     *
+     * @throws Exception
      */
     public function handle(NotificationService $notificationService): void
     {
@@ -56,14 +58,6 @@ class ProcessNotificationJob implements ShouldQueue
     public function failed(Exception $exception): void
     {
         $this->logJobFailure($exception);
-    }
-
-    /**
-     * Calculate the number of seconds to wait before retrying the job.
-     */
-    public function retryAfter(): int
-    {
-        return $this->calculateExponentialBackoff();
     }
 
     /**
@@ -143,21 +137,6 @@ class ProcessNotificationJob implements ShouldQueue
             'notification_data' => $this->notificationDTO->toArray(),
             'trace' => $this->shouldIncludeTrace() ? $exception->getTraceAsString() : null,
         ]));
-    }
-
-    /**
-     * Calculate exponential backoff delay
-     */
-    private function calculateExponentialBackoff(): int
-    {
-        $config = config('notifications.queue.backoff');
-        $baseDelay = $config['base_delay'] ?? 60;
-        $maxDelay = $config['max_delay'] ?? 3600;
-        $exponent = $this->attempts();
-
-        $delay = $baseDelay * (2 ** $exponent);
-
-        return min($delay, $maxDelay);
     }
 
     /**

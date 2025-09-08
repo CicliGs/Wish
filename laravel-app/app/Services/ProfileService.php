@@ -45,29 +45,6 @@ class ProfileService
         $this->cacheService->clearUserCache($user->id);
     }
 
-    public function searchUsers(string $query, int $excludeUserId, int $limit = self::DEFAULT_SEARCH_LIMIT): Collection
-    {
-        return User::where(function ($queryBuilder) use ($query) {
-                $queryBuilder->where('name', 'like', "%$query%")
-                  ->orWhere('email', 'like', "%$query%");
-            })
-            ->where('id', '!=', $excludeUserId)
-            ->limit($limit)
-            ->get();
-    }
-
-    public function addFriend(User $user, int $friendId): void
-    {
-        if ($this->canAddFriend($user, $friendId)) {
-            $user->friends()->attach($friendId);
-        }
-    }
-
-    public function removeFriend(User $user, int $friendId): void
-    {
-        $user->friends()->detach($friendId);
-    }
-
     public function getAchievements(User $user): array
     {
         return collect(config('achievements'))->map(function ($achievement) use ($user) {
@@ -103,11 +80,6 @@ class ProfileService
         $this->cacheService->clearUserCache($user->id);
     }
 
-    public function getWishLists(int $userId): Collection
-    {
-        return $this->wishListService->findByUser($userId);
-    }
-
     public function getProfileData(User $user, FriendService $friendService): ProfileDTO
     {
         $cacheKey = "user_profile_$user->id";
@@ -117,7 +89,7 @@ class ProfileService
             return unserialize($cachedData);
         }
 
-        $dto = new ProfileDTO(
+        $dto = ProfileDTO::fromUserWithData(
             user: $user,
             stats: $this->getUserStatistics($user->id),
             friends: $friendService->getFriends($user),
@@ -140,11 +112,6 @@ class ProfileService
             ['avatar' => $avatarFile],
             ['avatar' => 'required|image|max:' . self::MAX_AVATAR_SIZE]
         )->validate();
-    }
-
-    private function canAddFriend(User $user, int $friendId): bool
-    {
-        return $user->id !== $friendId && !$user->friends()->where('friend_id', $friendId)->exists();
     }
 
     private function createUserAchievement(User $user, string $achievementKey): void

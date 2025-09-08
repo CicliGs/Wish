@@ -9,6 +9,7 @@ use App\DTOs\NotificationDisplayDTO;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\Wish;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -21,10 +22,9 @@ class NotificationService
     public function createNotification(NotificationDTO $notificationDTO): Notification
     {
         try {
-            $notification = Notification::create($notificationDTO->toArray());
-            return $notification;
-        } catch (\Exception $e) {
-            Log::error('Failed to create notification', [
+            return Notification::create($notificationDTO->toArray());
+        } catch (Exception $e) {
+            $this->logError('Failed to create notification', [
                 'error' => $e->getMessage(),
                 'notification_data' => $notificationDTO->toArray(),
             ]);
@@ -39,37 +39,40 @@ class NotificationService
     public function getUserFriends(int $userId): array
     {
         try {
-            $friends = DB::table('friends')
-                ->where('status', 'accepted')
-                ->where(function ($query) use ($userId) {
-                    $query->where('user_id', $userId)
-                          ->orWhere('friend_id', $userId);
-                })
-                ->get();
+            $friendIds = $this->getFriendIds($userId);
 
-            $friendIds = [];
-            foreach ($friends as $friendship) {
-                if ($friendship->user_id == $userId) {
-                    $friendIds[] = $friendship->friend_id;
-                } else {
-                    $friendIds[] = $friendship->user_id;
-                }
-            }
-
-            if (empty($friendIds)) {
+            if ($friendIds->isEmpty()) {
                 return [];
             }
 
-            $users = User::whereIn('id', $friendIds)->get();
-            return $users->toArray();
-        } catch (\Exception $e) {
-            Log::error('Failed to get user friends', [
+            return User::whereIn('id', $friendIds)->get()->toArray();
+        } catch (Exception $e) {
+            $this->logError('Failed to get user friends', [
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);
 
             return [];
         }
+    }
+
+    /**
+     * Get friend IDs for a user
+     */
+    private function getFriendIds(int $userId): Collection
+    {
+        return DB::table('friends')
+            ->where('status', 'accepted')
+            ->where(function ($query) use ($userId) {
+                $query->where('user_id', $userId)
+                      ->orWhere('friend_id', $userId);
+            })
+            ->get()
+            ->map(function ($friendship) use ($userId) {
+                return $friendship->user_id == $userId ? $friendship->friend_id : $friendship->user_id;
+            })
+            ->unique()
+            ->values();
     }
 
     /**
@@ -93,14 +96,15 @@ class NotificationService
     {
         try {
             $notification = Notification::find($notificationId);
+
             if (!$notification) {
                 return false;
             }
 
             $notification->update(['is_read' => true]);
             return true;
-        } catch (\Exception $e) {
-            Log::error('Failed to mark notification as read', [
+        } catch (Exception $e) {
+            $this->logError('Failed to mark notification as read', [
                 'notification_id' => $notificationId,
                 'error' => $e->getMessage(),
             ]);
@@ -118,8 +122,8 @@ class NotificationService
             return Notification::where('user_id', $userId)
                 ->where('is_read', false)
                 ->update(['is_read' => true]);
-        } catch (\Exception $e) {
-            Log::error('Failed to mark all notifications as read', [
+        } catch (Exception $e) {
+            $this->logError('Failed to mark all notifications as read', [
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);
@@ -140,12 +144,32 @@ class NotificationService
     }
 
     /**
-     * Gets notification count for user
+     * Mark notification as read for specific user with validation
      */
-    public function getNotificationCount(int $userId): int
+    public function markNotificationAsReadForUser(int $notificationId, int $userId): array
     {
-        return Notification::where('user_id', $userId)
-            ->where('is_read', false)
-            ->count();
+        $notification = $this->getNotificationForUser($notificationId, $userId);
+
+        if (!$notification) {
+            return [
+                'success' => false,
+                'message' => 'Notification not found or not accessible'
+            ];
+        }
+
+        $success = $this->markAsRead($notificationId);
+
+        return [
+            'success' => $success,
+            'message' => $success ? 'Notification marked as read' : 'Failed to mark notification as read'
+        ];
+    }
+
+    /**
+     * Centralized error logging method
+     */
+    private function logError(string $message, array $context = []): void
+    {
+        Log::error($message, $context);
     }
 }

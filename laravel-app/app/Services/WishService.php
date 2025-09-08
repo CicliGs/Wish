@@ -130,16 +130,6 @@ class WishService
     }
 
     /**
-     * Get all user wishes with lists.
-     */
-    public function getAllUserWishesWithLists(int $userId): Collection
-    {
-        return Wish::whereHas('wishList', function($query) use ($userId) {
-            $query->where('user_id', $userId);
-        })->with('wishList')->get();
-    }
-
-    /**
      * Get wish list statistics.
      */
     public function getWishListStatistics(int $wishListId): array
@@ -163,11 +153,7 @@ class WishService
         $wishLists = WishList::where('user_id', $userId)->get();
         $wishes = $this->getUserWishes($userId);
 
-        return new UserWishesDTO(
-            user: $user,
-            wishLists: $wishLists,
-            wishes: $wishes
-        );
+        return UserWishesDTO::fromUserData($user, $wishLists, $wishes);
     }
 
     /**
@@ -179,30 +165,11 @@ class WishService
         $wishList = $this->findWishListByUser($wishListId, $userId);
         $wishes = $wishList->wishes()->with('reservation.user')->get();
 
-        return new UserWishesDTO(
+        return UserWishesDTO::fromUserData(
             user: $user,
             wishLists: WishList::where('id', $wishList->id)->get(),
-            selectedWishList: $wishList,
             wishes: $wishes
         );
-    }
-
-    /**
-     * Check if user can unreserve a wish.
-     */
-    public function canUnreserveWish(Wish $wish, int $userId): bool
-    {
-        return $wish->is_reserved &&
-               $wish->reservation &&
-               $wish->reservation->user_id === $userId;
-    }
-
-    /**
-     * Check if user can reserve a wish.
-     */
-    public function canReserveWish(Wish $wish): bool
-    {
-        return Auth::user() && $wish->isAvailable();
     }
 
     /**
@@ -252,12 +219,7 @@ class WishService
         $wishes = $this->findByWishList($wishListId);
         $stats = $this->getWishListStatistics($wishListId);
 
-        $dto = new WishDTO(
-            wishList: $wishList,
-            wishes: $wishes,
-            stats: $stats,
-            userId: $userId
-        );
+        $dto = WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
 
         $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
 
@@ -273,12 +235,7 @@ class WishService
         $wishes = $this->getAvailableWishes($wishListId);
         $stats = $this->getWishListStatistics($wishListId);
 
-        return new WishDTO(
-            wishList: $wishList,
-            wishes: $wishes,
-            stats: $stats,
-            userId: $userId
-        );
+        return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
     }
 
     /**
@@ -290,15 +247,8 @@ class WishService
         $wishes = $this->getReservedWishes($wishListId);
         $stats = $this->getWishListStatistics($wishListId);
 
-        return new WishDTO(
-            wishList: $wishList,
-            wishes: $wishes,
-            stats: $stats,
-            userId: $userId
-        );
+        return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
     }
-
-
 
     /**
      * Get user wishes.

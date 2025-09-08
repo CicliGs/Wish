@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Http\Requests\UpdateProfileRequest;
 use App\Services\ProfileService;
 use App\Services\FriendService;
 use App\Models\User;
@@ -147,11 +148,9 @@ class ProfileController extends Controller
 
     /**
      * Update user profile (name and avatar)
-     * @throws ValidationException
      */
-    public function update(Request $request, ProfileService $profileService): RedirectResponse
+    public function update(UpdateProfileRequest $request, ProfileService $profileService): RedirectResponse
     {
-        $this->validateProfileUpdate($request);
         $this->updateProfileData($request, Auth::user(), $profileService);
 
         return redirect()->route('profile')->with('success', __('messages.profile_updated'));
@@ -185,17 +184,6 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update user name
-     * @throws ValidationException
-     */
-    public function updateName(Request $request, ProfileService $profileService): RedirectResponse
-    {
-        $profileService->updateUserName(Auth::user(), $request->input('name'));
-
-        return redirect()->route('profile')->with('success', __('messages.name_updated'));
-    }
-
-    /**
      * Handle friend request result
      */
     private function handleFriendRequestResult(bool|string $result): RedirectResponse
@@ -206,21 +194,10 @@ class ProfileController extends Controller
     }
 
     /**
-     * Validate profile update request
-     */
-    private function validateProfileUpdate(Request $request): void
-    {
-        $request->validate([
-            'name' => 'required|string|max:' . self::MAX_NAME_LENGTH,
-            'avatar' => 'nullable|image|max:' . self::MAX_AVATAR_SIZE,
-        ]);
-    }
-
-    /**
      * Update profile data
      * @throws ValidationException
      */
-    private function updateProfileData(Request $request, User $user, ProfileService $profileService): void
+    private function updateProfileData(UpdateProfileRequest $request, User $user, ProfileService $profileService): void
     {
         if ($this->shouldUpdateName($request, $user)) {
             $newName = $request->name;
@@ -235,7 +212,7 @@ class ProfileController extends Controller
     /**
      * Check if name should be updated
      */
-    private function shouldUpdateName(Request $request, User $user): bool
+    private function shouldUpdateName(UpdateProfileRequest $request, User $user): bool
     {
         $requestName = $request->name;
         $userName = $user->name;

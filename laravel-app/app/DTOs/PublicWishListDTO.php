@@ -42,4 +42,21 @@ readonly class PublicWishListDTO implements BaseDTO
             isOwner: $data['isOwner'],
         );
     }
+
+    /**
+     * Create DTO from WishList with authentication context.
+     */
+    public static function fromWishList(WishList $wishList): static
+    {
+        $currentUser = auth()->user();
+        
+        return new self(
+            wishList: $wishList,
+            user: $wishList->user,
+            wishes: $wishList->wishes,
+            isGuest: !auth()->check(),
+            isFriend: $currentUser && $currentUser->friends()->where('friend_id', $wishList->user_id)->exists(),
+            isOwner: auth()->id() === $wishList->user_id
+        );
+    }
 }
