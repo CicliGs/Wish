@@ -46,14 +46,26 @@ readonly class UserWishesDTO implements BaseDTO
     }
 
     /**
-     * Create DTO from user with wish lists and wishes.
+     * Create DTO from user with wish lists only (for wish lists selection page).
      */
-    public static function fromUserData(User $user, Collection $wishLists, ?Collection $wishes = null): static
+    public static function fromUserWishLists(User $user, Collection $wishLists): static
+    {
+        return new self(
+            user: $user,
+            wishLists: $wishLists
+        );
+    }
+
+    /**
+     * Create DTO from user with specific wish list selected (for wish list details page).
+     */
+    public static function fromUserWithSelectedWishList(User $user, Collection $wishLists, Collection $wishes, WishList $selectedWishList): static
     {
         return new self(
             user: $user,
             wishLists: $wishLists,
-            wishes: $wishes
+            wishes: $wishes,
+            selectedWishList: $selectedWishList
         );
     }
 }
