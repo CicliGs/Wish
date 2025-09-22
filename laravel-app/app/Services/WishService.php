@@ -150,10 +150,11 @@ class WishService
     public function getUserWishListsData(int $userId): UserWishesDTO
     {
         $user = User::findOrFail($userId);
-        $wishLists = WishList::where('user_id', $userId)->get();
-        $wishes = $this->getUserWishes($userId);
+        $wishLists = WishList::where('user_id', $userId)
+            ->withCount('wishes')
+            ->get();
 
-        return UserWishesDTO::fromUserData($user, $wishLists, $wishes);
+        return UserWishesDTO::fromUserWishLists($user, $wishLists);
     }
 
     /**
@@ -165,10 +166,11 @@ class WishService
         $wishList = $this->findWishListByUser($wishListId, $userId);
         $wishes = $wishList->wishes()->with('reservation.user')->get();
 
-        return UserWishesDTO::fromUserData(
+        return UserWishesDTO::fromUserWithSelectedWishList(
             user: $user,
             wishLists: WishList::where('id', $wishList->id)->get(),
-            wishes: $wishes
+            wishes: $wishes,
+            selectedWishList: $wishList
         );
     }
 
