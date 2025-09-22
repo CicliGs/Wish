@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class FriendService
 {
     public function __construct(
-        protected CacheService $cacheService
+        protected CacheManagerService $cacheManager
     ) {}
 
     /**
@@ -35,7 +35,7 @@ class FriendService
             'status' => FriendRequestStatus::PENDING->value,
         ]);
 
-        $this->clearUserCaches($sender->id, $receiverId);
+        $this->cacheManager->clearFriendshipCache($sender->id, $receiverId);
 
         return true;
     }
@@ -60,7 +60,7 @@ class FriendService
             }
         });
 
-        $this->clearUserCaches($request->sender_id, $request->receiver_id);
+        $this->cacheManager->clearFriendshipCache($request->sender_id, $request->receiver_id);
     }
 
     /**
@@ -75,7 +75,7 @@ class FriendService
         }
 
         $request->update(['status' => FriendRequestStatus::DECLINED->value]);
-        $this->clearUserCaches($request->sender_id, $request->receiver_id);
+        $this->cacheManager->clearFriendshipCache($request->sender_id, $request->receiver_id);
     }
 
     /**
@@ -84,7 +84,7 @@ class FriendService
     public function removeFriendship(User $user, int $friendId): void
     {
         $this->deleteRequestsBetweenUsers($user->id, $friendId);
-        $this->clearUserCaches($user->id, $friendId);
+        $this->cacheManager->clearFriendshipCache($user->id, $friendId);
     }
 
     /**
@@ -206,12 +206,4 @@ class FriendService
     }
 
 
-    /**
-     * Clear cache for multiple users.
-     */
-    private function clearUserCaches(int $firstUserId, int $secondUserId): void
-    {
-        $this->cacheService->clearUserCache($firstUserId);
-        $this->cacheService->clearUserCache($secondUserId);
-    }
 }

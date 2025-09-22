@@ -9,81 +9,73 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
 
+/**
+ * Core cache service for application data caching
+ * Handles static content caching with automatic key tracking
+ */
 class CacheService
 {
     private const CACHE_KEYS_TTL = 86400;
     private const CACHE_KEYS_STORAGE = 'cache_keys';
 
+    /**
+     * Cache static content with optional TTL
+     */
     public function cacheStaticContent(string $key, string $content, ?int $ttl = null): bool
     {
-        return $this->cache(CacheType::STATIC_CONTENT, $key, $content, $ttl);
+        return $this->storeInCache(CacheType::STATIC_CONTENT, $key, $content, $ttl);
     }
 
+    /**
+     * Retrieve cached static content
+     */
     public function getStaticContent(string $key): ?string
     {
-        return $this->get(CacheType::STATIC_CONTENT, $key);
+        return $this->retrieveFromCache(CacheType::STATIC_CONTENT, $key);
     }
 
-    public function cacheImage(string $key, array $imageData, ?int $ttl = null): bool
-    {
-        return $this->cache(CacheType::IMAGES, $key, $imageData, $ttl);
-    }
-
-    public function getImage(string $key): ?array
-    {
-        return $this->get(CacheType::IMAGES, $key);
-    }
-
-    public function cacheAsset(string $key, array $assetData, ?int $ttl = null): bool
-    {
-        return $this->cache(CacheType::CSS_JS, $key, $assetData, $ttl);
-    }
-
-    public function getAsset(string $key): ?array
-    {
-        return $this->get(CacheType::CSS_JS, $key);
-    }
-
-    public function cacheAvatar(int $userId, array $avatarData, ?int $ttl = null): bool
-    {
-        return $this->cache(CacheType::AVATARS, $userId, $avatarData, $ttl);
-    }
-
-    public function getAvatar(int $userId): ?array
-    {
-        return $this->get(CacheType::AVATARS, $userId);
-    }
-
+    /**
+     * Clear all application cache
+     */
     public function clearAllCache(): bool
     {
-        return $this->executeSafely(function () {
+        return $this->withErrorHandling(function () {
             Cache::flush();
             return true;
         }, 'Failed to clear all cache');
     }
 
+    /**
+     * Clear cache by specific type
+     */
     public function clearCacheByType(CacheType $type): bool
     {
-        return $this->executeSafely(function () use ($type) {
+        return $this->withErrorHandling(function () use ($type) {
             $pattern = $this->buildCacheKey($type, '*');
             $keys = $this->getCacheKeysByPattern($pattern);
-            $this->deleteKeys($keys);
+            $this->removeCacheKeys($keys);
             return true;
         }, "Failed to clear cache for type: {$type->value}");
     }
 
+    /**
+     * Clear all cache related to specific user
+     */
     public function clearUserCache(int $userId): bool
     {
-        return $this->executeSafely(function () use ($userId) {
+        return $this->withErrorHandling(function () use ($userId) {
             $userKeys = $this->getUserCacheKeys($userId);
-            $this->deleteKeys($userKeys);
+            $this->removeCacheKeys($userKeys);
             return true;
         }, "Failed to clear cache for user: $userId");
     }
 
+    /**
+     * Get cache configuration statistics
+     */
     public function getCacheStats(): array
     {
-        return $this->executeSafely(function () {
+        return $this->withErrorHandling(function () {
             return [
                 'driver' => Config::get('cache.default'),
                 'store' => Config::get('cache.stores.' . Config::get('cache.default') . '.driver'),
@@ -94,9 +86,12 @@ class CacheService
         }, 'Failed to get cache stats') ?? [];
     }
 
+    /**
+     * Check if cache entry exists
+     */
     public function hasCache(CacheType $type, string $key): bool
     {
-        return $this->executeSafely(function () use ($type, $key) {
+        return $this->withErrorHandling(function () use ($type, $key) {
             return Cache::has($this->buildCacheKey($type, $key));
         }, 'Failed to check cache existence', [
             'type' => $type->value,
@@ -104,9 +99,12 @@ class CacheService
         ]) ?? false;
     }
 
+    /**
+     * Get cache TTL for specific entry
+     */
     public function getCacheTTL(CacheType $type, string $key): ?int
     {
-        return $this->executeSafely(function () use ($type, $key) {
+        return $this->withErrorHandling(function () use ($type, $key) {
             $cacheKey = $this->buildCacheKey($type, $key);
 
             if (!Cache::has($cacheKey)) {
@@ -120,9 +118,12 @@ class CacheService
         ]);
     }
 
-    private function cache(CacheType $type, $key, $data, ?int $ttl = null): bool
+    /**
+     * Store data in cache with automatic key tracking
+     */
+    private function storeInCache(CacheType $type, $key, $data, ?int $ttl = null): bool
     {
-        return $this->executeSafely(function () use ($type, $key, $data, $ttl) {
+        return $this->withErrorHandling(function () use ($type, $key, $data, $ttl) {
             $ttl = $ttl ?? $type->getTTL();
             $cacheKey = $this->buildCacheKey($type, $key);
 
@@ -136,9 +137,12 @@ class CacheService
         ]) ?? false;
     }
 
-    private function get(CacheType $type, $key)
+    /**
+     * Retrieve data from cache
+     */
+    private function retrieveFromCache(CacheType $type, $key)
     {
-        return $this->executeSafely(function () use ($type, $key) {
+        return $this->withErrorHandling(function () use ($type, $key) {
             return Cache::get($this->buildCacheKey($type, $key));
         }, "Failed to get {$type->value}", [
             'key' => $key,
@@ -146,11 +150,17 @@ class CacheService
         ]);
     }
 
+    /**
+     * Build cache key with type prefix
+     */
     private function buildCacheKey(CacheType $type, $key): string
     {
         return $type->getPrefix() . ":$key";
     }
 
+    /**
+     * Build TTL settings array for statistics
+     */
     private function buildTtlSettings(): array
     {
         return [
@@ -161,9 +171,12 @@ class CacheService
         ];
     }
 
+    /**
+     * Track cache key for selective clearing
+     */
     private function trackCacheKey(string $cacheKey): void
     {
-        $this->executeSafely(function () use ($cacheKey) {
+        $this->withErrorHandling(function () use ($cacheKey) {
             $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
 
             if (!in_array($cacheKey, $keys, true)) {
@@ -173,17 +186,23 @@ class CacheService
         }, 'Failed to track cache key', ['key' => $cacheKey]);
     }
 
+    /**
+     * Get cache keys matching pattern
+     */
     private function getCacheKeysByPattern(string $pattern): array
     {
-        return $this->executeSafely(function () use ($pattern) {
+        return $this->withErrorHandling(function () use ($pattern) {
             $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
             return array_filter($keys, fn($key) => fnmatch($pattern, $key));
         }, 'Failed to get cache keys by pattern', ['pattern' => $pattern]) ?? [];
     }
 
+    /**
+     * Get all cache keys related to specific user
+     */
     private function getUserCacheKeys(int $userId): array
     {
-        return $this->executeSafely(function () use ($userId) {
+        return $this->withErrorHandling(function () use ($userId) {
             $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
             return array_filter($keys, function($key) use ($userId) {
                 return str_contains($key, "user_$userId") ||
@@ -194,14 +213,20 @@ class CacheService
         }, 'Failed to get user cache keys', ['user_id' => $userId]) ?? [];
     }
 
-    private function deleteKeys(array $keys): void
+    /**
+     * Remove multiple cache keys from storage
+     */
+    private function removeCacheKeys(array $keys): void
     {
         foreach ($keys as $key) {
             Cache::forget($key);
         }
     }
 
-    private function executeSafely(callable $operation, string $errorMessage, array $context = [])
+    /**
+     * Execute operation with error handling and logging
+     */
+    private function withErrorHandling(callable $operation, string $errorMessage, array $context = [])
     {
         try {
             return $operation();
@@ -211,6 +236,9 @@ class CacheService
         }
     }
 
+    /**
+     * Log error with context
+     */
     private function logError(string $message, array $context = []): void
     {
         Log::error($message, $context);

@@ -19,7 +19,7 @@ class WishService
     private const STORAGE_PATH = 'wishes';
 
     public function __construct(
-        protected CacheService $cacheService
+        protected CacheManagerService $cacheManager
     ) {}
 
     /**
@@ -39,7 +39,7 @@ class WishService
 
         $wish = Wish::create($wishData);
 
-        $this->clearUserCacheByWishList($wishListId);
+        $this->cacheManager->clearWishListCache($wishListId, Auth::id());
 
         return $wish;
     }
@@ -51,7 +51,7 @@ class WishService
     {
         $wish->update($wishData);
 
-        $this->clearUserCacheByWishList($wish->wish_list_id);
+        $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, Auth::id());
 
         return $wish->fresh();
     }
@@ -64,7 +64,7 @@ class WishService
         $result = $wish->delete();
 
         if ($result) {
-            $this->clearUserCacheByWishList($wish->wish_list_id);
+            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, Auth::id());
         }
 
         return $result;
@@ -82,8 +82,7 @@ class WishService
         $result = $wish->reserveForUser($userId);
 
         if ($result) {
-            $this->clearUserCacheByWishList($wish->wish_list_id);
-            $this->cacheService->clearUserCache($userId);
+            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, $userId);
         }
 
         return $result;
@@ -106,8 +105,7 @@ class WishService
         $result = $wish->dereserve();
 
         if ($result) {
-            $this->clearUserCacheByWishList($wish->wish_list_id);
-            $this->cacheService->clearUserCache($userId);
+            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, $userId);
         }
 
         return $result;
@@ -196,7 +194,7 @@ class WishService
 
             $wish = Wish::create($wishData);
 
-            $this->clearUserCacheByWishList($wishListId);
+            $this->cacheManager->clearWishListCache($wishListId, Auth::id());
 
             return $wish;
         }
@@ -211,7 +209,7 @@ class WishService
     {
         $cacheKey = "wishes_list_{$wishListId}_user_$userId";
 
-        $cachedData = $this->cacheService->getStaticContent($cacheKey);
+        $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
 
         if ($cachedData) {
             return unserialize($cachedData);
@@ -223,7 +221,7 @@ class WishService
 
         $dto = WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
 
-        $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
+        $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
 
         return $dto;
     }
@@ -272,23 +270,4 @@ class WishService
             ->firstOrFail();
     }
 
-    /**
-     * Clear user cache by wish list ID
-     */
-    private function clearUserCacheByWishList(int $wishListId): void
-    {
-        $wishList = WishList::find($wishListId);
-        if ($wishList && $wishList->user_id) {
-            $this->cacheService->clearUserCache($wishList->user_id);
-
-            $ownerId = $wishList->user_id;
-            $ownerListCacheKey = "wishes_list_{$wishListId}_user_{$ownerId}";
-            Cache::forget("static_content:" . $ownerListCacheKey);
-
-            if ($wishList->uuid) {
-                $publicCacheKey = "public_wishlist_" . $wishList->uuid;
-                Cache::forget("static_content:" . $publicCacheKey);
-            }
-        }
-    }
 }

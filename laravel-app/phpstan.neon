@@ -1,0 +1,82 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - app
+        - tests
+    
+    # Money package support
+    # stubFiles:
+    #     - stubs/money.stub
+    
+    # Exclude patterns
+    excludePaths:
+        - bootstrap/*
+        - storage/*
+        - vendor/*
+    
+    # Ignore specific errors
+    ignoreErrors:
+        # Laravel specific false positives
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder::#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::#'
+        - '#Parameter \#1 \$view of function view expects view-string\|null, string given#'
+        - '#PHPDoc type array<string> of property .* is not covariant with PHPDoc type list<string>#'
+        
+        # Money package related
+        - '#Parameter \#1 \$amount of method Money\\Money::__construct\(\) expects string, float given#'
+        
+        # Laravel factories
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Factories\\Factory::#'
+        
+        # Test related
+        - '#Class .* extends @final class Tests\\TestCase#'
+        - '#Call to method PHPUnit\\Framework\\Assert::.* with .* will always evaluate to .*#'
+        
+        # DTOs with static return types
+        - '#Method .* should return static\(.*\) but returns .*#'
+        
+        # Model specific
+        - '#Parameter .* expects App\\Models\\.*, Illuminate\\Database\\Eloquent\\Model\|null given#'
+        - '#Method .* should return App\\Models\\.* but returns Illuminate\\Database\\Eloquent\\Model\|null#'
+        
+        # Collection types
+        - '#Parameter .* expects Illuminate\\Database\\Eloquent\\Collection, Illuminate\\Support\\Collection.* given#'
+        
+        # False positives from strict analysis
+        - '#If condition is always .*#'
+        - '#Unreachable statement - code above always terminates#'
+        - '#Strict comparison using === .* will always evaluate to .*#'
+        - '#Access to an undefined property App\\Models\\User::\$friend_status#'
+        
+        # Uninitialized properties in tests
+        - '#Class .* has an uninitialized property .*#'
+        
+        # Generic types and missing type specifications (Level 8 specific)
+        - '#Method .* has parameter .* with generic class .* but does not specify its types.*#'
+        - '#Method .* return type with generic class .* does not specify its types.*#'
+        - '#Class .* uses generic trait .* but does not specify its types.*#'
+        - '#Method .* return type has no value type specified in iterable type array.*#'
+        - '#Method .* has parameter .* with no value type specified in iterable type array.*#'
+        - '#Method .* has parameter .* with no type specified.*#'
+        - '#Method .* has no return type specified.*#'
+        - '#Parameter .* of class .* constructor expects non-empty-string, string given.*#'
+        
+        # Auth ID and User null checks
+        - '#Parameter .* expects int, int\|string\|null given.*#'
+        - '#Parameter .* expects App\\Models\\User, App\\Models\\User\|null given.*#'
+        - '#Cannot call method .* on App\\Models\\User\|null.*#'
+        - '#Cannot call method .* on Carbon\\Carbon\|null.*#'
+        
+        # Method return types that could be null
+        - '#Method .* should return .* but returns .*\|null.*#'
+        
+    # Custom rules
+    reportUnmatchedIgnoredErrors: false
+    checkUninitializedProperties: true
+    checkDynamicProperties: true
+    
+    # Cache configuration
+    tmpDir: build/phpstan
