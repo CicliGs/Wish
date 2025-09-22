@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Observers\WishObserver;
 use App\Support\MoneyHelper;
 use Exception;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Log;
 use Money\Money;
 
+#[ObservedBy(WishObserver::class)]
 class Wish extends Model
 {
     use HasFactory;
