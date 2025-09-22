@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Services\CacheService;
+use App\Services\CacheManagerService;
 use App\Services\CacheType;
 use Mockery\Exception;
 
@@ -25,7 +25,7 @@ class CacheManageCommand extends Command
     protected $description = 'Manage application cache';
 
     public function __construct(
-        protected CacheService $cacheService
+        protected CacheManagerService $cacheManager
     ) {
         parent::__construct();
     }
@@ -62,7 +62,7 @@ class CacheManageCommand extends Command
     {
         $this->info('Clearing all cache...');
 
-        $success = $this->cacheService->clearAllCache();
+        $success = $this->cacheManager->clearAllCache();
 
         if ($success) {
             $this->info('All cache cleared successfully!');
@@ -81,7 +81,7 @@ class CacheManageCommand extends Command
         $this->info('Cache Statistics:');
         $this->newLine();
 
-        $stats = $this->cacheService->getCacheStats();
+        $stats = $this->cacheManager->getCacheStats();
 
         if (empty($stats)) {
             $this->error('Failed to get cache statistics!');
@@ -133,7 +133,7 @@ class CacheManageCommand extends Command
 
         $this->info("Clearing $type cache...");
 
-        $success = $this->cacheService->clearCacheByType($cacheType);
+        $success = $this->cacheManager->clearCacheByType($cacheType);
 
         if ($success) {
             $this->info("$type cache cleared successfully!");
@@ -163,7 +163,7 @@ class CacheManageCommand extends Command
 
         $this->info("Clearing cache for user $userId...");
 
-        $success = $this->cacheService->clearUserCache((int) $userId);
+        $success = $this->cacheManager->clearUserCache((int) $userId);
 
         if ($success) {
             $this->info("Cache for user $userId cleared successfully!");

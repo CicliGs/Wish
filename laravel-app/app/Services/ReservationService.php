@@ -13,7 +13,7 @@ use Exception;
 class ReservationService
 {
     public function __construct(
-        protected CacheService $cacheService
+        protected CacheManagerService $cacheManager
     ) {}
 
     /**
@@ -31,8 +31,7 @@ class ReservationService
                 $this->updateWishReservationStatus($wish, true);
             });
 
-            $this->cacheService->clearUserCache($userId);
-            $this->cacheService->clearUserCache($wish->wishList->user_id);
+            $this->cacheManager->clearReservationCache($wish->id, $userId, $wish->wishList->user_id);
 
         } catch (Exception $e) {
             return __('messages.error_reserving_wish') . $e->getMessage();
@@ -58,8 +57,7 @@ class ReservationService
                 $this->updateWishReservationStatus($wish, false);
             });
 
-            $this->cacheService->clearUserCache($userId);
-            $this->cacheService->clearUserCache($wish->wishList->user_id);
+            $this->cacheManager->clearReservationCache($wish->id, $userId, $wish->wishList->user_id);
 
         } catch (Exception $e) {
             return __('messages.error_unreserving_wish') . $e->getMessage();

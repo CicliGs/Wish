@@ -21,7 +21,7 @@ class ProfileService
         private readonly WishListService $wishListService,
         private readonly ReservationService $reservationService,
         private readonly AchievementsReceiver $achievementsReceiver,
-        private readonly CacheService $cacheService
+        private readonly CacheManagerService $cacheManager
     ) {}
 
     public function getUserStatistics(int $userId): array
@@ -42,7 +42,7 @@ class ProfileService
         $path = $avatarFile->store(self::AVATAR_STORAGE_PATH, 'public');
         $user->update(['avatar' => '/storage/' . $path]);
 
-        $this->cacheService->clearUserCache($user->id);
+        $this->cacheManager->clearUserCache($user->id);
     }
 
     public function getAchievements(User $user): array
@@ -77,13 +77,13 @@ class ProfileService
     {
         $this->validateUserName($name);
         $user->update(['name' => $name]);
-        $this->cacheService->clearUserCache($user->id);
+        $this->cacheManager->clearUserCache($user->id);
     }
 
     public function getProfileData(User $user, FriendService $friendService): ProfileDTO
     {
         $cacheKey = "user_profile_$user->id";
-        $cachedData = $this->cacheService->getStaticContent($cacheKey);
+        $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
 
         if ($cachedData) {
             return unserialize($cachedData);
@@ -99,7 +99,7 @@ class ProfileService
             wishLists: $this->wishListService->findByUser($user->id)
         );
 
-        $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 900);
+        $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 900);
         return $dto;
     }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\CacheService;
+use App\Services\CacheManagerService;
 use App\Services\CacheType;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +13,7 @@ use Illuminate\View\View;
 class CacheController extends Controller
 {
     public function __construct(
-        protected CacheService $cacheService
+        protected CacheManagerService $cacheManager
     ) {}
 
     /**
@@ -21,7 +21,7 @@ class CacheController extends Controller
      */
     public function stats(): View
     {
-        $cacheStats = $this->cacheService->getCacheStats();
+        $cacheStats = $this->cacheManager->getCacheStats();
 
         return view('cache.stats', compact('cacheStats'));
     }
@@ -52,7 +52,7 @@ class CacheController extends Controller
     public function clearStaticContent(): JsonResponse
     {
         try {
-            $success = $this->cacheService->clearCacheByType(CacheType::STATIC_CONTENT);
+            $success = $this->cacheManager->clearCacheByType(CacheType::STATIC_CONTENT);
 
         } catch (Exception $e) {
 
@@ -74,7 +74,7 @@ class CacheController extends Controller
     public function clearImageCache(): JsonResponse
     {
         try {
-            $success = $this->cacheService->clearCacheByType(CacheType::IMAGES);
+            $success = $this->cacheManager->clearCacheByType(CacheType::IMAGES);
 
         } catch (Exception $e) {
             return response()->json([
@@ -95,7 +95,7 @@ class CacheController extends Controller
     public function clearAssetCache(): JsonResponse
     {
         try {
-            $success = $this->cacheService->clearCacheByType(CacheType::CSS_JS);
+            $success = $this->cacheManager->clearCacheByType(CacheType::CSS_JS);
 
         } catch (Exception $e) {
             return response()->json([
@@ -116,7 +116,7 @@ class CacheController extends Controller
     public function clearAvatarCache(): JsonResponse
     {
         try {
-            $success = $this->cacheService->clearCacheByType(CacheType::AVATARS);
+            $success = $this->cacheManager->clearCacheByType(CacheType::AVATARS);
 
         } catch (Exception $e) {
             return response()->json([
@@ -136,7 +136,7 @@ class CacheController extends Controller
      */
     public function clearAll(): JsonResponse
     {
-        $success = $this->cacheService->clearAllCache();
+        $success = $this->cacheManager->clearAllCache();
 
         return response()->json([
             'success' => $success,
@@ -150,7 +150,7 @@ class CacheController extends Controller
     public function clearUserCache(int $userId): JsonResponse
     {
         try {
-            $success = $this->cacheService->clearUserCache($userId);
+            $success = $this->cacheManager->clearUserCache($userId);
 
         } catch (Exception $e) {
             return response()->json([

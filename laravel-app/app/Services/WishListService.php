@@ -19,7 +19,7 @@ class WishListService
     private const MAX_DESCRIPTION_LENGTH = 1000;
 
     public function __construct(
-        protected CacheService $cacheService
+        protected CacheManagerService $cacheManager
     ) {}
 
     public function findByUser(int $userId): Collection
@@ -35,7 +35,7 @@ class WishListService
         $data['user_id'] = $userId;
 
         $wishList = WishList::create($data);
-        $this->cacheService->clearUserCache($userId);
+        $this->cacheManager->clearUserCache($userId);
 
         return $wishList;
     }
@@ -49,7 +49,7 @@ class WishListService
         $willBePublic = $data['is_public'] ?? $wasPublic;
 
         $wishList->update($data);
-        $this->cacheService->clearUserCache($wishList->user_id);
+        $this->cacheManager->clearUserCache($wishList->user_id);
 
         if ($wasPublic !== $willBePublic && $wishList->uuid) {
             $publicCacheKey = "public_wishlist_" . $wishList->uuid;
@@ -65,11 +65,10 @@ class WishListService
     public function delete(WishList $wishList): bool
     {
         try {
+            // Clear caches BEFORE deletion to get wish list data
+            $this->clearRelatedCaches($wishList);
+            
             $result = $wishList->delete();
-
-            if ($result) {
-                $this->clearRelatedCaches($wishList);
-            }
 
             return $result;
         } catch (\Exception $e) {
@@ -88,8 +87,13 @@ class WishListService
      */
     private function clearRelatedCaches(WishList $wishList): void
     {
-        $this->cacheService->clearUserCache($wishList->user_id);
+        // Clear user cache
+        $this->cacheManager->clearUserCache($wishList->user_id);
+        
+        // Clear wish list specific caches
+        $this->cacheManager->clearWishListCache($wishList->id, $wishList->user_id);
 
+        // Clear public cache if exists
         if ($wishList->uuid) {
             $this->clearPublicCache($wishList->uuid);
         }
@@ -132,7 +136,7 @@ class WishListService
     public function getPublicWishListData(string $uuid): PublicWishListDTO
     {
         $cacheKey = "public_wishlist_$uuid";
-        $cachedData = $this->cacheService->getStaticContent($cacheKey);
+        $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
 
         if ($cachedData) {
             return unserialize($cachedData);
@@ -146,14 +150,14 @@ class WishListService
 
         $dto = PublicWishListDTO::fromWishList($wishList);
 
-        $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
+        $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
         return $dto;
     }
 
     public function getIndexData(int $userId): WishListDTO
     {
         $cacheKey = "user_wishlists_$userId";
-        $cachedData = $this->cacheService->getStaticContent($cacheKey);
+        $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
 
         if ($cachedData) {
             return unserialize($cachedData);
@@ -164,8 +168,7 @@ class WishListService
 
         $dto = WishListDTO::fromWishLists($wishLists, $userId, $stats);
 
-        $this->cacheService->cacheStaticContent($cacheKey, serialize($dto), 3600);
+        $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 3600);
         return $dto;
     }
-
 }
