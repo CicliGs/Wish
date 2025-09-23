@@ -21,7 +21,7 @@ class RegisterController extends Controller
 
     public function register(RegisterRequest $request): RedirectResponse
     {
-        $this->userService->registerUser($request->validated());
+        $this->userService->registerNewUser($request->validated());
         
         return redirect()->route('wish-lists.index');
     }

@@ -23,7 +23,7 @@ class LoginController extends Controller
     public function login(LoginRequest $request):RedirectResponse
     {
         $credentials = $request->validated();
-        if ($this->userService->processLogin($credentials, $request->boolean('remember'))) {
+        if ($this->userService->authenticateUser($credentials, $request->boolean('remember'))) {
             return redirect()->intended(route('wish-lists.index'));
         }
 
@@ -34,7 +34,7 @@ class LoginController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
-        $this->userService->logout();
+        $this->userService->logoutUser();
 
         return redirect('/');
     }

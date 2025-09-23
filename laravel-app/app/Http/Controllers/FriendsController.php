@@ -28,7 +28,7 @@ class FriendsController extends Controller
     public function search(Request $request, FriendService $friendService): View
     {
         $query = $request->input('search') ?? '';
-        $searchDTO = $friendService->searchFriendsWithStatus($query, Auth::user());
+        $searchDTO = $friendService->searchUsersWithFriendStatus($query, Auth::user());
 
         return view('friends.search', $searchDTO->toArray());
     }

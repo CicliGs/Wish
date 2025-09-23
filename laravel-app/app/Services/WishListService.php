@@ -22,7 +22,7 @@ class WishListService
         protected CacheManagerService $cacheManager
     ) {}
 
-    public function findByUser(int $userId): Collection
+    public function findWishListsByUser(int $userId): Collection
     {
         return WishList::forUser($userId)->with('wishes')->get();
     }
@@ -116,14 +116,14 @@ class WishListService
         Log::error($message, $context);
     }
 
-    public function findPublic(string $uuid): ?WishList
+    public function findPublicWishListByUuid(string $uuid): ?WishList
     {
         return WishList::public()->where('uuid', $uuid)->with('wishes')->first();
     }
 
-    public function getStatistics(int $userId): array
+    public function getUserStatistics(int $userId): array
     {
-        $wishLists = $this->findByUser($userId);
+        $wishLists = $this->findWishListsByUser($userId);
 
         return [
             'total_wish_lists' => $wishLists->count(),
@@ -142,7 +142,7 @@ class WishListService
             return unserialize($cachedData);
         }
 
-        $wishList = $this->findPublic($uuid);
+        $wishList = $this->findPublicWishListByUuid($uuid);
 
         if (!$wishList) {
             throw new ModelNotFoundException();
@@ -163,8 +163,8 @@ class WishListService
             return unserialize($cachedData);
         }
 
-        $wishLists = $this->findByUser($userId);
-        $stats = $this->getStatistics($userId);
+        $wishLists = $this->findWishListsByUser($userId);
+        $stats = $this->getUserStatistics($userId);
 
         $dto = WishListDTO::fromWishLists($wishLists, $userId, $stats);
 

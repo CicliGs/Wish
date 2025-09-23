@@ -16,9 +16,9 @@ class UserService
     /**
      * Register a new user and grant first achievement.
      */
-    public function registerUser(array $data): User
+    public function registerNewUser(array $data): User
     {
-        $user = User::register($data);
+        $user = User::create($data);
 
         $this->grantRegistrationAchievement($user);
 
@@ -28,7 +28,7 @@ class UserService
     /**
      * Process user login.
      */
-    public function processLogin(array $credentials, bool $remember = false): bool
+    public function authenticateUser(array $credentials, bool $remember = false): bool
     {
         if (Auth::attempt($credentials, $remember)) {
             request()->session()->regenerate();
@@ -41,7 +41,7 @@ class UserService
     /**
      * Logout user with proper cleanup.
      */
-    public function logout(): void
+    public function logoutUser(): void
     {
         if (Auth::user() instanceof User) {
             $this->cacheManager->clearUserCache(Auth::user()->id);

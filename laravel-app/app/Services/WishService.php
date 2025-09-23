@@ -25,7 +25,7 @@ class WishService
     /**
      * Find wishes by wish list ID.
      */
-    public function findByWishList(int $wishListId): Collection
+    public function findWishesByWishList(int $wishListId): Collection
     {
         return Wish::forWishList($wishListId)->with('reservation.user')->get();
     }
@@ -33,7 +33,7 @@ class WishService
     /**
      * Create a new wish.
      */
-    public function create(array $wishData, int $wishListId): Wish
+    public function createWish(array $wishData, int $wishListId): Wish
     {
         $wishData['wish_list_id'] = $wishListId;
 
@@ -47,7 +47,7 @@ class WishService
     /**
      * Update an existing wish.
      */
-    public function update(Wish $wish, array $wishData): Wish
+    public function updateWish(Wish $wish, array $wishData): Wish
     {
         $wish->update($wishData);
 
@@ -59,7 +59,7 @@ class WishService
     /**
      * Delete a wish.
      */
-    public function delete(Wish $wish): bool
+    public function deleteWish(Wish $wish): bool
     {
         $result = $wish->delete();
 
@@ -184,7 +184,7 @@ class WishService
     /**
      * Create wish with image handling.
      */
-    public function createWithImage(array $wishData, int $wishListId, ?UploadedFile $imageFile = null): Wish
+    public function createWishWithImage(array $wishData, int $wishListId, ?UploadedFile $imageFile = null): Wish
     {
         if ($imageFile) {
             $imagePath = $this->handleImageUpload($imageFile);
@@ -199,7 +199,7 @@ class WishService
             return $wish;
         }
 
-        return $this->create($wishData, $wishListId);
+        return $this->createWish($wishData, $wishListId);
     }
 
     /**
@@ -216,7 +216,7 @@ class WishService
         }
 
         $wishList = WishList::findOrFail($wishListId);
-        $wishes = $this->findByWishList($wishListId);
+        $wishes = $this->findWishesByWishList($wishListId);
         $stats = $this->getWishListStatistics($wishListId);
 
         $dto = WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);

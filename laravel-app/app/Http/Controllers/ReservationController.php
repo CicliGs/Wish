@@ -26,7 +26,7 @@ class ReservationController extends Controller
         $wish = $this->findWish($wishId);
         $this->authorize('reserve', $wish);
         
-        $result = $this->service->reserve($wish, auth()->id());
+        $result = $this->service->reserveWishForUser($wish, auth()->id());
 
         return $this->handleReservationResult($result, 'wish_reserved');
     }
@@ -40,7 +40,7 @@ class ReservationController extends Controller
         $wish = $this->findWish($wishId);
         $this->authorize('unreserve', $wish);
         
-        $result = $this->service->unreserve($wish, auth()->id());
+        $result = $this->service->unreserveWishForUser($wish, auth()->id());
 
         return $this->handleReservationResult($result, 'wish_unreserved');
     }
