@@ -146,9 +146,14 @@ class CacheManagerService
         $cacheKeys = array_filter([
             $wishList->uuid ? "static_content:public_wishlist_" . $wishList->uuid : null,
             $wishList->user_id ? "static_content:wishes_list_{$wishListId}_user_{$wishList->user_id}" : null,
+            $wishList->user_id ? "static_content:user_wishlists_{$wishList->user_id}" : null,
         ]);
 
-        Cache::forget($cacheKeys);
+        Log::info("CacheManager: Clearing specific cache keys", ['keys' => $cacheKeys]);
+        
+        foreach ($cacheKeys as $key) {
+            Cache::forget($key);
+        }
     }
 
     /**

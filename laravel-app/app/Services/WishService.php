@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class WishService
 {
@@ -35,12 +36,16 @@ class WishService
      */
     public function createWish(array $wishData, int $wishListId): Wish
     {
+        Log::info('WishService: Creating new wish', ['wish_list_id' => $wishListId, 'title' => $wishData['title'] ?? 'unknown']);
+        
         $wishData['wish_list_id'] = $wishListId;
 
         $wish = Wish::create($wishData);
 
         $this->cacheManager->clearWishListCache($wishListId, Auth::id());
 
+        Log::info('WishService: Wish created successfully', ['wish_id' => $wish->id, 'wish_list_id' => $wishListId]);
+        
         return $wish;
     }
 
@@ -49,10 +54,14 @@ class WishService
      */
     public function updateWish(Wish $wish, array $wishData): Wish
     {
+        Log::info('WishService: Updating wish', ['wish_id' => $wish->id, 'title' => $wishData['title'] ?? 'unknown']);
+        
         $wish->update($wishData);
 
-        $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, Auth::id());
+        $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
 
+        Log::info('WishService: Wish updated successfully', ['wish_id' => $wish->id]);
+        
         return $wish->fresh();
     }
 
@@ -61,10 +70,15 @@ class WishService
      */
     public function deleteWish(Wish $wish): bool
     {
+        Log::info('WishService: Deleting wish', ['wish_id' => $wish->id, 'title' => $wish->title]);
+        
         $result = $wish->delete();
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, Auth::id());
+            $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
+            Log::info('WishService: Wish deleted successfully', ['wish_id' => $wish->id]);
+        } else {
+            Log::error('WishService: Failed to delete wish', ['wish_id' => $wish->id]);
         }
 
         return $result;
@@ -82,7 +96,7 @@ class WishService
         $result = $wish->reserveForUser($userId);
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, $userId);
+            $this->cacheManager->clearWishCache($wish->wish_list_id, $userId);
         }
 
         return $result;
@@ -105,7 +119,7 @@ class WishService
         $result = $wish->dereserve();
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, $userId);
+            $this->cacheManager->clearWishCache($wish->wish_list_id, $userId);
         }
 
         return $result;

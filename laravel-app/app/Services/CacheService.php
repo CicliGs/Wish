@@ -241,6 +241,6 @@ class CacheService
      */
     private function logError(string $message, array $context = []): void
     {
-        Log::error($message, $context);
+        Log::error("CacheService: $message", $context);
     }
 }

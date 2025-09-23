@@ -21,7 +21,7 @@ class NotificationController extends Controller
     public function getUnreadNotifications(): JsonResponse
     {
         $userId = Auth::id();
-        $notifications = $this->notificationService->getUnreadNotifications($userId);
+        $notifications = $this->notificationService->getUnreadNotificationsForUser($userId);
 
         return response()->json([
             'success' => true,
@@ -50,7 +50,7 @@ class NotificationController extends Controller
     public function markAllAsRead(): JsonResponse
     {
         $userId = Auth::id();
-        $count = $this->notificationService->markAllAsRead($userId);
+        $count = $this->notificationService->markAllNotificationsAsReadForUser($userId);
 
         return response()->json([
             'success' => true,
