@@ -39,7 +39,7 @@ class WishController extends Controller
     {
         try {
             $imageFile = $request->hasFile('image_file') ? $request->file('image_file') : null;
-            $this->wishService->createWithImage($request->getWishData(), $wishList->id, $imageFile);
+            $this->wishService->createWishWithImage($request->getWishData(), $wishList->id, $imageFile);
 
             return redirect()
                 ->route('wishes.index', $wishList)
@@ -69,7 +69,7 @@ class WishController extends Controller
         $this->authorize('update', $wish);
 
         try {
-            $this->wishService->update($wish, $request->getWishData());
+            $this->wishService->updateWish($wish, $request->getWishData());
 
             return redirect()
                 ->route('wishes.index', $wishList)
@@ -88,7 +88,7 @@ class WishController extends Controller
         $this->authorize('delete', $wish);
 
         try {
-            $this->wishService->delete($wish);
+            $this->wishService->deleteWish($wish);
 
             return redirect()
                 ->route('wishes.index', $wishList)

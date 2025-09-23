@@ -19,7 +19,7 @@ class ReservationService
     /**
      * Reserve a wish for a user.
      */
-    public function reserve(Wish $wish, int $userId): bool|string
+    public function reserveWishForUser(Wish $wish, int $userId): bool|string
     {
         if ($wish->is_reserved) {
             return __('messages.wish_already_reserved');
@@ -27,8 +27,8 @@ class ReservationService
 
         try {
             DB::transaction(function () use ($wish, $userId) {
-                $this->createReservation($wish, $userId);
-                $this->updateWishReservationStatus($wish, true);
+                $this->createReservationRecord($wish, $userId);
+                $this->markWishAsReserved($wish);
             });
 
             $this->cacheManager->clearReservationCache($wish->id, $userId, $wish->wishList->user_id);
@@ -37,15 +37,15 @@ class ReservationService
             return __('messages.error_reserving_wish') . $e->getMessage();
         }
 
-            return true;
+        return true;
     }
 
     /**
      * Unreserve a wish for a user.
      */
-    public function unreserve(Wish $wish, int $userId): bool|string
+    public function unreserveWishForUser(Wish $wish, int $userId): bool|string
     {
-        $reservation = $this->findUserReservation($wish->id, $userId);
+        $reservation = $this->findReservationByUserAndWish($wish->id, $userId);
 
         if (!$reservation) {
             return __('messages.wish_not_reserved_by_user');
@@ -53,8 +53,8 @@ class ReservationService
 
         try {
             DB::transaction(function () use ($reservation, $wish) {
-                $this->deleteReservation($reservation);
-                $this->updateWishReservationStatus($wish, false);
+                $this->deleteReservationRecord($reservation);
+                $this->markWishAsAvailable($wish);
             });
 
             $this->cacheManager->clearReservationCache($wish->id, $userId, $wish->wishList->user_id);
@@ -63,7 +63,7 @@ class ReservationService
             return __('messages.error_unreserving_wish') . $e->getMessage();
         }
 
-            return true;
+        return true;
     }
 
     /**
@@ -119,9 +119,9 @@ class ReservationService
     }
 
     /**
-     * Create reservation.
+     * Create reservation record in database.
      */
-    private function createReservation(Wish $wish, int $userId): void
+    private function createReservationRecord(Wish $wish, int $userId): void
     {
         Reservation::create([
             'wish_id' => $wish->id,
@@ -130,17 +130,25 @@ class ReservationService
     }
 
     /**
-     * Update wish reservation status.
+     * Mark wish as reserved in database.
      */
-    private function updateWishReservationStatus(Wish $wish, bool $isReserved): void
+    private function markWishAsReserved(Wish $wish): void
     {
-        $wish->update(['is_reserved' => $isReserved]);
+        $wish->update(['is_reserved' => true]);
     }
 
     /**
-     * Find user reservation.
+     * Mark wish as available in database.
      */
-    private function findUserReservation(int $wishId, int $userId): ?Reservation
+    private function markWishAsAvailable(Wish $wish): void
+    {
+        $wish->update(['is_reserved' => false]);
+    }
+
+    /**
+     * Find reservation by user and wish.
+     */
+    private function findReservationByUserAndWish(int $wishId, int $userId): ?Reservation
     {
         return Reservation::where('wish_id', $wishId)
             ->where('user_id', $userId)
@@ -148,9 +156,9 @@ class ReservationService
     }
 
     /**
-     * Delete reservation.
+     * Delete reservation record from database.
      */
-    private function deleteReservation(Reservation $reservation): void
+    private function deleteReservationRecord(Reservation $reservation): void
     {
         $reservation->delete();
     }

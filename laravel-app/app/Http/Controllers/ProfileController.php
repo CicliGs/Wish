@@ -43,7 +43,7 @@ class ProfileController extends Controller
     public function sendFriendRequest(User $user, FriendService $friendService): RedirectResponse|JsonResponse
     {
         try {
-            $result = $friendService->sendFriendRequest(Auth::user(), $user->id);
+            $result = $friendService->sendFriendRequestToUser(Auth::user(), $user->id);
 
             if ($this->isAjaxRequest()) {
                 return response()->json([
@@ -69,7 +69,7 @@ class ProfileController extends Controller
      */
     public function acceptFriendRequest(int $requestId, FriendService $friendService): RedirectResponse
     {
-        $friendService->acceptFriendRequest($requestId, Auth::id());
+        $friendService->acceptFriendRequestById($requestId, Auth::id());
         return back()->with('success', __('messages.friend_request_accepted'));
     }
 
@@ -78,7 +78,7 @@ class ProfileController extends Controller
      */
     public function declineFriendRequest(int $requestId, FriendService $friendService): RedirectResponse
     {
-        $friendService->declineFriendRequest($requestId, Auth::id());
+        $friendService->declineFriendRequestById($requestId, Auth::id());
         return back()->with('success', __('messages.friend_request_declined'));
     }
 
@@ -87,7 +87,7 @@ class ProfileController extends Controller
      */
     public function removeFriend(User $user, FriendService $friendService): RedirectResponse
     {
-        $friendService->removeFriendship(Auth::user(), $user->id);
+        $friendService->removeFriendshipBetweenUsers(Auth::user(), $user->id);
         return back()->with('success', __('messages.friend_removed'));
     }
 

@@ -19,7 +19,7 @@ class NotificationService
     /**
      * Creates a notification in the database
      */
-    public function createNotification(NotificationDTO $notificationDTO): Notification
+    public function createNotificationFromDTO(NotificationDTO $notificationDTO): Notification
     {
         try {
             return Notification::create($notificationDTO->toArray());
@@ -36,10 +36,10 @@ class NotificationService
     /**
      * Gets user's friends list
      */
-    public function getUserFriends(int $userId): array
+    public function getFriendsForUser(int $userId): array
     {
         try {
-            $friendIds = $this->getFriendIds($userId);
+            $friendIds = $this->getFriendIdsForUser($userId);
 
             if ($friendIds->isEmpty()) {
                 return [];
@@ -59,7 +59,7 @@ class NotificationService
     /**
      * Get friend IDs for a user
      */
-    private function getFriendIds(int $userId): Collection
+    private function getFriendIdsForUser(int $userId): Collection
     {
         return DB::table('friends')
             ->where('status', 'accepted')
@@ -78,7 +78,7 @@ class NotificationService
     /**
      * Gets user's unread notifications with DTO
      */
-    public function getUnreadNotifications(int $userId): Collection
+    public function getUnreadNotificationsForUser(int $userId): Collection
     {
         $notifications = Notification::with(['friend', 'wish.wishList'])
             ->where('user_id', $userId)
@@ -92,7 +92,7 @@ class NotificationService
     /**
      * Marks a notification as read
      */
-    public function markAsRead(int $notificationId): bool
+    public function markNotificationAsRead(int $notificationId): bool
     {
         try {
             $notification = Notification::find($notificationId);
@@ -116,7 +116,7 @@ class NotificationService
     /**
      * Marks all user's notifications as read
      */
-    public function markAllAsRead(int $userId): int
+    public function markAllNotificationsAsReadForUser(int $userId): int
     {
         try {
             return Notification::where('user_id', $userId)
@@ -135,7 +135,7 @@ class NotificationService
     /**
      * Gets notification by ID for specific user
      */
-    public function getNotificationForUser(int $notificationId, int $userId): ?Notification
+    public function getUnreadNotificationForUser(int $notificationId, int $userId): ?Notification
     {
         return Notification::where('id', $notificationId)
             ->where('user_id', $userId)
@@ -148,7 +148,7 @@ class NotificationService
      */
     public function markNotificationAsReadForUser(int $notificationId, int $userId): array
     {
-        $notification = $this->getNotificationForUser($notificationId, $userId);
+        $notification = $this->getUnreadNotificationForUser($notificationId, $userId);
 
         if (!$notification) {
             return [
@@ -157,7 +157,7 @@ class NotificationService
             ];
         }
 
-        $success = $this->markAsRead($notificationId);
+        $success = $this->markNotificationAsRead($notificationId);
 
         return [
             'success' => $success,

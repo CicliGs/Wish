@@ -23,7 +23,7 @@ class ProfileService
     public function getUserStatistics(int $userId): array
     {
         return array_merge(
-            $this->wishListService->getStatistics($userId),
+            $this->wishListService->getUserStatistics($userId),
             $this->reservationService->getUserReservationStatistics($userId)
         );
     }
@@ -91,11 +91,11 @@ class ProfileService
         $dto = ProfileDTO::fromUserWithData(
             user: $user,
             stats: $this->getUserStatistics($user->id),
-            friends: $friendService->getFriends($user),
-            incomingRequests: $friendService->getIncomingRequests($user),
-            outgoingRequests: $friendService->getOutgoingRequests($user),
+            friends: $friendService->getFriendsForUser($user),
+            incomingRequests: $friendService->getIncomingFriendRequests($user),
+            outgoingRequests: $friendService->getOutgoingFriendRequests($user),
             achievements: $this->getAchievements($user),
-            wishLists: $this->wishListService->findByUser($user->id)
+            wishLists: $this->wishListService->findWishListsByUser($user->id)
         );
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 900);

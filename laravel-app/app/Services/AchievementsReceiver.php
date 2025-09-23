@@ -19,15 +19,15 @@ class AchievementsReceiver
     /**
      * First gift (has at least one wish).
      */
-    public function checkGift(User $user): bool
+    public function checkFirstGiftAchievement(User $user): bool
     {
-        return $this->getUserWishCount($user) > 0;
+        return $this->getWishCountForUser($user) > 0;
     }
 
     /**
      * First reservation (has at least one reservation).
      */
-    public function checkReserve(User $user): bool
+    public function checkFirstReservationAchievement(User $user): bool
     {
         return $user->reservations()->count() > 0;
     }
@@ -35,23 +35,23 @@ class AchievementsReceiver
     /**
      * First friend (has at least one friend).
      */
-    public function checkFriend(User $user): bool
+    public function checkFirstFriendAchievement(User $user): bool
     {
-        return $this->hasAcceptedFriends($user);
+        return $this->userHasAcceptedFriends($user);
     }
 
     /**
      * Gift master (50+ added gifts).
      */
-    public function checkGiftMaster(User $user): bool
+    public function checkGiftMasterAchievement(User $user): bool
     {
-        return $this->getUserWishCount($user) >= self::GIFT_MASTER_THRESHOLD;
+        return $this->getWishCountForUser($user) >= self::GIFT_MASTER_THRESHOLD;
     }
 
     /**
      * Reservation master (50+ reserved gifts).
      */
-    public function checkReserveMaster(User $user): bool
+    public function checkReservationMasterAchievement(User $user): bool
     {
         return $user->reservations()->count() >= self::RESERVE_MASTER_THRESHOLD;
     }
@@ -59,15 +59,15 @@ class AchievementsReceiver
     /**
      * Social butterfly (10+ friends).
      */
-    public function checkSocialButterfly(User $user): bool
+    public function checkSocialButterflyAchievement(User $user): bool
     {
-        return $this->getAcceptedFriendsCount($user) >= self::SOCIAL_BUTTERFLY_THRESHOLD;
+        return $this->getAcceptedFriendsCountForUser($user) >= self::SOCIAL_BUTTERFLY_THRESHOLD;
     }
 
     /**
      * Site veteran (one month of site registration).
      */
-    public function checkVeteran(User $user): bool
+    public function checkSiteVeteranAchievement(User $user): bool
     {
         $veteranDate = now()->subMonths(self::VETERAN_MONTHS);
 
@@ -77,7 +77,7 @@ class AchievementsReceiver
     /**
      * Get user wish count.
      */
-    private function getUserWishCount(User $user): int
+    private function getWishCountForUser(User $user): int
     {
         $wishListIds = $user->wishLists()->pluck('id')->toArray();
 
@@ -87,7 +87,7 @@ class AchievementsReceiver
     /**
      * Check if user has accepted friends.
      */
-    private function hasAcceptedFriends(User $user): bool
+    private function userHasAcceptedFriends(User $user): bool
     {
         return DB::table('friends')
             ->where('status', 'accepted')
@@ -101,7 +101,7 @@ class AchievementsReceiver
     /**
      * Get accepted friends count.
      */
-    private function getAcceptedFriendsCount(User $user): int
+    private function getAcceptedFriendsCountForUser(User $user): int
     {
         return DB::table('friends')
             ->where('status', 'accepted')
