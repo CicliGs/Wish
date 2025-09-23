@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
@@ -131,44 +130,6 @@ class User extends Authenticatable
         $data['currency'] = $data['currency'] ?? self::DEFAULT_CURRENCY;
 
         return self::create($data);
-    }
-
-    /**
-     * Try to login user.
-     */
-    public static function tryLogin(array $credentials, bool $remember = false): bool
-    {
-        if (Auth::attempt($credentials, $remember)) {
-            request()->session()->regenerate();
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Logout user.
-     */
-    public static function logout(): void
-    {
-        Auth::logout();
-
-        request()->session()->invalidate();
-
-        request()->session()->regenerateToken();
-
-        request()->session()->flush();
-
-        request()->session()->forget('remember_web');
-
-        if (Auth::check()) {
-            $user = Auth::user();
-            if ($user instanceof self) {
-                $userId = $user->id;
-                cache()->forget('user_' . $userId);
-                cache()->forget('user_permissions_' . $userId);
-            }
-        }
     }
 
     /**

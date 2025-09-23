@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Models\Wish;
-use App\Observers\WishObserver;
 use App\Services\NotificationService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
@@ -28,8 +26,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Wish::observe(WishObserver::class);
-
         View::composer('layouts.app', function ($view) {
             if (Auth::check()) {
                 $incomingRequestsCount = Auth::user()->incomingRequests()->where('status', 'pending')->count();

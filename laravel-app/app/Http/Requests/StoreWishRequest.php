@@ -61,7 +61,7 @@ class StoreWishRequest extends FormRequest
     {
         $price = $this->input('price');
         $normalizedPrice = $this->validatePrice($price);
-        $currency = $this->getCurrencyForValidation();
+        $currency = $this->getCurrency();
 
         $title = $this->input('title');
         $url = $this->input('url');

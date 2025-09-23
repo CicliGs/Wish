@@ -5,17 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Database\Eloquent\Collection;
 use App\DTOs\ProfileDTO;
-use Illuminate\Validation\ValidationException;
 
 class ProfileService
 {
     private const AVATAR_STORAGE_PATH = 'avatars';
-    private const MAX_AVATAR_SIZE = 2048;
-    private const DEFAULT_SEARCH_LIMIT = 10;
 
     public function __construct(
         private readonly WishListService $wishListService,
@@ -33,18 +29,28 @@ class ProfileService
     }
 
     /**
-     * @throws ValidationException
+     * Update user avatar
      */
     public function updateAvatar(User $user, UploadedFile $avatarFile): void
     {
-        $this->validateAvatar($avatarFile);
-
         $path = $avatarFile->store(self::AVATAR_STORAGE_PATH, 'public');
         $user->update(['avatar' => '/storage/' . $path]);
 
         $this->cacheManager->clearUserCache($user->id);
     }
 
+    /**
+     * Update user name
+     */
+    public function updateUserName(User $user, string $name): void
+    {
+        $user->update(['name' => $name]);
+        $this->cacheManager->clearUserCache($user->id);
+    }
+
+    /**
+     * Get user achievements
+     */
     public function getAchievements(User $user): array
     {
         return collect(config('achievements'))->map(function ($achievement) use ($user) {
@@ -71,15 +77,8 @@ class ProfileService
     }
 
     /**
-     * @throws ValidationException
+     * Get profile data with caching
      */
-    public function updateUserName(User $user, string $name): void
-    {
-        $this->validateUserName($name);
-        $user->update(['name' => $name]);
-        $this->cacheManager->clearUserCache($user->id);
-    }
-
     public function getProfileData(User $user, FriendService $friendService): ProfileDTO
     {
         $cacheKey = "user_profile_$user->id";
@@ -104,32 +103,13 @@ class ProfileService
     }
 
     /**
-     * @throws ValidationException
+     * Create user achievement
      */
-    private function validateAvatar(UploadedFile $avatarFile): void
-    {
-        Validator::make(
-            ['avatar' => $avatarFile],
-            ['avatar' => 'required|image|max:' . self::MAX_AVATAR_SIZE]
-        )->validate();
-    }
-
     private function createUserAchievement(User $user, string $achievementKey): void
     {
         $user->achievements()->create([
             'achievement_key' => $achievementKey,
             'received_at' => now(),
         ]);
-    }
-
-    /**
-     * @throws ValidationException
-     */
-    private function validateUserName(string $name): void
-    {
-        Validator::make(
-            ['name' => $name],
-            ['name' => 'required|string|max:255']
-        )->validate();
     }
 }

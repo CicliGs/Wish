@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
+use App\Services\CacheManagerService;
+use Illuminate\Support\Facades\Auth;
 
 class UserService
 {
+    public function __construct(
+        protected CacheManagerService $cacheManager
+    ) {}
     /**
      * Register a new user and grant first achievement.
      */
@@ -25,15 +30,26 @@ class UserService
      */
     public function processLogin(array $credentials, bool $remember = false): bool
     {
-        return User::tryLogin($credentials, $remember);
+        if (Auth::attempt($credentials, $remember)) {
+            request()->session()->regenerate();
+            return true;
+        }
+
+        return false;
     }
 
     /**
-     * Logout user.
+     * Logout user with proper cleanup.
      */
     public function logout(): void
     {
-        User::logout();
+        if (Auth::user() instanceof User) {
+            $this->cacheManager->clearUserCache(Auth::user()->id);
+        }
+
+        Auth::logout();
+        
+        request()->session()->regenerate();
     }
 
     /**

@@ -45,7 +45,7 @@ trait MoneyValidationTrait
         return $floatValue >= 0 ? $floatValue : null;
     }
 
-    protected function getCurrencyForValidation(): ?string
+    protected function getCurrency(): ?string
     {
         $currency = $this->input('currency');
         if ($this->has('currency') && $currency) {
