@@ -25,7 +25,7 @@ readonly class WishObserver
         try {
             $this->notifyFriendsAboutNewWish($wish);
         } catch (Exception $e) {
-            Log::error('Error in WishObserver::created:', [
+            Log::error('WishObserver: Error in created method', [
                 'wish_id' => $wish->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -78,7 +78,7 @@ readonly class WishObserver
                 return;
             }
 
-            $friends = $this->notificationService->getUserFriends($user->id);
+            $friends = $this->notificationService->getFriendsForUser($user->id);
             if (empty($friends)) {
                 return;
             }

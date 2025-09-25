@@ -28,7 +28,9 @@ class ReservationController extends Controller
         
         $result = $this->service->reserveWishForUser($wish, auth()->id());
 
-        return $this->handleReservationResult($result, 'wish_reserved');
+        return $result === true
+            ? back()->with('success', __('messages.wish_reserved'))
+            : back()->with('error', $result);
     }
 
     /**
@@ -42,7 +44,9 @@ class ReservationController extends Controller
         
         $result = $this->service->unreserveWishForUser($wish, auth()->id());
 
-        return $this->handleReservationResult($result, 'wish_unreserved');
+        return $result === true
+            ? back()->with('success', __('messages.wish_unreserved'))
+            : back()->with('error', $result);
     }
 
     /**
@@ -76,13 +80,4 @@ class ReservationController extends Controller
             ->findOrFail($wishId);
     }
 
-    /**
-     * Handle reservation result.
-     */
-    private function handleReservationResult(bool|string $result, string $successMessageKey): RedirectResponse
-    {
-        return $result === true
-            ? back()->with('success', __('messages.' . $successMessageKey))
-            : back()->with('error', $result);
-    }
 }

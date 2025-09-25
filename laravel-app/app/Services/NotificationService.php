@@ -61,15 +61,15 @@ class NotificationService
      */
     private function getFriendIdsForUser(int $userId): Collection
     {
-        return DB::table('friends')
+        return DB::table('friend_requests')
             ->where('status', 'accepted')
             ->where(function ($query) use ($userId) {
-                $query->where('user_id', $userId)
-                      ->orWhere('friend_id', $userId);
+                $query->where('sender_id', $userId)
+                      ->orWhere('receiver_id', $userId);
             })
             ->get()
             ->map(function ($friendship) use ($userId) {
-                return $friendship->user_id == $userId ? $friendship->friend_id : $friendship->user_id;
+                return $friendship->sender_id == $userId ? $friendship->receiver_id : $friendship->sender_id;
             })
             ->unique()
             ->values();
@@ -170,6 +170,6 @@ class NotificationService
      */
     private function logError(string $message, array $context = []): void
     {
-        Log::error($message, $context);
+        Log::error("NotificationService: $message", $context);
     }
 }

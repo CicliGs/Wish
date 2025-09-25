@@ -6,8 +6,10 @@ use App\Http\Controllers\WishController;
 use App\Http\Controllers\WishListController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\CacheController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FriendsController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -60,9 +62,9 @@ Route::middleware('auth')->group(function () {
 
 // Notification Routes
 Route::middleware('auth')->prefix('notifications')->group(function () {
-    Route::get('/unread', [App\Http\Controllers\NotificationController::class, 'getUnreadNotifications'])->name('notifications.unread');
-    Route::post('/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
-    Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::get('/unread', [NotificationController::class, 'getUnreadNotifications'])->name('notifications.unread');
+    Route::post('/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
 });
 
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
@@ -73,18 +75,16 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/public/wish-list/{uuid}', [WishListController::class, 'public'])->name('wish-lists.public');
 
-// Cache management routes
 Route::prefix('cache')->group(function () {
-    Route::get('/stats', [App\Http\Controllers\CacheController::class, 'stats'])->name('cache.stats');
-    Route::get('/status', [App\Http\Controllers\CacheController::class, 'status'])->name('cache.status');
-    Route::post('/clear-static', [App\Http\Controllers\CacheController::class, 'clearStaticContent'])->name('cache.clear-static');
-    Route::post('/clear-images', [App\Http\Controllers\CacheController::class, 'clearImageCache'])->name('cache.clear-images');
-    Route::post('/clear-assets', [App\Http\Controllers\CacheController::class, 'clearAssetCache'])->name('cache.clear-assets');
-    Route::post('/clear-avatars', [App\Http\Controllers\CacheController::class, 'clearAvatarCache'])->name('cache.clear-avatars');
-    Route::post('/clear-all', [App\Http\Controllers\CacheController::class, 'clearAll'])->name('cache.clear-all');
+    Route::get('/stats', [CacheController::class, 'stats'])->name('cache.stats');
+    Route::get('/status', [CacheController::class, 'status'])->name('cache.status');
+    Route::post('/clear-static', [CacheController::class, 'clearStaticContent'])->name('cache.clear-static');
+    Route::post('/clear-images', [CacheController::class, 'clearImageCache'])->name('cache.clear-images');
+    Route::post('/clear-assets', [CacheController::class, 'clearAssetCache'])->name('cache.clear-assets');
+    Route::post('/clear-avatars', [CacheController::class, 'clearAvatarCache'])->name('cache.clear-avatars');
+    Route::post('/clear-all', [CacheController::class, 'clearAll'])->name('cache.clear-all');
 });
 
-// CSRF token route
 Route::get('/csrf-token', function() {
     return response()->json(['token' => csrf_token()]);
 });

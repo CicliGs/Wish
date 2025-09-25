@@ -113,7 +113,7 @@ class WishListService
      */
     private function logError(string $message, array $context = []): void
     {
-        Log::error($message, $context);
+        Log::error("WishListService: $message", $context);
     }
 
     public function findPublicWishListByUuid(string $uuid): ?WishList

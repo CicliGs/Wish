@@ -89,11 +89,11 @@ class AchievementsReceiver
      */
     private function userHasAcceptedFriends(User $user): bool
     {
-        return DB::table('friends')
+        return DB::table('friend_requests')
             ->where('status', 'accepted')
             ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                      ->orWhere('friend_id', $user->id);
+                $query->where('sender_id', $user->id)
+                      ->orWhere('receiver_id', $user->id);
             })
             ->exists();
     }
@@ -103,11 +103,11 @@ class AchievementsReceiver
      */
     private function getAcceptedFriendsCountForUser(User $user): int
     {
-        return DB::table('friends')
+        return DB::table('friend_requests')
             ->where('status', 'accepted')
             ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                      ->orWhere('friend_id', $user->id);
+                $query->where('sender_id', $user->id)
+                      ->orWhere('receiver_id', $user->id);
             })
             ->count();
     }

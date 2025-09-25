@@ -62,9 +62,7 @@ class CacheManageCommand extends Command
     {
         $this->info('Clearing all cache...');
 
-        $success = $this->cacheManager->clearAllCache();
-
-        if ($success) {
+        if ($this->cacheManager->clearAllCache()) {
             $this->info('All cache cleared successfully!');
             return self::SUCCESS;
         } else {

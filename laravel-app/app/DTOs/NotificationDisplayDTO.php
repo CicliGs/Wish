@@ -11,6 +11,7 @@ readonly class NotificationDisplayDTO implements BaseDTO
 {
     public function __construct(
         public int $id,
+        public string $message,
         public string $senderName,
         public int $senderId,
         public string $wishTitle,
@@ -24,6 +25,7 @@ readonly class NotificationDisplayDTO implements BaseDTO
     {
         return [
             'id' => $this->id,
+            'message' => $this->message,
             'sender_name' => $this->senderName,
             'sender_id' => $this->senderId,
             'wish_title' => $this->wishTitle,
@@ -38,6 +40,7 @@ readonly class NotificationDisplayDTO implements BaseDTO
     {
         return new self(
             id: $data['id'],
+            message: $data['message'],
             senderName: $data['sender_name'],
             senderId: $data['sender_id'],
             wishTitle: $data['wish_title'],
@@ -55,6 +58,7 @@ readonly class NotificationDisplayDTO implements BaseDTO
     {
         return new self(
             id: $notification->id,
+            message: $notification->message,
             senderName: $notification->friend_name,
             senderId: $notification->friend_id,
             wishTitle: $notification->wish_title,
