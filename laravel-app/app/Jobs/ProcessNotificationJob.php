@@ -99,12 +99,7 @@ class ProcessNotificationJob implements ShouldQueue
             return;
         }
 
-        Log::info('ProcessNotificationJob: Notification processed successfully', $this->getLogContext([
-            'notification_id' => $notificationId,
-            'user_id' => $this->notificationDTO->userId,
-            'friend_id' => $this->notificationDTO->friendId,
-            'wish_id' => $this->notificationDTO->wishId,
-        ]));
+        // Only log errors and warnings, not successful operations
     }
 
     /**

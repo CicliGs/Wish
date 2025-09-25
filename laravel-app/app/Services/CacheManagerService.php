@@ -27,7 +27,6 @@ class CacheManagerService
     public function clearAllCache(): bool
     {
         return $this->withErrorHandling(function () {
-            Log::info('CacheManager: Clearing all application cache');
             return $this->cacheService->clearAllCache();
         }, 'Failed to clear all cache') ?? false;
     }
@@ -38,7 +37,6 @@ class CacheManagerService
     public function clearCacheByType(CacheType $type): bool
     {
         return $this->withErrorHandling(function () use ($type) {
-            Log::info("CacheManager: Clearing cache by type: {$type->value}");
             return $this->cacheService->clearCacheByType($type);
         }, "Failed to clear cache for type: {$type->value}") ?? false;
     }
@@ -49,7 +47,6 @@ class CacheManagerService
     public function clearUserCache(int $userId): bool
     {
         return $this->withErrorHandling(function () use ($userId) {
-            Log::info("CacheManager: Clearing cache for user: $userId");
             return $this->cacheService->clearUserCache($userId);
         }, "Failed to clear cache for user: $userId") ?? false;
     }
@@ -76,10 +73,7 @@ class CacheManagerService
     public function clearReservationCache(int $wishId, int $reserverId, int $ownerId): bool
     {
         return $this->withErrorHandling(function () use ($wishId, $reserverId, $ownerId) {
-            Log::info("CacheManager: Clearing cache for reservation: wish $wishId, reserver $reserverId, owner $ownerId");
-
             $this->clearMultipleUserCaches([$reserverId, $ownerId]);
-
             return true;
         }, "Failed to clear cache for reservation: wish $wishId") ?? false;
     }
@@ -90,10 +84,7 @@ class CacheManagerService
     public function clearFriendshipCache(int $firstUserId, int $secondUserId): bool
     {
         return $this->withErrorHandling(function () use ($firstUserId, $secondUserId) {
-            Log::info("CacheManager: Clearing friendship cache between users: $firstUserId and $secondUserId");
-
             $this->clearMultipleUserCaches([$firstUserId, $secondUserId]);
-
             return true;
         }, "Failed to clear friendship cache between users: $firstUserId and $secondUserId") ?? false;
     }
@@ -114,11 +105,8 @@ class CacheManagerService
     private function clearWishRelatedCache(int $wishListId, int $userId, string $type): bool
     {
         return $this->withErrorHandling(function () use ($wishListId, $userId, $type) {
-            Log::info("CacheManager: Clearing cache for $type: $wishListId, user: $userId");
-
             $this->cacheService->clearUserCache($userId);
             $this->clearWishListSpecificCaches($wishListId);
-
             return true;
         }, "Failed to clear cache for $type: $wishListId") ?? false;
     }
@@ -148,8 +136,6 @@ class CacheManagerService
             $wishList->user_id ? "static_content:wishes_list_{$wishListId}_user_{$wishList->user_id}" : null,
             $wishList->user_id ? "static_content:user_wishlists_{$wishList->user_id}" : null,
         ]);
-
-        Log::info("CacheManager: Clearing specific cache keys", ['keys' => $cacheKeys]);
         
         foreach ($cacheKeys as $key) {
             Cache::forget($key);

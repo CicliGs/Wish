@@ -22,8 +22,6 @@ class ReservationService
      */
     public function reserveWishForUser(Wish $wish, int $userId): bool|string
     {
-        Log::info('ReservationService: Attempting to reserve wish', ['wish_id' => $wish->id, 'user_id' => $userId]);
-        
         if ($wish->is_reserved) {
             Log::warning('ReservationService: Wish already reserved', ['wish_id' => $wish->id, 'user_id' => $userId]);
             return __('messages.wish_already_reserved');
@@ -36,8 +34,6 @@ class ReservationService
             });
 
             $this->cacheManager->clearReservationCache($wish->id, $userId, $wish->wishList->user_id);
-
-            Log::info('ReservationService: Wish reserved successfully', ['wish_id' => $wish->id, 'user_id' => $userId]);
         } catch (Exception $e) {
             Log::error('ReservationService: Failed to reserve wish', ['wish_id' => $wish->id, 'user_id' => $userId, 'error' => $e->getMessage()]);
             return __('messages.error_reserving_wish') . $e->getMessage();
@@ -51,8 +47,6 @@ class ReservationService
      */
     public function unreserveWishForUser(Wish $wish, int $userId): bool|string
     {
-        Log::info('ReservationService: Attempting to unreserve wish', ['wish_id' => $wish->id, 'user_id' => $userId]);
-        
         $reservation = $this->findReservationByUserAndWish($wish->id, $userId);
 
         if (!$reservation) {
@@ -67,8 +61,6 @@ class ReservationService
             });
 
             $this->cacheManager->clearReservationCache($wish->id, $userId, $wish->wishList->user_id);
-
-            Log::info('ReservationService: Wish unreserved successfully', ['wish_id' => $wish->id, 'user_id' => $userId]);
         } catch (Exception $e) {
             Log::error('ReservationService: Failed to unreserve wish', ['wish_id' => $wish->id, 'user_id' => $userId, 'error' => $e->getMessage()]);
             return __('messages.error_unreserving_wish') . $e->getMessage();
