@@ -25,6 +25,7 @@ class ProfileController extends Controller
     public function showCurrent(ProfileService $profileService, FriendService $friendService): View
     {
         $profileDTO = $profileService->getProfileData(Auth::user(), $friendService);
+
         return view('profile', $profileDTO->toArray());
     }
 
@@ -34,6 +35,7 @@ class ProfileController extends Controller
     public function show(ProfileService $profileService, FriendService $friendService, User $user): View
     {
         $profileDTO = $profileService->getProfileData($user, $friendService);
+
         return view('profile', $profileDTO->toArray());
     }
 
@@ -43,7 +45,7 @@ class ProfileController extends Controller
     public function sendFriendRequest(User $user, FriendService $friendService): RedirectResponse|JsonResponse
     {
         try {
-            $result = $friendService->sendFriendRequestToUser(Auth::user(), $user->id);
+            $result = $friendService->sendRequest(Auth::user(), $user->id);
 
             if ($this->isAjaxRequest()) {
                 return response()->json([
@@ -60,6 +62,7 @@ class ProfileController extends Controller
             if ($this->isAjaxRequest()) {
                 return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
             }
+
             return back()->with('error', 'Server error: ' . $e->getMessage());
         }
     }
@@ -69,7 +72,8 @@ class ProfileController extends Controller
      */
     public function acceptFriendRequest(int $requestId, FriendService $friendService): RedirectResponse
     {
-        $friendService->acceptFriendRequestById($requestId, Auth::id());
+        $friendService->acceptRequest($requestId, Auth::id());
+
         return back()->with('success', __('messages.friend_request_accepted'));
     }
 
@@ -78,7 +82,8 @@ class ProfileController extends Controller
      */
     public function declineFriendRequest(int $requestId, FriendService $friendService): RedirectResponse
     {
-        $friendService->declineFriendRequestById($requestId, Auth::id());
+        $friendService->declineRequest($requestId, Auth::id());
+
         return back()->with('success', __('messages.friend_request_declined'));
     }
 
@@ -87,7 +92,8 @@ class ProfileController extends Controller
      */
     public function removeFriend(User $user, FriendService $friendService): RedirectResponse
     {
-        $friendService->removeFriendshipBetweenUsers(Auth::user(), $user->id);
+        $friendService->removeFriendship(Auth::user(), $user->id);
+
         return back()->with('success', __('messages.friend_removed'));
     }
 

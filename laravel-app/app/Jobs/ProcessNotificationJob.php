@@ -80,6 +80,7 @@ class ProcessNotificationJob implements ShouldQueue
     private function logJobStart(): void
     {
         if (!$this->shouldLog()) {
+
             return;
         }
 
@@ -113,6 +114,7 @@ class ProcessNotificationJob implements ShouldQueue
     private function logJobError(Exception $exception): void
     {
         if (!$this->shouldLog()) {
+
             return;
         }
 
@@ -129,6 +131,7 @@ class ProcessNotificationJob implements ShouldQueue
     private function logJobFailure(Exception $exception): void
     {
         if (!$this->shouldLog()) {
+
             return;
         }
 

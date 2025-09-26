@@ -32,6 +32,7 @@ class UserService
     {
         if (Auth::attempt($credentials, $remember)) {
             request()->session()->regenerate();
+
             return true;
         }
 
@@ -48,7 +49,7 @@ class UserService
         }
 
         Auth::logout();
-        
+
         request()->session()->regenerate();
     }
 

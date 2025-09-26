@@ -105,7 +105,7 @@ class WishService
         $result = $wish->dereserve();
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, $userId);
+            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id);
         }
 
         return $result;
@@ -178,6 +178,7 @@ class WishService
     public function handleImageUpload(UploadedFile $file): string
     {
         $path = $file->store(self::STORAGE_PATH, 'public');
+
         return '/storage/' . $path;
     }
 
@@ -248,16 +249,6 @@ class WishService
         $stats = $this->getWishListStatistics($wishListId);
 
         return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
-    }
-
-    /**
-     * Get user wishes.
-     */
-    private function getUserWishes(int $userId): Collection
-    {
-        return Wish::whereHas('wishList', function($query) use ($userId) {
-            $query->where('user_id', $userId);
-        })->with(['wishList', 'reservation.user'])->get();
     }
 
     /**

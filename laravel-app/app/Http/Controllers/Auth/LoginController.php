@@ -13,7 +13,9 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function __construct(protected UserService $userService) {}
+    public function __construct(
+        protected UserService $userService
+    ) {}
 
     public function showLoginForm(): View
     {

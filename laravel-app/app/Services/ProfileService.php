@@ -91,14 +91,15 @@ class ProfileService
         $dto = ProfileDTO::fromUserWithData(
             user: $user,
             stats: $this->getUserStatistics($user->id),
-            friends: $friendService->getFriendsForUser($user),
-            incomingRequests: $friendService->getIncomingFriendRequests($user),
-            outgoingRequests: $friendService->getOutgoingFriendRequests($user),
+            friends: $friendService->getFriends($user),
+            incomingRequests: $friendService->getIncomingRequests($user),
+            outgoingRequests: $friendService->getOutgoingRequests($user),
             achievements: $this->getAchievements($user),
             wishLists: $this->wishListService->findWishListsByUser($user->id)
         );
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 900);
+
         return $dto;
     }
 

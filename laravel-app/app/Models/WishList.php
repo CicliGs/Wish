@@ -44,7 +44,6 @@ class WishList extends Model
     /**
      * Default currency for new wish lists.
      */
-    public const DEFAULT_CURRENCY = 'USD';
 
     /**
      * Get supported currencies.
@@ -90,53 +89,5 @@ class WishList extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Scope for user.
-     */
-    public function scopeForUser(Builder $query, int $userId): Builder
-    {
-        return $query->where('user_id', $userId);
-    }
-
-    /**
-     * Scope for public wish lists.
-     */
-    public function scopePublic(Builder $query): Builder
-    {
-        return $query->whereNotNull('uuid');
-    }
-
-    /**
-     * Get public URL attribute.
-     */
-    public function getPublicUrlAttribute(): string
-    {
-        return route('wish-lists.public', $this->uuid);
-    }
-
-    /**
-     * Check if wish list has wishes.
-     */
-    public function hasWishes(): bool
-    {
-        return $this->wishes()->exists();
-    }
-
-    /**
-     * Get wishes count attribute.
-     */
-    public function getWishesCountAttribute(): int
-    {
-        return $this->wishes()->count();
-    }
-
-    /**
-     * Get reserved wishes count attribute.
-     */
-    public function getReservedWishesCountAttribute(): int
-    {
-        return $this->wishes()->where('is_reserved', true)->count();
     }
 }

@@ -82,41 +82,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Get users who added this user as friend.
-     */
-    public function friendOf(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'friends', 'friend_id', 'user_id');
-    }
-
-    /**
      * Get incoming friend requests.
      */
     public function incomingRequests(): HasMany
-    {
-        return $this->hasMany(FriendRequest::class, 'receiver_id');
-    }
-
-    /**
-     * Get outgoing friend requests.
-     */
-    public function outgoingRequests(): HasMany
-    {
-        return $this->hasMany(FriendRequest::class, 'sender_id');
-    }
-
-    /**
-     * Get sent friend requests.
-     */
-    public function sentRequests(): HasMany
-    {
-        return $this->hasMany(FriendRequest::class, 'sender_id');
-    }
-
-    /**
-     * Get received friend requests.
-     */
-    public function receivedRequests(): HasMany
     {
         return $this->hasMany(FriendRequest::class, 'receiver_id');
     }
@@ -130,25 +98,6 @@ class User extends Authenticatable
         $data['currency'] = $data['currency'] ?? self::DEFAULT_CURRENCY;
 
         return self::create($data);
-    }
-
-    /**
-     * Check if user owns wish list.
-     */
-    public function ownsWishList(WishList $wishList): bool
-    {
-        return $this->id === $wishList->user_id;
-    }
-
-    /**
-     * Check if user has reserved wish.
-     */
-    public function hasReservedWish(Wish $wish): bool
-    {
-        $wishReservationUserId = $wish->reservation->user_id ?? null;
-        $userId = $this->id;
-
-        return $wish->reservation && $wishReservationUserId === $userId;
     }
 
     /**
@@ -175,37 +124,4 @@ class User extends Authenticatable
         return $this->achievements()->where('achievement_key', $achievementKey)->exists();
     }
 
-    /**
-     * Get user's preferred currency.
-     */
-    public function getCurrencyAttribute(): string
-    {
-        return $this->attributes['currency'] ?? self::DEFAULT_CURRENCY;
-    }
-
-    /**
-     * Set user's preferred currency.
-     */
-    public function setCurrencyAttribute(string $currency): void
-    {
-        $this->attributes['currency'] = MoneyHelper::isValidCurrency($currency)
-            ? $currency
-            : self::DEFAULT_CURRENCY;
-    }
-
-    /**
-     * Get supported currencies.
-     */
-    public static function getSupportedCurrencies(): array
-    {
-        return array_keys(MoneyHelper::getSupportedCurrencies());
-    }
-
-    /**
-     * Check if currency is supported.
-     */
-    public static function isCurrencySupported(string $currency): bool
-    {
-        return MoneyHelper::isValidCurrency($currency);
-    }
 }

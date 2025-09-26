@@ -12,7 +12,9 @@ use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
-    public function __construct(protected UserService $userService) {}
+    public function __construct(
+        protected UserService $userService
+    ) {}
 
     public function showRegistrationForm(): View
     {
@@ -22,7 +24,7 @@ class RegisterController extends Controller
     public function register(RegisterRequest $request): RedirectResponse
     {
         $this->userService->registerNewUser($request->validated());
-        
+
         return redirect()->route('wish-lists.index');
     }
 }

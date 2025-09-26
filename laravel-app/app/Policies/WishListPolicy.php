@@ -10,14 +10,6 @@ use App\Models\WishList;
 class WishListPolicy
 {
     /**
-     * Determine whether the user can view any wish lists.
-     */
-    public function viewAny(): bool
-    {
-        return true;
-    }
-
-    /**
      * Determine whether the user can view the wish list.
      */
     public function view(User $user, WishList $wishList): bool
@@ -53,14 +45,6 @@ class WishListPolicy
      * Determine whether the user can restore the wish list.
      */
     public function restore(User $user, WishList $wishList): bool
-    {
-        return $this->isOwner($user, $wishList);
-    }
-
-    /**
-     * Determine whether the user can permanently delete the wish list.
-     */
-    public function forceDelete(User $user, WishList $wishList): bool
     {
         return $this->isOwner($user, $wishList);
     }

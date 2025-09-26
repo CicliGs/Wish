@@ -88,27 +88,4 @@ class UpdateWishRequest extends FormRequest
             'price' => $this->validated('price'),
         ];
     }
-
-    /**
-     * Get the currency for this wish.
-     *
-     * @return string|null
-     */
-    public function getWishCurrency(): ?string
-    {
-        return $this->validated('currency');
-    }
-
-    /**
-     * Check if request has valid Money data.
-     *
-     * @return bool
-     */
-    public function hasValidMoneyData(): bool
-    {
-        $price = $this->validated('price');
-        $currency = $this->validated('currency');
-
-        return $this->validateMoneyPrice($price, $currency);
-    }
 }

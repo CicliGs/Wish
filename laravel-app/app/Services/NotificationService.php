@@ -36,7 +36,7 @@ class NotificationService
     /**
      * Gets user's friends list
      */
-    public function getFriendsForUser(int $userId): array
+    public function getFriends(int $userId): array
     {
         try {
             $friendIds = $this->getFriendIdsForUser($userId);
@@ -78,7 +78,7 @@ class NotificationService
     /**
      * Gets user's unread notifications with DTO
      */
-    public function getUnreadNotificationsForUser(int $userId): Collection
+    public function getUnreadNotifications(int $userId): Collection
     {
         $notifications = Notification::with(['friend', 'wish.wishList'])
             ->where('user_id', $userId)
@@ -102,6 +102,7 @@ class NotificationService
             }
 
             $notification->update(['is_read' => true]);
+
             return true;
         } catch (Exception $e) {
             $this->logError('Failed to mark notification as read', [
@@ -116,7 +117,7 @@ class NotificationService
     /**
      * Marks all user's notifications as read
      */
-    public function markAllNotificationsAsReadForUser(int $userId): int
+    public function markAllAsRead(int $userId): int
     {
         try {
             return Notification::where('user_id', $userId)

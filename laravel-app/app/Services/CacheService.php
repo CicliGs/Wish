@@ -143,6 +143,7 @@ class CacheService
     private function retrieveFromCache(CacheType $type, $key)
     {
         return $this->withErrorHandling(function () use ($type, $key) {
+
             return Cache::get($this->buildCacheKey($type, $key));
         }, "Failed to get {$type->value}", [
             'key' => $key,
@@ -204,6 +205,7 @@ class CacheService
     {
         return $this->withErrorHandling(function () use ($userId) {
             $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
+
             return array_filter($keys, function($key) use ($userId) {
                 return str_contains($key, "user_$userId") ||
                        str_contains($key, "user_wishlists_$userId") ||
@@ -229,9 +231,11 @@ class CacheService
     private function withErrorHandling(callable $operation, string $errorMessage, array $context = [])
     {
         try {
+
             return $operation();
         } catch (Exception $e) {
             $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]));
+
             return null;
         }
     }

@@ -116,7 +116,9 @@ class WishListController extends Controller
 
         try {
             $this->service->delete($wishList);
+
         } catch (Exception $e) {
+
             return $this->redirectToIndexWithError('error_deleting_list', $e->getMessage());
         }
 

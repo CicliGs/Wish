@@ -17,7 +17,7 @@ class FriendsController extends Controller
     public function index(FriendService $friendService): View
     {
         $selectedFriendId = $this->getSelectedFriendId();
-        $friendsDTO = $friendService->getFriendsPageData(Auth::user(), $selectedFriendId);
+        $friendsDTO = $friendService->getPageData(Auth::user(), $selectedFriendId);
 
         return view('friends.index', $friendsDTO->toArray());
     }
@@ -28,7 +28,7 @@ class FriendsController extends Controller
     public function search(Request $request, FriendService $friendService): View
     {
         $query = $request->input('search') ?? '';
-        $searchDTO = $friendService->searchUsersWithFriendStatus($query, Auth::user());
+        $searchDTO = $friendService->searchUsers($query, Auth::user());
 
         return view('friends.search', $searchDTO->toArray());
     }
@@ -39,6 +39,7 @@ class FriendsController extends Controller
     private function getSelectedFriendId(): ?int
     {
         $selectedFriendId = request('friend_id');
+
         return $selectedFriendId ? (int) $selectedFriendId : null;
     }
 }

@@ -15,7 +15,9 @@ class ReservationController extends Controller
 {
     use AuthorizesRequests;
 
-    public function __construct(protected ReservationService $service) {}
+    public function __construct(
+        protected ReservationService $service
+    ) {}
 
     /**
      * Reserve a wish.
@@ -25,7 +27,7 @@ class ReservationController extends Controller
     {
         $wish = $this->findWish($wishId);
         $this->authorize('reserve', $wish);
-        
+
         $result = $this->service->reserveWishForUser($wish, auth()->id());
 
         return $this->handleReservationResult($result, 'wish_reserved');
@@ -39,7 +41,7 @@ class ReservationController extends Controller
     {
         $wish = $this->findWish($wishId);
         $this->authorize('unreserve', $wish);
-        
+
         $result = $this->service->unreserveWishForUser($wish, auth()->id());
 
         return $this->handleReservationResult($result, 'wish_unreserved');

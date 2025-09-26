@@ -45,14 +45,6 @@ class MoneyHelper
     }
 
     /**
-     * Create Money object from string value and currency code
-     */
-    public static function createFromString(string $amount, string $currencyCode): Money
-    {
-        return self::create((float) $amount, $currencyCode);
-    }
-
-    /**
      * Format Money object to display string
      */
     public static function format(Money $money): string
@@ -156,8 +148,10 @@ class MoneyHelper
 
         try {
             $currency = new Currency($currencyCode);
+
             return self::$currencies->contains($currency);
         } catch (Exception) {
+
             return false;
         }
     }

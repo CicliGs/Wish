@@ -31,7 +31,7 @@ class CacheController extends Controller
      */
     public function status(): JsonResponse
     {
-        $stats = $this->cacheService->getCacheStats();
+        $stats = $this->cacheManager->getCacheStats();
 
         if (empty($stats)) {
             return response()->json([
@@ -141,27 +141,6 @@ class CacheController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $success ? 'All cache cleared successfully' : 'Failed to clear all cache'
-        ]);
-    }
-
-    /**
-     * Clear cache by specific user
-     */
-    public function clearUserCache(int $userId): JsonResponse
-    {
-        try {
-            $success = $this->cacheManager->clearUserCache($userId);
-
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => "Failed to clear cache for user $userId: " . $e->getMessage()
-            ], 500);
-        }
-
-        return response()->json([
-            'success' => $success,
-            'message' => $success ? "Cache for user $userId cleared successfully" : "Failed to clear cache for user $userId"
         ]);
     }
 }

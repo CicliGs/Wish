@@ -72,74 +72,6 @@ class Wish extends Model
     }
 
     /**
-     * Scope for wish list.
-     */
-    public function scopeForWishList(Builder $query, int $wishListId): Builder
-    {
-        return $query->where('wish_list_id', $wishListId);
-    }
-
-    /**
-     * Scope for reserved wishes.
-     */
-    public function scopeReserved(Builder $query): Builder
-    {
-        return $query->where('is_reserved', true);
-    }
-
-    /**
-     * Scope for available wishes.
-     */
-    public function scopeAvailable(Builder $query): Builder
-    {
-        return $query->where('is_reserved', false);
-    }
-
-    /**
-     * Get formatted price attribute.
-     */
-    public function getFormattedPriceAttribute(): string
-    {
-        try {
-            if (!$this->hasValidPrice()) {
-                return '';
-            }
-
-            $money = $this->getMoneyObject();
-            return MoneyHelper::format($money);
-        } catch (Exception $e) {
-            Log::error('Error formatting price', [
-                'price' => $this->price ?? 'null',
-                'error' => $e->getMessage()
-            ]);
-
-            return '';
-        }
-    }
-
-    /**
-     * Get formatted price for specific user.
-     */
-    public function getFormattedPriceForUser(?User $user = null): string
-    {
-        try {
-            if (!$this->hasValidPrice()) {
-                return '';
-            }
-
-            return MoneyHelper::format($this->getMoneyObject());
-        } catch (Exception $e) {
-            Log::error('Error formatting price for user', [
-                'price' => $this->price ?? 'null',
-                'user_id' => $user->id ?? 'null',
-                'error' => $e->getMessage()
-            ]);
-
-            return '';
-        }
-    }
-
-    /**
      * Check if wish has valid price.
      */
     private function hasValidPrice(): bool
@@ -208,27 +140,6 @@ class Wish extends Model
     }
 
     /**
-     * Get Money object for this wish (public API).
-     */
-    public function getMoney(): ?Money
-    {
-        try {
-            if (!$this->hasValidPrice()) {
-                return null;
-            }
-
-            return $this->getMoneyObject();
-        } catch (Exception $e) {
-            Log::error('Error creating Money object', [
-                'price' => $this->price ?? 'null',
-                'error' => $e->getMessage()
-            ]);
-
-            return null;
-        }
-    }
-
-    /**
      * Check if wish is available.
      */
     public function isAvailable(): bool
@@ -294,18 +205,6 @@ class Wish extends Model
     public function hasImage(): bool
     {
         return !empty($this->image);
-    }
-
-    /**
-     * Get image URL attribute.
-     */
-    public function getImageUrlAttribute(): ?string
-    {
-        if (!$this->hasImage()) {
-            return null;
-        }
-
-        return $this->image;
     }
 
     /**

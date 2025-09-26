@@ -31,7 +31,7 @@ trait MoneyValidationTrait
 
     protected function validatePrice(?string $price): ?float
     {
-        if ($price === null || $price === '') {
+        if (empty($price)) {
             return null;
         }
 
@@ -42,47 +42,47 @@ trait MoneyValidationTrait
         }
 
         $floatValue = (float) $cleaned;
+
         return $floatValue >= 0 ? $floatValue : null;
     }
 
     protected function getCurrency(): ?string
     {
-        $currency = $this->input('currency');
-        if ($this->has('currency') && $currency) {
+        if ($this->has('currency') && $currency = $this->input('currency')) {
             return $currency;
         }
 
-        $wishList = $this->route('wishList');
-        if ($wishList instanceof WishList) {
-            return $wishList->currency;
+        if ($wishList = $this->route('wishList')) {
+            return $wishList instanceof WishList ? $wishList->currency : null;
         }
 
-        if (auth()->check() && auth()->user()) {
-            return auth()->user()->currency;
-        }
-
-        return null;
+        return auth()->user()?->currency;
     }
 
     protected function validateMoneyPrice(?float $price, ?string $currency): bool
     {
         if ($price === null) {
+
             return true;
         }
 
         if ($price <= 0) {
+
             return false;
         }
 
-        if ($currency && MoneyHelper::isValidCurrency($currency)) {
-            try {
-                MoneyHelper::create($price, $currency);
-                return true;
-            } catch (Exception) {
-                return false;
-            }
+        if (!$currency || !MoneyHelper::isValidCurrency($currency)) {
+
+            return true;
         }
 
-        return true;
+        try {
+            MoneyHelper::create($price, $currency);
+
+            return true;
+        } catch (Exception) {
+
+            return false;
+        }
     }
 }
