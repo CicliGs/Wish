@@ -10,13 +10,6 @@ use Illuminate\Support\Facades\Auth;
 
 class WishPolicy
 {
-    /**
-     * Determine whether the user can view any wishes.
-     */
-    public function viewAny(): bool
-    {
-        return true;
-    }
 
     /**
      * Determine whether the user can view the wish.
@@ -70,14 +63,6 @@ class WishPolicy
      * Determine whether the user can restore the wish.
      */
     public function restore(User $user, Wish $wish): bool
-    {
-        return $this->isOwner($user, $wish);
-    }
-
-    /**
-     * Determine whether the user can permanently delete the wish.
-     */
-    public function forceDelete(User $user, Wish $wish): bool
     {
         return $this->isOwner($user, $wish);
     }
