@@ -52,7 +52,10 @@ readonly class NotificationDTO implements BaseDTO
         string $friendName,
         string $wishTitle
     ): static {
-        $message = "{$friendName} добавил новый подарок: {$wishTitle}";
+        $message = __('messages.friend_added_new_wish', [
+            'friendName' => $friendName,
+            'wishTitle' => $wishTitle
+        ]);
 
         return new self(
             userId: $userId,

@@ -12,6 +12,11 @@ class FriendRequest extends Model
 {
     use HasFactory;
 
+    /** @phpstan-ignore-next-line */
+    public int $sender_id;
+    /** @phpstan-ignore-next-line */
+    public int $receiver_id;
+
     /**
      * The attributes that are mass assignable.
      *

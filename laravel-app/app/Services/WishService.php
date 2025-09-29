@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class WishService
 {
@@ -41,7 +40,7 @@ class WishService
         $wish = Wish::create($wishData);
 
         $this->cacheManager->clearWishListCache($wishListId, Auth::id());
-        
+
         return $wish;
     }
 
@@ -53,7 +52,7 @@ class WishService
         $wish->update($wishData);
 
         $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
-        
+
         return $wish->fresh();
     }
 
@@ -66,8 +65,6 @@ class WishService
 
         if ($result) {
             $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
-        } else {
-            Log::error('WishService: Failed to delete wish', ['wish_id' => $wish->id]);
         }
 
         return $result;
@@ -253,15 +250,6 @@ class WishService
         return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
     }
 
-    /**
-     * Get user wishes.
-     */
-    private function getUserWishes(int $userId): Collection
-    {
-        return Wish::whereHas('wishList', function($query) use ($userId) {
-            $query->where('user_id', $userId);
-        })->with(['wishList', 'reservation.user'])->get();
-    }
 
     /**
      * Find wish list by user.

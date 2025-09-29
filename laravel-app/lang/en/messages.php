@@ -309,4 +309,18 @@ return [
     'show_qr_code' => 'Show QR Code',
     'edit_wishlist' => 'Edit Wish List',
     'view_profile' => 'View Profile',
+    
+    // Notification defaults
+    'unknown_sender' => 'Unknown',
+    'unknown_wish' => 'Unknown wish',
+    'unknown_wishlist' => 'Unknown wish list',
+    'friend_added_new_wish' => ':friendName added a new gift: :wishTitle',
+    
+    // Friend request statuses
+    'friend_status_pending' => 'Pending',
+    'friend_status_accepted' => 'Accepted',
+    'friend_status_declined' => 'Declined',
+    
+    // Authentication
+    'invalid_credentials' => 'Invalid email or password',
 ]; 

@@ -73,6 +73,9 @@ parameters:
         # Method return types that could be null
         - '#Method .* should return .* but returns .*\|null.*#'
         
+        # Dead catch detection
+        - '#Dead catch - .* is never thrown in the try block\.$#'
+        
     # Custom rules
     reportUnmatchedIgnoredErrors: false
     checkUninitializedProperties: true

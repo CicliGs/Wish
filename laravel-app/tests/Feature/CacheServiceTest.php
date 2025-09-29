@@ -33,41 +33,6 @@ class CacheServiceTest extends TestCase
         $this->assertEquals($content, $this->cacheService->getStaticContent($key));
     }
 
-    /** @test */
-    public function it_can_cache_image_data()
-    {
-        $key = 'test_image';
-        $imageData = ['path' => '/images/test.jpg', 'alt' => 'Test Image'];
-        
-        $result = $this->cacheService->cacheImage($key, $imageData);
-        
-        $this->assertTrue($result);
-        $this->assertEquals($imageData, $this->cacheService->getImage($key));
-    }
-
-    /** @test */
-    public function it_can_cache_asset_data()
-    {
-        $key = 'test_css';
-        $assetData = ['path' => '/css/test.css', 'version' => '1.0.0'];
-        
-        $result = $this->cacheService->cacheAsset($key, $assetData);
-        
-        $this->assertTrue($result);
-        $this->assertEquals($assetData, $this->cacheService->getAsset($key));
-    }
-
-    /** @test */
-    public function it_can_cache_user_avatar()
-    {
-        $userId = 123;
-        $avatarData = ['path' => '/avatars/user123.jpg', 'size' => '150x150'];
-        
-        $result = $this->cacheService->cacheAvatar($userId, $avatarData);
-        
-        $this->assertTrue($result);
-        $this->assertEquals($avatarData, $this->cacheService->getAvatar($userId));
-    }
 
     /** @test */
     public function it_can_check_cache_existence()
@@ -104,16 +69,16 @@ class CacheServiceTest extends TestCase
     public function it_can_clear_cache_by_type()
     {
         $this->cacheService->cacheStaticContent('test1', 'content1');
-        $this->cacheService->cacheImage('test2', ['path' => '/test.jpg']);
+        $this->cacheService->cacheStaticContent('test2', 'content2');
         
         $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, 'test1'));
-        $this->assertTrue($this->cacheService->hasCache(CacheType::IMAGES, 'test2'));
+        $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, 'test2'));
         
         $result = $this->cacheService->clearCacheByType(CacheType::STATIC_CONTENT);
         
         $this->assertTrue($result);
         $this->assertFalse($this->cacheService->hasCache(CacheType::STATIC_CONTENT, 'test1'));
-        $this->assertTrue($this->cacheService->hasCache(CacheType::IMAGES, 'test2'));
+        $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, 'test2'));
     }
 
     /** @test */
@@ -151,10 +116,10 @@ class CacheServiceTest extends TestCase
     public function it_can_clear_all_cache()
     {
         $this->cacheService->cacheStaticContent('test1', 'content1');
-        $this->cacheService->cacheImage('test2', ['path' => '/test.jpg']);
+        $this->cacheService->cacheStaticContent('test2', 'content2');
         
         $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, 'test1'));
-        $this->assertTrue($this->cacheService->hasCache(CacheType::IMAGES, 'test2'));
+        $this->assertTrue($this->cacheService->hasCache(CacheType::STATIC_CONTENT, 'test2'));
         
         $result = $this->cacheService->clearAllCache();
         

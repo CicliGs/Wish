@@ -90,6 +90,9 @@ class FriendService
     /**
      * Get user's friends list.
      */
+    /**
+     * @return Collection<int, User>
+     */
     public function getFriendsForUser(User $user): Collection
     {
         return FriendRequest::where('status', FriendRequestStatus::ACCEPTED->value)
@@ -99,7 +102,13 @@ class FriendService
             })
             ->with(['sender', 'receiver'])
             ->get()
-            ->map(fn($request) => $request->sender_id === $user->id ? $request->receiver : $request->sender)
+            ->map(function ($request) use ($user) {
+                if ($request->sender_id === $user->id) {
+                    return $request->receiver;
+                }
+                return $request->sender;
+            })
+            ->filter(fn($user) => $user instanceof User)
             ->unique('id');
     }
 

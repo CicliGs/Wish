@@ -60,7 +60,7 @@ class CacheStaticContent
             return false;
         }
 
-        $contentType = $response->headers->get('Content-Type', '');
+        $contentType = $response->headers->get('Content-Type', '') ?? '';
         return str_contains($contentType, 'text/html');
     }
 

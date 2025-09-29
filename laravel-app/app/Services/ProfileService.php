@@ -53,7 +53,9 @@ class ProfileService
      */
     public function getAchievements(User $user): array
     {
-        return collect(config('achievements'))->map(function ($achievement) use ($user) {
+        /** @var array<int, array<string, mixed>> $achievements */
+        $achievements = config('achievements', []);
+        return collect($achievements)->map(function ($achievement) use ($user) {
             $achievementKey = $achievement['key'];
             $received = $user->hasAchievement($achievementKey);
 

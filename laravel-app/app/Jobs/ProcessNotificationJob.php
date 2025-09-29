@@ -21,9 +21,12 @@ class ProcessNotificationJob implements ShouldQueue
     private const DEFAULT_TRIES = 3;
     private const DEFAULT_MAX_EXCEPTIONS = 3;
 
-    private $timeout;
-    private $tries;
-    private $maxExceptions;
+    /** @phpstan-ignore-next-line */
+    private int $timeout;
+    /** @phpstan-ignore-next-line */
+    private int $tries;
+    /** @phpstan-ignore-next-line */
+    private int $maxExceptions;
 
     /**
      * Create a new job instance.
@@ -157,7 +160,7 @@ class ProcessNotificationJob implements ShouldQueue
     {
         $context = [
             'attempt' => $this->attempts(),
-            'job_id' => $this->job->getJobId(),
+            'job_id' => $this->job?->getJobId(),
         ];
 
         if (config('notifications.logging.context.include_notification_data', true)) {

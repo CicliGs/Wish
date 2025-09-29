@@ -15,9 +15,6 @@ use Illuminate\Support\Facades\Cache;
 
 class WishListService
 {
-    private const MAX_TITLE_LENGTH = 255;
-    private const MAX_DESCRIPTION_LENGTH = 1000;
-
     public function __construct(
         protected CacheManagerService $cacheManager
     ) {}

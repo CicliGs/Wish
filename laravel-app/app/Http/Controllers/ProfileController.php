@@ -105,6 +105,9 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request, ProfileService $profileService): RedirectResponse
     {
         $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
 
         if ($request->has('name') && $request->name !== $user->name) {
             $profileService->updateUserName($user, $request->name);

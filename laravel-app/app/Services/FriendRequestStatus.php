@@ -13,9 +13,9 @@ enum FriendRequestStatus: string
     public function label(): string
     {
         return match($this) {
-            self::PENDING => 'Ожидает ответа',
-            self::ACCEPTED => 'Принят',
-            self::DECLINED => 'Отклонен',
+            self::PENDING => __('messages.friend_status_pending'),
+            self::ACCEPTED => __('messages.friend_status_accepted'),
+            self::DECLINED => __('messages.friend_status_declined'),
         };
     }
 }
