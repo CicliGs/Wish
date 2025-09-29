@@ -103,13 +103,11 @@ class FriendService
             ->with(['sender', 'receiver'])
             ->get()
             ->map(function ($request) use ($user) {
-                if ($request->sender_id === $user->id) {
-                    return $request->receiver;
-                }
-                return $request->sender;
+                return $request->sender_id === $user->id ? $request->receiver : $request->sender;
             })
-            ->filter(fn($user) => $user instanceof User)
-            ->unique('id');
+            ->filter(fn($friend) => $friend instanceof User)
+            ->unique('id')
+            ->values();
     }
 
     /**
@@ -213,6 +211,4 @@ class FriendService
                   ->where('receiver_id', $userId1);
         })->delete();
     }
-
-
 }

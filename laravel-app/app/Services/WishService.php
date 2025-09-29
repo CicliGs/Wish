@@ -250,7 +250,6 @@ class WishService
         return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
     }
 
-
     /**
      * Find wish list by user.
      */
@@ -260,5 +259,4 @@ class WishService
             ->where('user_id', $userId)
             ->firstOrFail();
     }
-
 }

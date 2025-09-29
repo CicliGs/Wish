@@ -99,6 +99,7 @@ class ReservationService
         return [
             'total_reservations' => $reservations->count(),
             'total_value' => $reservations->sum(function ($reservation) {
+
                 return $reservation->wish->price ?? 0;
             }),
             'total_reserved_wishes' => $reservations->count(),
@@ -115,6 +116,7 @@ class ReservationService
         return [
             'total_reservations' => $reservations->count(),
             'total_value' => $reservations->sum(function ($reservation) {
+
                 return $reservation->wish->price ?? 0;
             }),
             'reserved_wishes' => $reservations->pluck('wish'),

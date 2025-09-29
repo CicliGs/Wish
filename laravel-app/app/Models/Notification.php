@@ -12,19 +12,13 @@ class Notification extends Model
 {
     use HasFactory;
 
-    /** @phpstan-ignore-next-line */
-    public string $friend_id;
-    /** @phpstan-ignore-next-line */
-    public bool $is_read;
-    /** @phpstan-ignore-next-line */
-    public \DateTimeInterface $created_at;
-    /** @phpstan-ignore-next-line */
-    public \DateTimeInterface $updated_at;
 
     protected $fillable = [
         'user_id',
         'friend_id',
         'wish_id',
+        'friend_name',
+        'wish_title',
         'message',
         'is_read'
     ];

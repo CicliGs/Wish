@@ -54,6 +54,7 @@ class CacheService
             $pattern = $this->buildCacheKey($type, '*');
             $keys = $this->getCacheKeysByPattern($pattern);
             $this->removeCacheKeys($keys);
+
             return true;
         }, "Failed to clear cache for type: {$type->value}");
     }
@@ -66,6 +67,7 @@ class CacheService
         return $this->withErrorHandling(function () use ($userId) {
             $userKeys = $this->getUserCacheKeys($userId);
             $this->removeCacheKeys($userKeys);
+
             return true;
         }, "Failed to clear cache for user: $userId");
     }
@@ -76,6 +78,7 @@ class CacheService
     public function getCacheStats(): array
     {
         return $this->withErrorHandling(function () {
+
             return [
                 'driver' => Config::get('cache.default'),
                 'store' => Config::get('cache.stores.' . Config::get('cache.default') . '.driver'),
@@ -92,6 +95,7 @@ class CacheService
     public function hasCache(CacheType $type, string $key): bool
     {
         return $this->withErrorHandling(function () use ($type, $key) {
+
             return Cache::has($this->buildCacheKey($type, $key));
         }, 'Failed to check cache existence', [
             'type' => $type->value,
@@ -204,7 +208,9 @@ class CacheService
     {
         return $this->withErrorHandling(function () use ($userId) {
             $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
+
             return array_filter($keys, function($key) use ($userId) {
+
                 return str_contains($key, "user_$userId") ||
                        str_contains($key, "user_wishlists_$userId") ||
                        str_contains($key, "user_profile_$userId") ||
@@ -232,6 +238,7 @@ class CacheService
             return $operation();
         } catch (Exception $e) {
             $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]));
+
             return null;
         }
     }

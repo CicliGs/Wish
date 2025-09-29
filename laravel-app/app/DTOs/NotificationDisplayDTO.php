@@ -56,23 +56,23 @@ readonly class NotificationDisplayDTO implements BaseDTO
         return new self(
             id: $notification->id,
             senderName: $notification->friend->name ?? __('messages.unknown_sender'),
-            senderId: (int) ($notification->friend_id ?? 0),
+            senderId: (int) ($notification->getAttribute('friend_id') ?? 0),
             wishTitle: $notification->wish->title ?? __('messages.unknown_wish'),
             wishListId: $notification->wish?->wish_list_id,
             wishListTitle: $notification->wish->wishList->title ?? __('messages.unknown_wishlist'),
-            readAt: $notification->is_read ? $notification->updated_at->format('c') : null,
-            createdAt: $notification->created_at->format('c')
+            readAt: $notification->getAttribute('is_read') && $notification->getAttribute('updated_at') ? $notification->getAttribute('updated_at')->format('c') : null,
+            createdAt: $notification->getAttribute('created_at') ? $notification->getAttribute('created_at')->format('c') : now()->format('c')
         );
     }
 
     /**
      * Create a collection DTO
-     */
-    /**
+     *
      * @param \Illuminate\Database\Eloquent\Collection<int, Notification> $notifications
-     * @return \Illuminate\Support\Collection<int, static>
+     *
+     * @return Collection<int, static>
      */
-    public static function fromNotificationCollection(\Illuminate\Database\Eloquent\Collection $notifications): \Illuminate\Support\Collection
+    public static function fromNotificationCollection(\Illuminate\Database\Eloquent\Collection $notifications): Collection
     {
         return $notifications->map(fn(Notification $notification) => self::fromNotification($notification));
     }
