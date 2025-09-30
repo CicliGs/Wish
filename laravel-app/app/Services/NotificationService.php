@@ -46,6 +46,7 @@ class NotificationService
             }
 
             return User::whereIn('id', $friendIds)->get()->toArray();
+
         } catch (Exception $e) {
             $this->logError('Failed to get user friends', [
                 'user_id' => $userId,
@@ -102,7 +103,9 @@ class NotificationService
             }
 
             $notification->update(['is_read' => true]);
+
             return true;
+
         } catch (Exception $e) {
             $this->logError('Failed to mark notification as read', [
                 'notification_id' => $notificationId,

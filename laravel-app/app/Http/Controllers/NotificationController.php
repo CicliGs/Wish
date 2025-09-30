@@ -41,6 +41,7 @@ class NotificationController extends Controller
         );
 
         $statusCode = $result['success'] ? 200 : 404;
+
         return response()->json($result, $statusCode);
     }
 

@@ -15,9 +15,6 @@ use Illuminate\Support\Facades\Cache;
 
 class WishListService
 {
-    private const MAX_TITLE_LENGTH = 255;
-    private const MAX_DESCRIPTION_LENGTH = 1000;
-
     public function __construct(
         protected CacheManagerService $cacheManager
     ) {}
@@ -65,9 +62,8 @@ class WishListService
     public function delete(WishList $wishList): bool
     {
         try {
-            // Clear caches BEFORE deletion to get wish list data
             $this->clearRelatedCaches($wishList);
-            
+
             $result = $wishList->delete();
 
             return $result;
@@ -87,13 +83,10 @@ class WishListService
      */
     private function clearRelatedCaches(WishList $wishList): void
     {
-        // Clear user cache
         $this->cacheManager->clearUserCache($wishList->user_id);
-        
-        // Clear wish list specific caches
+
         $this->cacheManager->clearWishListCache($wishList->id, $wishList->user_id);
 
-        // Clear public cache if exists
         if ($wishList->uuid) {
             $this->clearPublicCache($wishList->uuid);
         }
@@ -151,6 +144,7 @@ class WishListService
         $dto = PublicWishListDTO::fromWishList($wishList);
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
+
         return $dto;
     }
 
@@ -169,6 +163,7 @@ class WishListService
         $dto = WishListDTO::fromWishLists($wishLists, $userId, $stats);
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 3600);
+
         return $dto;
     }
 }

@@ -64,8 +64,8 @@ readonly class UserWishesDTO implements BaseDTO
         return new self(
             user: $user,
             wishLists: $wishLists,
-            wishes: $wishes,
-            selectedWishList: $selectedWishList
+            selectedWishList: $selectedWishList,
+            wishes: $wishes
         );
     }
 }

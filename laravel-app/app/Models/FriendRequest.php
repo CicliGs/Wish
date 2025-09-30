@@ -12,6 +12,7 @@ class FriendRequest extends Model
 {
     use HasFactory;
 
+
     /**
      * The attributes that are mass assignable.
      *
@@ -21,6 +22,16 @@ class FriendRequest extends Model
         'sender_id',
         'receiver_id',
         'status',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'sender_id' => 'integer',
+        'receiver_id' => 'integer',
     ];
 
     /**

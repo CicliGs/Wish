@@ -305,4 +305,18 @@ return [
     'qr_code_not_available' => 'Генерация QR-кода недоступна',
     'open_link' => 'Открыть ссылку',
     'view_profile' => 'Посмотреть профиль',
+    
+    // Notification defaults
+    'unknown_sender' => 'Неизвестный',
+    'unknown_wish' => 'Неизвестное желание',
+    'unknown_wishlist' => 'Неизвестный список',
+    'friend_added_new_wish' => ':friendName добавил новый подарок: :wishTitle',
+    
+    // Friend request statuses
+    'friend_status_pending' => 'Ожидает ответа',
+    'friend_status_accepted' => 'Принят',
+    'friend_status_declined' => 'Отклонен',
+    
+    // Authentication
+    'invalid_credentials' => 'Неверный email или пароль',
 ]; 

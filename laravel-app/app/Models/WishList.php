@@ -16,6 +16,9 @@ class WishList extends Model
 {
     use HasFactory;
 
+    /** @phpstan-ignore-next-line */
+    public bool $is_public;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -70,7 +73,7 @@ class WishList extends Model
 
             $wishList->wishes()->each(function ($wish) {
                 if ($wish->reservation) {
-                    $wish->reservation()->delete();
+                    $wish->reservation->delete();
                 }
             });
         });

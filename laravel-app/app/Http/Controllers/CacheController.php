@@ -31,7 +31,7 @@ class CacheController extends Controller
      */
     public function status(): JsonResponse
     {
-        $stats = $this->cacheService->getCacheStats();
+        $stats = $this->cacheManager->getCacheStats();
 
         if (empty($stats)) {
             return response()->json([

@@ -23,7 +23,7 @@ class WishPolicy
      */
     public function view(User $user, Wish $wish): bool
     {
-        return $this->isOwner($user, $wish) || $wish->wishList->is_public;
+        return $this->isOwner($user, $wish) || ($wish->wishList->is_public ?? false);
     }
 
     /**
@@ -87,7 +87,7 @@ class WishPolicy
      */
     private function isOwner(User $user, Wish $wish): bool
     {
-        return $user->id === $wish->wishList->user_id;
+        return $user->id === ($wish->wishList->user_id ?? 0);
     }
 
     /**
@@ -107,6 +107,6 @@ class WishPolicy
             return false;
         }
 
-        return $user->id === $wish->reservation->user_id;
+        return $user->id === ($wish->reservation->user_id ?? 0);
     }
 }

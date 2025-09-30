@@ -58,7 +58,7 @@ readonly class WishObserver
     }
 
     /**
-     * Уведомляем друзей о новом подарке
+     * Notify friends about new wish/gift
      */
     private function notifyFriendsAboutNewWish(Wish $wish): void
     {

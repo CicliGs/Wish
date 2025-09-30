@@ -11,7 +11,6 @@ readonly class NotificationDisplayDTO implements BaseDTO
 {
     public function __construct(
         public int $id,
-        public string $message,
         public string $senderName,
         public int $senderId,
         public string $wishTitle,
@@ -25,7 +24,6 @@ readonly class NotificationDisplayDTO implements BaseDTO
     {
         return [
             'id' => $this->id,
-            'message' => $this->message,
             'sender_name' => $this->senderName,
             'sender_id' => $this->senderId,
             'wish_title' => $this->wishTitle,
@@ -40,7 +38,6 @@ readonly class NotificationDisplayDTO implements BaseDTO
     {
         return new self(
             id: $data['id'],
-            message: $data['message'],
             senderName: $data['sender_name'],
             senderId: $data['sender_id'],
             wishTitle: $data['wish_title'],
@@ -58,21 +55,24 @@ readonly class NotificationDisplayDTO implements BaseDTO
     {
         return new self(
             id: $notification->id,
-            message: $notification->message,
-            senderName: $notification->friend_name,
-            senderId: $notification->friend_id,
-            wishTitle: $notification->wish_title,
+            senderName: $notification->friend->name ?? __('messages.unknown_sender'),
+            senderId: (int) ($notification->getAttribute('friend_id') ?? 0),
+            wishTitle: $notification->wish->title ?? __('messages.unknown_wish'),
             wishListId: $notification->wish?->wish_list_id,
-            wishListTitle: $notification->wish?->wishList?->title ?? 'Неизвестный список',
-            readAt: $notification->is_read ? $notification->updated_at?->toISOString() : null,
-            createdAt: $notification->created_at->toISOString()
+            wishListTitle: $notification->wish->wishList->title ?? __('messages.unknown_wishlist'),
+            readAt: $notification->getAttribute('is_read') && $notification->getAttribute('updated_at') ? $notification->getAttribute('updated_at')->format('c') : null,
+            createdAt: $notification->getAttribute('created_at') ? $notification->getAttribute('created_at')->format('c') : now()->format('c')
         );
     }
 
     /**
      * Create a collection DTO
+     *
+     * @param \Illuminate\Database\Eloquent\Collection<int, Notification> $notifications
+     *
+     * @return Collection<int, static>
      */
-    public static function fromNotificationCollection(\Illuminate\Database\Eloquent\Collection $notifications): \Illuminate\Support\Collection
+    public static function fromNotificationCollection(\Illuminate\Database\Eloquent\Collection $notifications): Collection
     {
         return $notifications->map(fn(Notification $notification) => self::fromNotification($notification));
     }

@@ -75,6 +75,7 @@ class WishController extends Controller
                 ->route('wishes.index', $wishList)
                 ->with('success', __('messages.wish_updated'));
         } catch (Exception $e) {
+
             return back()
                 ->with('error', __('messages.error_updating_wish') . ': ' . $e->getMessage());
         }
@@ -94,6 +95,7 @@ class WishController extends Controller
                 ->route('wishes.index', $wishList)
                 ->with('success', __('messages.wish_deleted'));
         } catch (Exception $e) {
+
             return back()
                 ->with('error', __('messages.error_deleting_wish') . ': ' . $e->getMessage());
         }

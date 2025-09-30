@@ -42,6 +42,7 @@ trait MoneyValidationTrait
         }
 
         $floatValue = (float) $cleaned;
+
         return $floatValue >= 0 ? $floatValue : null;
     }
 

@@ -15,6 +15,9 @@ use App\Models\WishList;
  */
 class CacheManagerService
 {
+    /**
+     * @var array<int, WishList|null>
+     */
     private array $wishListCache = [];
 
     public function __construct(
@@ -136,7 +139,7 @@ class CacheManagerService
             $wishList->user_id ? "static_content:wishes_list_{$wishListId}_user_{$wishList->user_id}" : null,
             $wishList->user_id ? "static_content:user_wishlists_{$wishList->user_id}" : null,
         ]);
-        
+
         foreach ($cacheKeys as $key) {
             Cache::forget($key);
         }
@@ -163,6 +166,7 @@ class CacheManagerService
             return $operation();
         } catch (Exception $e) {
             $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]));
+
             return null;
         }
     }
