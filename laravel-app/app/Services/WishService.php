@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class WishService
 {
@@ -40,7 +41,7 @@ class WishService
         $wish = Wish::create($wishData);
 
         $this->cacheManager->clearWishListCache($wishListId, Auth::id());
-
+        
         return $wish;
     }
 
@@ -51,8 +52,8 @@ class WishService
     {
         $wish->update($wishData);
 
-        $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, Auth::id());
-
+        $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
+        
         return $wish->fresh();
     }
 
@@ -64,7 +65,9 @@ class WishService
         $result = $wish->delete();
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, Auth::id());
+            $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
+        } else {
+            Log::error('WishService: Failed to delete wish', ['wish_id' => $wish->id]);
         }
 
         return $result;
@@ -82,7 +85,7 @@ class WishService
         $result = $wish->reserveForUser($userId);
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, $userId);
+            $this->cacheManager->clearWishCache($wish->wish_list_id, $userId);
         }
 
         return $result;
@@ -105,7 +108,7 @@ class WishService
         $result = $wish->dereserve();
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->id, $wish->wish_list_id, $userId);
+            $this->cacheManager->clearWishCache($wish->wish_list_id, $userId);
         }
 
         return $result;

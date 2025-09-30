@@ -83,7 +83,7 @@ class ProcessNotificationJob implements ShouldQueue
             return;
         }
 
-        Log::info('Processing notification job', $this->getLogContext([
+        Log::info('ProcessNotificationJob: Processing notification job', $this->getLogContext([
             'user_id' => $this->notificationDTO->userId,
             'friend_id' => $this->notificationDTO->friendId,
             'wish_id' => $this->notificationDTO->wishId,
@@ -99,12 +99,7 @@ class ProcessNotificationJob implements ShouldQueue
             return;
         }
 
-        Log::info('Notification processed successfully', $this->getLogContext([
-            'notification_id' => $notificationId,
-            'user_id' => $this->notificationDTO->userId,
-            'friend_id' => $this->notificationDTO->friendId,
-            'wish_id' => $this->notificationDTO->wishId,
-        ]));
+        // Only log errors and warnings, not successful operations
     }
 
     /**
@@ -116,7 +111,7 @@ class ProcessNotificationJob implements ShouldQueue
             return;
         }
 
-        Log::error('Failed to process notification job', $this->getLogContext([
+        Log::error('ProcessNotificationJob: Failed to process notification job', $this->getLogContext([
             'error' => $exception->getMessage(),
             'notification_data' => $this->notificationDTO->toArray(),
             'trace' => $this->shouldIncludeTrace() ? $exception->getTraceAsString() : null,
@@ -132,7 +127,7 @@ class ProcessNotificationJob implements ShouldQueue
             return;
         }
 
-        Log::error('ProcessNotificationJob failed permanently', $this->getLogContext([
+        Log::error('ProcessNotificationJob: Failed permanently', $this->getLogContext([
             'error' => $exception->getMessage(),
             'notification_data' => $this->notificationDTO->toArray(),
             'trace' => $this->shouldIncludeTrace() ? $exception->getTraceAsString() : null,

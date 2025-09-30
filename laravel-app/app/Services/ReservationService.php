@@ -8,6 +8,7 @@ use App\Models\Reservation;
 use App\Models\Wish;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class ReservationService
@@ -22,6 +23,7 @@ class ReservationService
     public function reserveWishForUser(Wish $wish, int $userId): bool|string
     {
         if ($wish->is_reserved) {
+            Log::warning('ReservationService: Wish already reserved', ['wish_id' => $wish->id, 'user_id' => $userId]);
             return __('messages.wish_already_reserved');
         }
 
@@ -32,8 +34,8 @@ class ReservationService
             });
 
             $this->cacheManager->clearReservationCache($wish->id, $userId, $wish->wishList->user_id);
-
         } catch (Exception $e) {
+            Log::error('ReservationService: Failed to reserve wish', ['wish_id' => $wish->id, 'user_id' => $userId, 'error' => $e->getMessage()]);
             return __('messages.error_reserving_wish') . $e->getMessage();
         }
 
@@ -48,6 +50,7 @@ class ReservationService
         $reservation = $this->findReservationByUserAndWish($wish->id, $userId);
 
         if (!$reservation) {
+            Log::warning('ReservationService: Reservation not found', ['wish_id' => $wish->id, 'user_id' => $userId]);
             return __('messages.wish_not_reserved_by_user');
         }
 
@@ -58,8 +61,8 @@ class ReservationService
             });
 
             $this->cacheManager->clearReservationCache($wish->id, $userId, $wish->wishList->user_id);
-
         } catch (Exception $e) {
+            Log::error('ReservationService: Failed to unreserve wish', ['wish_id' => $wish->id, 'user_id' => $userId, 'error' => $e->getMessage()]);
             return __('messages.error_unreserving_wish') . $e->getMessage();
         }
 

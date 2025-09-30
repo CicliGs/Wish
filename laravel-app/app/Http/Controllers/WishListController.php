@@ -60,10 +60,12 @@ class WishListController extends Controller
 
         } catch (Exception $e) {
 
-            return $this->redirectToIndexWithError('error_creating_list', $e->getMessage());
+            return redirect()->route('wish-lists.index')
+                ->with('error', __('messages.error_creating_list') . $e->getMessage());
         }
 
-        return $this->redirectToIndex('wishlist_created');
+        return redirect()->route('wish-lists.index')
+            ->with('success', __('messages.wishlist_created'));
     }
 
     /**
@@ -90,10 +92,12 @@ class WishListController extends Controller
 
         } catch (Exception $e) {
 
-            return $this->redirectToIndexWithError('error_updating_list', $e->getMessage());
+            return redirect()->route('wish-lists.index')
+                ->with('error', __('messages.error_updating_list') . $e->getMessage());
         }
 
-        return $this->redirectToIndex('wishlist_updated');
+        return redirect()->route('wish-lists.index')
+            ->with('success', __('messages.wishlist_updated'));
     }
 
     /**
@@ -117,27 +121,12 @@ class WishListController extends Controller
         try {
             $this->service->delete($wishList);
         } catch (Exception $e) {
-            return $this->redirectToIndexWithError('error_deleting_list', $e->getMessage());
+            return redirect()->route('wish-lists.index')
+                ->with('error', __('messages.error_deleting_list') . $e->getMessage());
         }
 
-        return $this->redirectToIndex('wishlist_deleted');
+        return redirect()->route('wish-lists.index')
+            ->with('success', __('messages.wishlist_deleted'));
     }
 
-    /**
-     * Redirect to index with success message.
-     */
-    private function redirectToIndex(string $messageKey): RedirectResponse
-    {
-        return redirect()->route('wish-lists.index')
-            ->with('success', __('messages.' . $messageKey));
-    }
-
-    /**
-     * Redirect to index with error message.
-     */
-    private function redirectToIndexWithError(string $messageKey, string $errorMessage): RedirectResponse
-    {
-        return redirect()->route('wish-lists.index')
-            ->with('error', __('messages.' . $messageKey) . $errorMessage);
-    }
 }
