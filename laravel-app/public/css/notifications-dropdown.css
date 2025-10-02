@@ -274,30 +274,30 @@
         left: 50% !important;
         transform: translateX(-50%);
     }
-    
+
     .notification-item {
         padding: 12px 15px;
     }
-    
+
     .notification-header {
         flex-direction: column;
         gap: 6px;
     }
-    
+
     .notification-time {
         align-self: flex-start;
     }
-    
+
     .notification-actions {
         flex-direction: column;
         gap: 6px;
     }
-    
+
     .notification-actions .btn {
         width: 100%;
         justify-content: center;
     }
-    
+
     .notification-message,
     .notification-wish-title,
     .notification-wish-list {
@@ -313,11 +313,11 @@
         max-width: calc(100vw - 20px);
         margin: 0 10px;
     }
-    
+
     .notification-item {
         padding: 10px 12px;
     }
-    
+
     .notification-message,
     .notification-wish-title,
     .notification-wish-list {

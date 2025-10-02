@@ -17,7 +17,6 @@
     @stack('styles')
 
     <script>
-        // Обновляем CSRF токен при каждой загрузке страницы
         window.Laravel = {!! json_encode([
             'csrfToken' => csrf_token(),
         ]) !!};

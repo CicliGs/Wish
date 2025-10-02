@@ -42,8 +42,8 @@ class CacheStaticContent
 
     private function shouldCache(Request $request): bool
     {
-        return $request->isMethod('GET') && 
-               auth()->guest() && 
+        return $request->isMethod('GET') &&
+               auth()->guest() &&
                !$request->hasHeader('Authorization') &&
                !$request->is('cache/*') &&
                !$request->is('admin/*');
@@ -61,6 +61,7 @@ class CacheStaticContent
         }
 
         $contentType = $response->headers->get('Content-Type', '') ?? '';
+        
         return str_contains($contentType, 'text/html');
     }
 
