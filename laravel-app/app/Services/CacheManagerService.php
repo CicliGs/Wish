@@ -75,7 +75,7 @@ class CacheManagerService
      */
     public function clearReservationCache(int $wishId, int $reserverId, int $ownerId): bool
     {
-        return $this->withErrorHandling(function () use ($wishId, $reserverId, $ownerId) {
+        return $this->withErrorHandling(function () use ($reserverId, $ownerId) {
             $this->clearMultipleUserCaches([$reserverId, $ownerId]);
             return true;
         }, "Failed to clear cache for reservation: wish $wishId") ?? false;
@@ -107,7 +107,7 @@ class CacheManagerService
      */
     private function clearWishRelatedCache(int $wishListId, int $userId, string $type): bool
     {
-        return $this->withErrorHandling(function () use ($wishListId, $userId, $type) {
+        return $this->withErrorHandling(function () use ($wishListId, $userId) {
             $this->cacheService->clearUserCache($userId);
             $this->clearWishListSpecificCaches($wishListId);
             return true;

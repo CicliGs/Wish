@@ -17,17 +17,6 @@ class ProcessNotificationJob implements ShouldQueue
 {
     use Queueable, InteractsWithQueue, SerializesModels;
 
-    private const DEFAULT_TIMEOUT = 30;
-    private const DEFAULT_TRIES = 3;
-    private const DEFAULT_MAX_EXCEPTIONS = 3;
-
-    /** @phpstan-ignore-next-line */
-    private int $timeout;
-    /** @phpstan-ignore-next-line */
-    private int $tries;
-    /** @phpstan-ignore-next-line */
-    private int $maxExceptions;
-
     /**
      * Create a new job instance.
      */
@@ -72,9 +61,6 @@ class ProcessNotificationJob implements ShouldQueue
 
         $this->onQueue($config['name']);
         $this->onConnection($config['connection']);
-        $this->timeout = $config['timeout'] ?? self::DEFAULT_TIMEOUT;
-        $this->tries = $config['tries'] ?? self::DEFAULT_TRIES;
-        $this->maxExceptions = $config['max_exceptions'] ?? self::DEFAULT_MAX_EXCEPTIONS;
     }
 
     /**
@@ -101,8 +87,6 @@ class ProcessNotificationJob implements ShouldQueue
         if (!$this->shouldLog()) {
             return;
         }
-
-        // Only log errors and warnings, not successful operations
     }
 
     /**
