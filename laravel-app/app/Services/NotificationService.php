@@ -7,12 +7,7 @@ namespace App\Services;
 use App\DTOs\NotificationDTO;
 use App\DTOs\NotificationDisplayDTO;
 use App\Models\Notification;
-use App\Models\User;
-use App\Models\Wish;
-use Exception;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -21,59 +16,7 @@ class NotificationService
      */
     public function createNotificationFromDTO(NotificationDTO $notificationDTO): Notification
     {
-        try {
-            return Notification::create($notificationDTO->toArray());
-        } catch (Exception $e) {
-            $this->logError('Failed to create notification', [
-                'error' => $e->getMessage(),
-                'notification_data' => $notificationDTO->toArray(),
-            ]);
-
-            throw $e;
-        }
-    }
-
-    /**
-     * Gets user's friends list
-     */
-    public function getFriendsForUser(int $userId): array
-    {
-        try {
-            $friendIds = $this->getFriendIdsForUser($userId);
-
-            if ($friendIds->isEmpty()) {
-                return [];
-            }
-
-            return User::whereIn('id', $friendIds)->get()->toArray();
-
-        } catch (Exception $e) {
-            $this->logError('Failed to get user friends', [
-                'user_id' => $userId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return [];
-        }
-    }
-
-    /**
-     * Get friend IDs for a user
-     */
-    private function getFriendIdsForUser(int $userId): Collection
-    {
-        return DB::table('friend_requests')
-            ->where('status', 'accepted')
-            ->where(function ($query) use ($userId) {
-                $query->where('sender_id', $userId)
-                      ->orWhere('receiver_id', $userId);
-            })
-            ->get()
-            ->map(function ($friendship) use ($userId) {
-                return $friendship->sender_id == $userId ? $friendship->receiver_id : $friendship->sender_id;
-            })
-            ->unique()
-            ->values();
+        return Notification::create($notificationDTO->toArray());
     }
 
     /**
@@ -95,25 +38,15 @@ class NotificationService
      */
     public function markNotificationAsRead(int $notificationId): bool
     {
-        try {
-            $notification = Notification::find($notificationId);
+        $notification = Notification::find($notificationId);
 
-            if (!$notification) {
-                return false;
-            }
-
-            $notification->update(['is_read' => true]);
-
-            return true;
-
-        } catch (Exception $e) {
-            $this->logError('Failed to mark notification as read', [
-                'notification_id' => $notificationId,
-                'error' => $e->getMessage(),
-            ]);
-
+        if (!$notification) {
             return false;
         }
+
+        $notification->update(['is_read' => true]);
+
+        return true;
     }
 
     /**
@@ -121,18 +54,9 @@ class NotificationService
      */
     public function markAllNotificationsAsReadForUser(int $userId): int
     {
-        try {
-            return Notification::where('user_id', $userId)
-                ->where('is_read', false)
-                ->update(['is_read' => true]);
-        } catch (Exception $e) {
-            $this->logError('Failed to mark all notifications as read', [
-                'user_id' => $userId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return 0;
-        }
+        return Notification::where('user_id', $userId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
     }
 
     /**
@@ -166,13 +90,5 @@ class NotificationService
             'success' => $success,
             'message' => $success ? 'Notification marked as read' : 'Failed to mark notification as read'
         ];
-    }
-
-    /**
-     * Centralized error logging method
-     */
-    private function logError(string $message, array $context = []): void
-    {
-        Log::error("NotificationService: $message", $context);
     }
 }

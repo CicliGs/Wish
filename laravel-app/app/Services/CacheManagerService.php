@@ -93,6 +93,18 @@ class CacheManagerService
     }
 
     /**
+     * Clear public wish list cache by UUID
+     */
+    public function clearPublicWishListCache(string $uuid): bool
+    {
+        return $this->withErrorHandling(function () use ($uuid) {
+            $publicCacheKey = "static_content:public_wishlist_" . $uuid;
+            Cache::forget($publicCacheKey);
+            return true;
+        }, "Failed to clear public wish list cache for UUID: $uuid") ?? false;
+    }
+
+    /**
      * Get cache configuration statistics
      */
     public function getCacheStats(): array

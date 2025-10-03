@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CreateWishListRequest;
+use App\Http\Requests\UpdateWishListRequest;
 use App\Models\WishList;
 use App\Services\WishListService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Exception;
 
 class WishListController extends Controller
 {
@@ -53,16 +53,9 @@ class WishListController extends Controller
     /**
      * Store new wish list.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(CreateWishListRequest $request): RedirectResponse
     {
-        try {
-            $this->service->create($request->all(), Auth::id());
-
-        } catch (Exception $e) {
-
-            return redirect()->route('wish-lists.index')
-                ->with('error', __('messages.error_creating_list') . $e->getMessage());
-        }
+        $this->service->create($request->validated(), Auth::id());
 
         return redirect()->route('wish-lists.index')
             ->with('success', __('messages.wishlist_created'));
@@ -70,6 +63,7 @@ class WishListController extends Controller
 
     /**
      * Display wish list edit form.
+     *
      * @throws AuthorizationException
      */
     public function edit(WishList $wishList): View
@@ -81,20 +75,14 @@ class WishListController extends Controller
 
     /**
      * Update wish list.
+     *
      * @throws AuthorizationException
      */
-    public function update(Request $request, WishList $wishList): RedirectResponse
+    public function update(UpdateWishListRequest $request, WishList $wishList): RedirectResponse
     {
         $this->authorize('update', $wishList);
 
-        try {
-            $this->service->update($wishList, $request->all());
-
-        } catch (Exception $e) {
-
-            return redirect()->route('wish-lists.index')
-                ->with('error', __('messages.error_updating_list') . $e->getMessage());
-        }
+        $this->service->update($wishList, $request->validated());
 
         return redirect()->route('wish-lists.index')
             ->with('success', __('messages.wishlist_updated'));
@@ -112,21 +100,16 @@ class WishListController extends Controller
 
     /**
      * Delete wish list.
+     *
      * @throws AuthorizationException
      */
     public function destroy(WishList $wishList): RedirectResponse
     {
         $this->authorize('delete', $wishList);
 
-        try {
-            $this->service->delete($wishList);
-        } catch (Exception $e) {
-            return redirect()->route('wish-lists.index')
-                ->with('error', __('messages.error_deleting_list') . $e->getMessage());
-        }
+        $this->service->delete($wishList);
 
         return redirect()->route('wish-lists.index')
             ->with('success', __('messages.wishlist_deleted'));
     }
-
 }

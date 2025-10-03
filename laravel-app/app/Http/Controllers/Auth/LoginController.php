@@ -9,6 +9,7 @@ use App\Http\Requests\LoginRequest;
 use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -20,10 +21,13 @@ class LoginController extends Controller
         return view('login');
     }
 
-    public function login(LoginRequest $request):RedirectResponse
+    public function login(LoginRequest $request): RedirectResponse
     {
         $credentials = $request->validated();
-        if ($this->userService->authenticateUser($credentials, $request->boolean('remember'))) {
+        
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            
             return redirect()->intended(route('wish-lists.index'));
         }
 
@@ -34,7 +38,16 @@ class LoginController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
-        $this->userService->logoutUser();
+        $userId = Auth::id();
+        
+        if ($userId) {
+            $this->userService->clearUserCacheOnLogout($userId);
+        }
+        
+        Auth::logout();
+        
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect('/');
     }

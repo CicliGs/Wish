@@ -19,13 +19,14 @@ class ReservationController extends Controller
 
     /**
      * Reserve a wish.
+     *
      * @throws AuthorizationException
      */
     public function reserve(int $wishId): RedirectResponse
     {
         $wish = $this->findWish($wishId);
         $this->authorize('reserve', $wish);
-        
+
         $result = $this->service->reserveWishForUser($wish, auth()->id());
 
         return $result === true
@@ -35,13 +36,14 @@ class ReservationController extends Controller
 
     /**
      * Unreserve a wish.
+     *
      * @throws AuthorizationException
      */
     public function unreserve(int $wishId): RedirectResponse
     {
         $wish = $this->findWish($wishId);
         $this->authorize('unreserve', $wish);
-        
+
         $result = $this->service->unreserveWishForUser($wish, auth()->id());
 
         return $result === true

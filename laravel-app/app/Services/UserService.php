@@ -6,8 +6,6 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Services\CacheManagerService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class UserService
 {
@@ -27,34 +25,11 @@ class UserService
     }
 
     /**
-     * Process user login.
+     * Clear user cache on logout.
      */
-    public function authenticateUser(array $credentials, bool $remember = false): bool
+    public function clearUserCacheOnLogout(int $userId): void
     {
-        if (Auth::attempt($credentials, $remember)) {
-            request()->session()->regenerate();
-
-            return true;
-        }
-
-        Log::warning('UserService: Authentication failed', ['email' => $credentials['email'] ?? 'unknown']);
-        return false;
-    }
-
-    /**
-     * Logout user with proper cleanup.
-     */
-    public function logoutUser(): void
-    {
-        $userId = Auth::id();
-        
-        if (Auth::user() instanceof User) {
-            $this->cacheManager->clearUserCache(Auth::user()->id);
-        }
-
-        Auth::logout();
-
-        request()->session()->regenerate();
+        $this->cacheManager->clearUserCache($userId);
     }
 
     /**

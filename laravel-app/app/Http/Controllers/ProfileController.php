@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -44,27 +43,16 @@ class ProfileController extends Controller
      */
     public function sendFriendRequest(User $user, FriendService $friendService): RedirectResponse|JsonResponse
     {
-        try {
-            $result = $friendService->sendFriendRequestToUser(Auth::user(), $user->id);
-
-            if ($this->isAjaxRequest()) {
-                return response()->json([
-                    'success' => $result === true,
-                    'message' => $result === true ? __('messages.friend_request_sent') : $result
-                ]);
-            }
-
-            return $result === true
-                ? back()->with('success', __('messages.friend_request_sent'))
-                : back()->with('error', $result);
-
-        } catch (Exception $e) {
-            if ($this->isAjaxRequest()) {
-                return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
-            }
-
-            return back()->with('error', 'Server error: ' . $e->getMessage());
+        $result = $friendService->sendFriendRequestToUser(Auth::user(), $user->id);
+        
+        $success = $result === true;
+        $message = $success ? __('messages.friend_request_sent') : $result;
+        
+        if ($this->isAjaxRequest()) {
+            return response()->json(['success' => $success, 'message' => $message]);
         }
+        
+        return back()->with($success ? 'success' : 'error', $message);
     }
 
     /**
@@ -111,9 +99,6 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request, ProfileService $profileService): RedirectResponse
     {
         $user = Auth::user();
-        if (!$user) {
-            return redirect()->route('login');
-        }
 
         if ($request->has('name') && $request->name !== $user->name) {
             $profileService->updateUserName($user, $request->name);

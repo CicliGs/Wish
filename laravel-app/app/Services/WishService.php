@@ -23,23 +23,23 @@ class WishService
     ) {}
 
     /**
-     * Find wishes by wish list ID.
+     * Find wishes by wish list.
      */
-    public function findWishesByWishList(int $wishListId): Collection
+    public function findWishesByWishList(WishList $wishList): Collection
     {
-        return Wish::forWishList($wishListId)->with('reservation.user')->get();
+        return Wish::forWishList($wishList->id)->with('reservation.user')->get();
     }
 
     /**
      * Create a new wish.
      */
-    public function createWish(array $wishData, int $wishListId): Wish
+    public function createWish(array $wishData, WishList $wishList): Wish
     {
-        $wishData['wish_list_id'] = $wishListId;
+        $wishData['wish_list_id'] = $wishList->id;
 
         $wish = Wish::create($wishData);
 
-        $this->cacheManager->clearWishListCache($wishListId, Auth::id());
+        $this->cacheManager->clearWishListCache($wishList->id, Auth::id());
 
         return $wish;
     }
@@ -114,25 +114,25 @@ class WishService
     /**
      * Get available wishes for a wish list.
      */
-    public function getAvailableWishes(int $wishListId): Collection
+    public function getAvailableWishes(WishList $wishList): Collection
     {
-        return Wish::forWishList($wishListId)->available()->get();
+        return Wish::forWishList($wishList->id)->available()->get();
     }
 
     /**
      * Get reserved wishes for a wish list.
      */
-    public function getReservedWishes(int $wishListId): Collection
+    public function getReservedWishes(WishList $wishList): Collection
     {
-        return Wish::forWishList($wishListId)->reserved()->with('reservation.user')->get();
+        return Wish::forWishList($wishList->id)->reserved()->with('reservation.user')->get();
     }
 
     /**
      * Get wish list statistics.
      */
-    public function getWishListStatistics(int $wishListId): array
+    public function getWishListStatistics(WishList $wishList): array
     {
-        $wishes = Wish::forWishList($wishListId);
+        $wishes = Wish::forWishList($wishList->id);
 
         return [
             'total_wishes' => $wishes->count(),
@@ -158,10 +158,9 @@ class WishService
     /**
      * Get data for specific user wish list page.
      */
-    public function getUserWishListData(int $userId, int $wishListId): UserWishesDTO
+    public function getUserWishListData(int $userId, WishList $wishList): UserWishesDTO
     {
         $user = User::findOrFail($userId);
-        $wishList = $this->findWishListByUser($wishListId, $userId);
         $wishes = $wishList->wishes()->with('reservation.user')->get();
 
         return UserWishesDTO::fromUserWithSelectedWishList(
@@ -184,30 +183,30 @@ class WishService
     /**
      * Create wish with image handling.
      */
-    public function createWishWithImage(array $wishData, int $wishListId, ?UploadedFile $imageFile = null): Wish
+    public function createWishWithImage(array $wishData, WishList $wishList, ?UploadedFile $imageFile = null): Wish
     {
         if ($imageFile) {
             $imagePath = $this->handleImageUpload($imageFile);
 
             $wishData['image'] = $imagePath;
-            $wishData['wish_list_id'] = $wishListId;
+            $wishData['wish_list_id'] = $wishList->id;
 
             $wish = Wish::create($wishData);
 
-            $this->cacheManager->clearWishListCache($wishListId, Auth::id());
+            $this->cacheManager->clearWishListCache($wishList->id, Auth::id());
 
             return $wish;
         }
 
-        return $this->createWish($wishData, $wishListId);
+        return $this->createWish($wishData, $wishList);
     }
 
     /**
      * Get index data for wish list with caching.
      */
-    public function getIndexData(int $wishListId, int $userId): WishDTO
+    public function getIndexData(WishList $wishList, int $userId): WishDTO
     {
-        $cacheKey = "wishes_list_{$wishListId}_user_$userId";
+        $cacheKey = "wishes_list_{$wishList->id}_user_$userId";
 
         $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
 
@@ -215,9 +214,8 @@ class WishService
             return unserialize($cachedData);
         }
 
-        $wishList = WishList::findOrFail($wishListId);
-        $wishes = $this->findWishesByWishList($wishListId);
-        $stats = $this->getWishListStatistics($wishListId);
+        $wishes = $this->findWishesByWishList($wishList);
+        $stats = $this->getWishListStatistics($wishList);
 
         $dto = WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
 
@@ -229,11 +227,10 @@ class WishService
     /**
      * Get available data for wish list.
      */
-    public function getAvailableData(int $wishListId, int $userId): WishDTO
+    public function getAvailableData(WishList $wishList, int $userId): WishDTO
     {
-        $wishList = WishList::findOrFail($wishListId);
-        $wishes = $this->getAvailableWishes($wishListId);
-        $stats = $this->getWishListStatistics($wishListId);
+        $wishes = $this->getAvailableWishes($wishList);
+        $stats = $this->getWishListStatistics($wishList);
 
         return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
     }
@@ -241,22 +238,12 @@ class WishService
     /**
      * Get reserved data for wish list.
      */
-    public function getReservedData(int $wishListId, int $userId): WishDTO
+    public function getReservedData(WishList $wishList, int $userId): WishDTO
     {
-        $wishList = WishList::findOrFail($wishListId);
-        $wishes = $this->getReservedWishes($wishListId);
-        $stats = $this->getWishListStatistics($wishListId);
+        $wishes = $this->getReservedWishes($wishList);
+        $stats = $this->getWishListStatistics($wishList);
 
         return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
     }
 
-    /**
-     * Find wish list by user.
-     */
-    private function findWishListByUser(int $wishListId, int $userId): WishList
-    {
-        return WishList::where('id', $wishListId)
-            ->where('user_id', $userId)
-            ->firstOrFail();
-    }
 }

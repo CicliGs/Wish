@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Services;
+declare(strict_types=1);
+
+namespace App\Enums;
 
 enum CacheType: string
 {
@@ -28,3 +30,4 @@ enum CacheType: string
         };
     }
 }
+

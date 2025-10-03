@@ -10,8 +10,6 @@ use App\Models\WishList;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Cache;
 
 class WishListService
 {
@@ -49,8 +47,7 @@ class WishListService
         $this->cacheManager->clearUserCache($wishList->user_id);
 
         if ($wasPublic !== $willBePublic && $wishList->uuid) {
-            $publicCacheKey = "public_wishlist_" . $wishList->uuid;
-            Cache::forget("static_content:" . $publicCacheKey);
+            $this->cacheManager->clearPublicWishListCache($wishList->uuid);
         }
 
         return $wishList->fresh();
@@ -88,17 +85,8 @@ class WishListService
         $this->cacheManager->clearWishListCache($wishList->id, $wishList->user_id);
 
         if ($wishList->uuid) {
-            $this->clearPublicCache($wishList->uuid);
+            $this->cacheManager->clearPublicWishListCache($wishList->uuid);
         }
-    }
-
-    /**
-     * Clear public cache for wish list.
-     */
-    private function clearPublicCache(string $uuid): void
-    {
-        $publicCacheKey = "public_wishlist_" . $uuid;
-        Cache::forget("static_content:" . $publicCacheKey);
     }
 
     /**

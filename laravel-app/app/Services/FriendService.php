@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\DTOs\FriendsDTO;
 use App\DTOs\FriendsSearchDTO;
+use App\Enums\FriendRequestStatus;
 use App\Models\FriendRequest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;

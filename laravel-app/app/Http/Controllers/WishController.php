@@ -14,8 +14,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 class WishController extends Controller
 {
@@ -25,7 +23,7 @@ class WishController extends Controller
 
     public function index(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getIndexData($wishList->id, auth()->id());
+        $wishDTO = $this->wishService->getIndexData($wishList, auth()->id());
 
         return view('wishes.index', $wishDTO->toArray());
     }
@@ -37,18 +35,12 @@ class WishController extends Controller
 
     public function store(StoreWishRequest $request, WishList $wishList): RedirectResponse
     {
-        try {
-            $imageFile = $request->hasFile('image_file') ? $request->file('image_file') : null;
-            $this->wishService->createWishWithImage($request->getWishData(), $wishList->id, $imageFile);
+        $imageFile = $request->hasFile('image_file') ? $request->file('image_file') : null;
+        $this->wishService->createWishWithImage($request->getWishData(), $wishList, $imageFile);
 
-            return redirect()
-                ->route('wishes.index', $wishList)
-                ->with('success', __('messages.wish_created'));
-        } catch (Exception $e) {
-
-            return back()
-                ->with('error', __('messages.error_creating_wish') . ': ' . $e->getMessage());
-        }
+        return redirect()
+            ->route('wishes.index', $wishList)
+            ->with('success', __('messages.wish_created'));
     }
 
     /**
@@ -68,17 +60,11 @@ class WishController extends Controller
     {
         $this->authorize('update', $wish);
 
-        try {
-            $this->wishService->updateWish($wish, $request->getWishData());
+        $this->wishService->updateWish($wish, $request->getWishData());
 
-            return redirect()
-                ->route('wishes.index', $wishList)
-                ->with('success', __('messages.wish_updated'));
-        } catch (Exception $e) {
-
-            return back()
-                ->with('error', __('messages.error_updating_wish') . ': ' . $e->getMessage());
-        }
+        return redirect()
+            ->route('wishes.index', $wishList)
+            ->with('success', __('messages.wish_updated'));
     }
 
     /**
@@ -88,29 +74,23 @@ class WishController extends Controller
     {
         $this->authorize('delete', $wish);
 
-        try {
-            $this->wishService->deleteWish($wish);
+        $this->wishService->deleteWish($wish);
 
-            return redirect()
-                ->route('wishes.index', $wishList)
-                ->with('success', __('messages.wish_deleted'));
-        } catch (Exception $e) {
-
-            return back()
-                ->with('error', __('messages.error_deleting_wish') . ': ' . $e->getMessage());
-        }
+        return redirect()
+            ->route('wishes.index', $wishList)
+            ->with('success', __('messages.wish_deleted'));
     }
 
     public function available(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getAvailableData($wishList->id, auth()->id());
+        $wishDTO = $this->wishService->getAvailableData($wishList, auth()->id());
 
         return view('wishes.available', $wishDTO->toArray());
     }
 
     public function reserved(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getReservedData($wishList->id, auth()->id());
+        $wishDTO = $this->wishService->getReservedData($wishList, auth()->id());
 
         return view('wishes.reserved', $wishDTO->toArray());
     }
@@ -149,7 +129,7 @@ class WishController extends Controller
 
     public function showUserWishList(User $user, WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getUserWishListData($user->id, $wishList->id);
+        $wishDTO = $this->wishService->getUserWishListData($user->id, $wishList);
         $data = $wishDTO->toArray();
         $data['isGuest'] = !auth()->check();
 

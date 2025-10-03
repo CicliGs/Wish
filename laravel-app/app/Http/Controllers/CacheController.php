@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Services\CacheManagerService;
-use App\Services\CacheType;
+use App\Enums\CacheType;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;

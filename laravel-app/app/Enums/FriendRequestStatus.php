@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Enums;
 
 enum FriendRequestStatus: string
 {
@@ -19,3 +19,4 @@ enum FriendRequestStatus: string
         };
     }
 }
+
