@@ -12,7 +12,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use RuntimeException;
 
 class ReservationController extends Controller
 {
@@ -32,14 +31,9 @@ class ReservationController extends Controller
         $wish = $this->findWish($wishId);
         $this->authorize('reserve', $wish);
 
-        try {
-            $this->service->reserve($wish, Auth::user());
+        $this->service->reserve($wish, Auth::user());
 
-            return back()->with('success', __('messages.wish_reserved'));
-        } catch (RuntimeException $e) {
-
-            return back()->with('error', $e->getMessage());
-        }
+        return back()->with('success', __('messages.wish_reserved'));
     }
 
     /**
@@ -52,14 +46,9 @@ class ReservationController extends Controller
         $wish = $this->findWish($wishId);
         $this->authorize('unreserve', $wish);
 
-        try {
-            $this->service->unreserve($wish, Auth::user());
+        $this->service->unreserve($wish, Auth::user());
 
-            return back()->with('success', __('messages.wish_unreserved'));
-        } catch (RuntimeException $e) {
-
-            return back()->with('error', $e->getMessage());
-        }
+        return back()->with('success', __('messages.wish_unreserved'));
     }
 
     /**
@@ -67,6 +56,7 @@ class ReservationController extends Controller
      */
     public function index(): View
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $reservations = $this->service->getReservations($user);
         $statistics = $this->service->getStatistics($user);

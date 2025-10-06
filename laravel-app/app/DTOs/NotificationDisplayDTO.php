@@ -53,15 +53,20 @@ readonly class NotificationDisplayDTO implements BaseDTO
      */
     public static function fromNotification(Notification $notification): static
     {
+        $friendId = $notification->getAttribute('friend_id');
+        $isRead = $notification->getAttribute('is_read');
+        $updatedAt = $notification->getAttribute('updated_at');
+        $createdAt = $notification->getAttribute('created_at');
+
         return new self(
             id: $notification->id,
             senderName: $notification->friend->name ?? __('messages.unknown_sender'),
-            senderId: $notification->friend_id ?? 0,
+            senderId: $friendId ?? 0,
             wishTitle: $notification->wish->title ?? __('messages.unknown_wish'),
             wishListId: $notification->wish?->wish_list_id,
-            wishListTitle: $notification->wish?->wishList?->title ?? __('messages.unknown_wishlist'),
-            readAt: $notification->is_read && $notification->updated_at ? $notification->updated_at->format('c') : null,
-            createdAt: $notification->created_at ? $notification->created_at->format('c') : now()->format('c')
+            wishListTitle: $notification->wish->wishList->title ?? __('messages.unknown_wishlist'),
+            readAt: $isRead && $updatedAt ? $updatedAt->format('c') : null,
+            createdAt: $createdAt ? $createdAt->format('c') : now()->format('c')
         );
     }
 

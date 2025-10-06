@@ -13,7 +13,6 @@ use App\Http\Requests\UpdateProfileRequest;
 use App\Services\ProfileService;
 use App\Services\FriendService;
 use App\Models\User;
-use RuntimeException;
 
 class ProfileController extends Controller
 {
@@ -44,22 +43,14 @@ class ProfileController extends Controller
      */
     public function sendFriendRequest(User $user, FriendService $friendService): RedirectResponse|JsonResponse
     {
-        try {
-            $friendService->sendRequest(Auth::user(), $user);
-            $message = __('messages.friend_request_sent');
-            
-            if ($this->isAjaxRequest()) {
-                return response()->json(['success' => true, 'message' => $message]);
-            }
-            
-            return back()->with('success', $message);
-        } catch (RuntimeException $e) {
-            if ($this->isAjaxRequest()) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()]);
-            }
-            
-            return back()->with('error', $e->getMessage());
+        $friendService->sendRequest(Auth::user(), $user);
+        $message = __('messages.friend_request_sent');
+        
+        if ($this->isAjaxRequest()) {
+            return response()->json(['success' => true, 'message' => $message]);
         }
+        
+        return back()->with('success', $message);
     }
 
     /**
@@ -105,6 +96,7 @@ class ProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request, ProfileService $profileService): RedirectResponse
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if ($request->has('name') && $request->name !== $user->name) {

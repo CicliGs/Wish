@@ -40,8 +40,8 @@ class LoginController extends Controller
     {
         $userId = Auth::id();
         
-        if ($userId) {
-            $this->userService->clearUserCacheOnLogout($userId);
+        if ($userId !== null) {
+            $this->userService->clearUserCacheOnLogout((int) $userId);
         }
         
         Auth::logout();

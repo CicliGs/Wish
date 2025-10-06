@@ -16,7 +16,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use RuntimeException;
 
 class WishController extends Controller
 {
@@ -25,6 +24,9 @@ class WishController extends Controller
         private readonly ReservationService $reservationService
     ) {}
 
+    /**
+     * Display wishes index page.
+     */
     public function index(WishList $wishList): View
     {
         $wishDTO = $this->wishService->getIndexData($wishList, Auth::user());
@@ -32,11 +34,17 @@ class WishController extends Controller
         return view('wishes.index', $wishDTO->toArray());
     }
 
+    /**
+     * Display wish creation form.
+     */
     public function create(WishList $wishList): View
     {
         return view('wishes.create', compact('wishList'));
     }
 
+    /**
+     * Store a new wish.
+     */
     public function store(StoreWishRequest $request, WishList $wishList): RedirectResponse
     {
         $imageFile = $request->hasFile('image_file') ? $request->file('image_file') : null;
@@ -48,6 +56,8 @@ class WishController extends Controller
     }
 
     /**
+     * Display wish edit form.
+     *
      * @throws AuthorizationException
      */
     public function edit(WishList $wishList, Wish $wish): View
@@ -58,6 +68,8 @@ class WishController extends Controller
     }
 
     /**
+     * Update an existing wish.
+     *
      * @throws AuthorizationException
      */
     public function update(UpdateWishRequest $request, WishList $wishList, Wish $wish): RedirectResponse
@@ -72,6 +84,8 @@ class WishController extends Controller
     }
 
     /**
+     * Delete a wish.
+     *
      * @throws AuthorizationException
      */
     public function destroy(WishList $wishList, Wish $wish): RedirectResponse
@@ -85,6 +99,9 @@ class WishController extends Controller
             ->with('success', __('messages.wish_deleted'));
     }
 
+    /**
+     * Display available wishes.
+     */
     public function available(WishList $wishList): View
     {
         $wishDTO = $this->wishService->getData($wishList, Auth::user(), 'available');
@@ -92,6 +109,9 @@ class WishController extends Controller
         return view('wishes.available', $wishDTO->toArray());
     }
 
+    /**
+     * Display reserved wishes.
+     */
     public function reserved(WishList $wishList): View
     {
         $wishDTO = $this->wishService->getData($wishList, Auth::user(), 'reserved');
@@ -99,6 +119,9 @@ class WishController extends Controller
         return view('wishes.reserved', $wishDTO->toArray());
     }
 
+    /**
+     * Display user's wish lists.
+     */
     public function showUser(User $user): View
     {
         $wishDTO = $this->wishService->getWishListsData($user);
@@ -106,6 +129,9 @@ class WishController extends Controller
         return view('wishes.user_all', $wishDTO->toArray());
     }
 
+    /**
+     * Display specific user wish list.
+     */
     public function showUserWishList(User $user, WishList $wishList): View
     {
         $wishDTO = $this->wishService->getWishListData($user, $wishList);
@@ -116,70 +142,58 @@ class WishController extends Controller
     }
 
     /**
+     * Unreserve a wish.
+     *
      * @throws AuthorizationException
      */
     public function unreserve(Wish $wish): RedirectResponse
     {
         $this->authorize('unreserve', $wish);
 
-        try {
-            $this->reservationService->unreserve($wish, Auth::user());
+        $this->reservationService->unreserve($wish, Auth::user());
 
-            return back()->with('success', __('messages.wish_unreserved'));
-        } catch (RuntimeException $e) {
-
-            return back()->with('error', $e->getMessage());
-        }
+        return back()->with('success', __('messages.wish_unreserved'));
     }
 
     /**
+     * Reserve a wish.
+     *
      * @throws AuthorizationException
      */
     public function reserve(Wish $wish): RedirectResponse
     {
         $this->authorize('reserve', $wish);
 
-        try {
-            $this->reservationService->reserve($wish, Auth::user());
+        $this->reservationService->reserve($wish, Auth::user());
 
-            return back()->with('success', __('messages.wish_reserved'));
-        } catch (RuntimeException $e) {
-
-            return back()->with('error', $e->getMessage());
-        }
+        return back()->with('success', __('messages.wish_reserved'));
     }
 
     /**
+     * Unreserve a wish via AJAX.
+     *
      * @throws AuthorizationException
      */
     public function unreserveAjax(Wish $wish): JsonResponse
     {
         $this->authorize('unreserve', $wish);
 
-        try {
-            $this->reservationService->unreserve($wish, Auth::user());
+        $this->reservationService->unreserve($wish, Auth::user());
 
-            return response()->json(['success' => __('messages.wish_unreserved')]);
-        } catch (RuntimeException $e) {
-
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
+        return response()->json(['success' => __('messages.wish_unreserved')]);
     }
 
     /**
+     * Reserve a wish via AJAX.
+     *
      * @throws AuthorizationException
      */
     public function reserveAjax(Wish $wish): JsonResponse
     {
         $this->authorize('reserve', $wish);
 
-        try {
-            $this->reservationService->reserve($wish, Auth::user());
+        $this->reservationService->reserve($wish, Auth::user());
 
-            return response()->json(['success' => __('messages.wish_reserved')]);
-        } catch (RuntimeException $e) {
-
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
+        return response()->json(['success' => __('messages.wish_reserved')]);
     }
 }
