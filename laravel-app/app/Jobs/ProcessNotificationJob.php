@@ -36,7 +36,7 @@ class ProcessNotificationJob implements ShouldQueue
         $this->logJobStart();
 
         try {
-            $notification = $notificationService->createNotificationFromDTO($this->notificationDTO);
+            $notification = $notificationService->create($this->notificationDTO);
             $this->logJobSuccess($notification->id);
         } catch (Exception $e) {
             $this->logJobError($e);

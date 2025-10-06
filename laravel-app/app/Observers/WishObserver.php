@@ -54,7 +54,7 @@ readonly class WishObserver
                 return;
             }
 
-            $friends = $this->friendService->getFriendsForUser($user);
+            $friends = $this->friendService->getFriends($user);
             if ($friends->isEmpty()) {
                 return;
             }

@@ -7,25 +7,26 @@ namespace App\Services;
 use App\DTOs\NotificationDTO;
 use App\DTOs\NotificationDisplayDTO;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Support\Collection;
 
 class NotificationService
 {
     /**
-     * Creates a notification in the database
+     * Create a notification in the database.
      */
-    public function createNotificationFromDTO(NotificationDTO $notificationDTO): Notification
+    public function create(NotificationDTO $notificationDTO): Notification
     {
         return Notification::create($notificationDTO->toArray());
     }
 
     /**
-     * Gets user's unread notifications with DTO
+     * Get user's unread notifications with DTO.
      */
-    public function getUnreadNotificationsForUser(int $userId): Collection
+    public function getUnread(User $user): Collection
     {
         $notifications = Notification::with(['friend', 'wish.wishList'])
-            ->where('user_id', $userId)
+            ->where('user_id', $user->id)
             ->where('is_read', false)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -34,61 +35,33 @@ class NotificationService
     }
 
     /**
-     * Marks a notification as read
+     * Mark a notification as read.
      */
-    public function markNotificationAsRead(int $notificationId): bool
+    public function markAsRead(Notification $notification): bool
     {
-        $notification = Notification::find($notificationId);
-
-        if (!$notification) {
-            return false;
-        }
-
         $notification->update(['is_read' => true]);
 
         return true;
     }
 
     /**
-     * Marks all user's notifications as read
+     * Mark all user's notifications as read.
      */
-    public function markAllNotificationsAsReadForUser(int $userId): int
+    public function markAllAsRead(User $user): int
     {
-        return Notification::where('user_id', $userId)
+        return Notification::where('user_id', $user->id)
             ->where('is_read', false)
             ->update(['is_read' => true]);
     }
 
     /**
-     * Gets notification by ID for specific user
+     * Get user's unread notification by ID.
      */
-    public function getUnreadNotificationForUser(int $notificationId, int $userId): ?Notification
+    public function findUnread(User $user, int $notificationId): ?Notification
     {
         return Notification::where('id', $notificationId)
-            ->where('user_id', $userId)
+            ->where('user_id', $user->id)
             ->where('is_read', false)
             ->first();
-    }
-
-    /**
-     * Mark notification as read for specific user with validation
-     */
-    public function markNotificationAsReadForUser(int $notificationId, int $userId): array
-    {
-        $notification = $this->getUnreadNotificationForUser($notificationId, $userId);
-
-        if (!$notification) {
-            return [
-                'success' => false,
-                'message' => 'Notification not found or not accessible'
-            ];
-        }
-
-        $success = $this->markNotificationAsRead($notificationId);
-
-        return [
-            'success' => $success,
-            'message' => $success ? 'Notification marked as read' : 'Failed to mark notification as read'
-        ];
     }
 }

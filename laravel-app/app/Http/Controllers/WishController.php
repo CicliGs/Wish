@@ -10,20 +10,24 @@ use App\Models\Wish;
 use App\Models\WishList;
 use App\Models\User;
 use App\Services\WishService;
+use App\Services\ReservationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use RuntimeException;
 
 class WishController extends Controller
 {
     public function __construct(
-        private readonly WishService $wishService
+        private readonly WishService $wishService,
+        private readonly ReservationService $reservationService
     ) {}
 
     public function index(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getIndexData($wishList, auth()->id());
+        $wishDTO = $this->wishService->getIndexData($wishList, Auth::user());
 
         return view('wishes.index', $wishDTO->toArray());
     }
@@ -36,7 +40,7 @@ class WishController extends Controller
     public function store(StoreWishRequest $request, WishList $wishList): RedirectResponse
     {
         $imageFile = $request->hasFile('image_file') ? $request->file('image_file') : null;
-        $this->wishService->createWishWithImage($request->getWishData(), $wishList, $imageFile);
+        $this->wishService->create($request->getWishData(), $wishList, Auth::user(), $imageFile);
 
         return redirect()
             ->route('wishes.index', $wishList)
@@ -60,7 +64,7 @@ class WishController extends Controller
     {
         $this->authorize('update', $wish);
 
-        $this->wishService->updateWish($wish, $request->getWishData());
+        $this->wishService->update($wish, $request->getWishData(), Auth::user());
 
         return redirect()
             ->route('wishes.index', $wishList)
@@ -74,7 +78,7 @@ class WishController extends Controller
     {
         $this->authorize('delete', $wish);
 
-        $this->wishService->deleteWish($wish);
+        $this->wishService->delete($wish, Auth::user());
 
         return redirect()
             ->route('wishes.index', $wishList)
@@ -83,53 +87,28 @@ class WishController extends Controller
 
     public function available(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getAvailableData($wishList, auth()->id());
+        $wishDTO = $this->wishService->getData($wishList, Auth::user(), 'available');
 
         return view('wishes.available', $wishDTO->toArray());
     }
 
     public function reserved(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getReservedData($wishList, auth()->id());
+        $wishDTO = $this->wishService->getData($wishList, Auth::user(), 'reserved');
 
         return view('wishes.reserved', $wishDTO->toArray());
     }
 
-    /**
-     * @throws AuthorizationException
-     */
-    public function unreserve(Wish $wish): RedirectResponse
-    {
-        $this->authorize('unreserve', $wish);
-
-        $success = $this->wishService->unreserveWish($wish, auth()->id());
-        $message = $success ? 'wish_unreserved' : 'cannot_unreserve_wish';
-        $type = $success ? 'success' : 'error';
-
-        return back()->with($type, __("messages.$message"));
-    }
-
-    public function reserve(Wish $wish): RedirectResponse
-    {
-        $this->authorize('reserve', $wish);
-
-        $success = $this->wishService->reserveWish($wish, auth()->id());
-        $message = $success ? 'wish_reserved' : 'cannot_reserve_wish';
-        $type = $success ? 'success' : 'error';
-
-        return back()->with($type, __("messages.$message"));
-    }
-
     public function showUser(User $user): View
     {
-        $wishDTO = $this->wishService->getUserWishListsData($user->id);
+        $wishDTO = $this->wishService->getWishListsData($user);
 
         return view('wishes.user_all', $wishDTO->toArray());
     }
 
     public function showUserWishList(User $user, WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getUserWishListData($user->id, $wishList);
+        $wishDTO = $this->wishService->getWishListData($user, $wishList);
         $data = $wishDTO->toArray();
         $data['isGuest'] = !auth()->check();
 
@@ -139,15 +118,52 @@ class WishController extends Controller
     /**
      * @throws AuthorizationException
      */
+    public function unreserve(Wish $wish): RedirectResponse
+    {
+        $this->authorize('unreserve', $wish);
+
+        try {
+            $this->reservationService->unreserve($wish, Auth::user());
+
+            return back()->with('success', __('messages.wish_unreserved'));
+        } catch (RuntimeException $e) {
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function reserve(Wish $wish): RedirectResponse
+    {
+        $this->authorize('reserve', $wish);
+
+        try {
+            $this->reservationService->reserve($wish, Auth::user());
+
+            return back()->with('success', __('messages.wish_reserved'));
+        } catch (RuntimeException $e) {
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
     public function unreserveAjax(Wish $wish): JsonResponse
     {
         $this->authorize('unreserve', $wish);
 
-        $success = $this->wishService->unreserveWish($wish, auth()->id());
+        try {
+            $this->reservationService->unreserve($wish, Auth::user());
 
-        return $success
-            ? response()->json(['success' => __('messages.wish_unreserved')])
-            : response()->json(['error' => __('messages.cannot_unreserve_wish')], 400);
+            return response()->json(['success' => __('messages.wish_unreserved')]);
+        } catch (RuntimeException $e) {
+
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 
     /**
@@ -157,10 +173,13 @@ class WishController extends Controller
     {
         $this->authorize('reserve', $wish);
 
-        $success = $this->wishService->reserveWish($wish, auth()->id());
+        try {
+            $this->reservationService->reserve($wish, Auth::user());
 
-        return $success
-            ? response()->json(['success' => __('messages.wish_reserved')])
-            : response()->json(['error' => __('messages.cannot_reserve_wish')], 400);
+            return response()->json(['success' => __('messages.wish_reserved')]);
+        } catch (RuntimeException $e) {
+
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 }

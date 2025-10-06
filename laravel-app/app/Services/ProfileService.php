@@ -20,11 +20,14 @@ class ProfileService
         private readonly CacheManagerService $cacheManager
     ) {}
 
-    public function getUserStatistics(int $userId): array
+    /**
+     * Get user statistics.
+     */
+    public function getStatistics(User $user): array
     {
         return array_merge(
-            $this->wishListService->getUserStatistics($userId),
-            $this->reservationService->getUserReservationStatistics($userId)
+            $this->wishListService->getStatistics($user),
+            $this->reservationService->getStatistics($user)
         );
     }
 
@@ -93,12 +96,12 @@ class ProfileService
 
         $dto = ProfileDTO::fromUserWithData(
             user: $user,
-            stats: $this->getUserStatistics($user->id),
-            friends: $friendService->getFriendsForUser($user),
-            incomingRequests: $friendService->getIncomingFriendRequests($user),
-            outgoingRequests: $friendService->getOutgoingFriendRequests($user),
+            stats: $this->getStatistics($user),
+            friends: $friendService->getFriends($user),
+            incomingRequests: $friendService->getIncomingRequests($user),
+            outgoingRequests: $friendService->getOutgoingRequests($user),
             achievements: $this->getAchievements($user),
-            wishLists: $this->wishListService->findWishListsByUser($user->id)
+            wishLists: $this->wishListService->findWishLists($user)
         );
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 900);

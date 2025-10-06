@@ -11,8 +11,6 @@ use App\Models\WishList;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 
 class WishService
 {
@@ -25,7 +23,7 @@ class WishService
     /**
      * Find wishes by wish list.
      */
-    public function findWishesByWishList(WishList $wishList): Collection
+    public function findWishes(WishList $wishList): Collection
     {
         return Wish::forWishList($wishList->id)->with('reservation.user')->get();
     }
@@ -33,13 +31,16 @@ class WishService
     /**
      * Create a new wish.
      */
-    public function createWish(array $wishData, WishList $wishList): Wish
+    public function create(array $wishData, WishList $wishList, User $user, ?UploadedFile $imageFile = null): Wish
     {
-        $wishData['wish_list_id'] = $wishList->id;
+        if ($imageFile) {
+            $wishData['image'] = $this->uploadImage($imageFile);
+        }
 
+        $wishData['wish_list_id'] = $wishList->id;
         $wish = Wish::create($wishData);
 
-        $this->cacheManager->clearWishListCache($wishList->id, Auth::id());
+        $this->cacheManager->clearWishListCache($wishList->id, $user->id);
 
         return $wish;
     }
@@ -47,11 +48,11 @@ class WishService
     /**
      * Update an existing wish.
      */
-    public function updateWish(Wish $wish, array $wishData): Wish
+    public function update(Wish $wish, array $wishData, User $user): Wish
     {
         $wish->update($wishData);
 
-        $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
+        $this->cacheManager->clearWishCache($wish->wish_list_id, $user->id);
 
         return $wish->fresh();
     }
@@ -59,78 +60,21 @@ class WishService
     /**
      * Delete a wish.
      */
-    public function deleteWish(Wish $wish): bool
+    public function delete(Wish $wish, User $user): bool
     {
         $result = $wish->delete();
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
+            $this->cacheManager->clearWishCache($wish->wish_list_id, $user->id);
         }
 
         return $result;
-    }
-
-    /**
-     * Reserve a wish for a user.
-     */
-    public function reserveWish(Wish $wish, int $userId): bool
-    {
-        if (!$wish->isAvailable()) {
-            return false;
-        }
-
-        $result = $wish->reserveForUser($userId);
-
-        if ($result) {
-            $this->cacheManager->clearWishCache($wish->wish_list_id, $userId);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Unreserve a wish.
-     */
-    public function unreserveWish(Wish $wish, int $userId): bool
-    {
-        if (!$wish->hasReservation()) {
-            return false;
-        }
-
-        $reservedByUser = $wish->getReservedByUser();
-        if (!$reservedByUser || $reservedByUser->id !== $userId) {
-            return false;
-        }
-
-        $result = $wish->dereserve();
-
-        if ($result) {
-            $this->cacheManager->clearWishCache($wish->wish_list_id, $userId);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get available wishes for a wish list.
-     */
-    public function getAvailableWishes(WishList $wishList): Collection
-    {
-        return Wish::forWishList($wishList->id)->available()->get();
-    }
-
-    /**
-     * Get reserved wishes for a wish list.
-     */
-    public function getReservedWishes(WishList $wishList): Collection
-    {
-        return Wish::forWishList($wishList->id)->reserved()->with('reservation.user')->get();
     }
 
     /**
      * Get wish list statistics.
      */
-    public function getWishListStatistics(WishList $wishList): array
+    public function getStatistics(WishList $wishList): array
     {
         $wishes = Wish::forWishList($wishList->id);
 
@@ -145,10 +89,9 @@ class WishService
     /**
      * Get data for user wish lists page.
      */
-    public function getUserWishListsData(int $userId): UserWishesDTO
+    public function getWishListsData(User $user): UserWishesDTO
     {
-        $user = User::findOrFail($userId);
-        $wishLists = WishList::where('user_id', $userId)
+        $wishLists = WishList::where('user_id', $user->id)
             ->withCount('wishes')
             ->get();
 
@@ -158,9 +101,8 @@ class WishService
     /**
      * Get data for specific user wish list page.
      */
-    public function getUserWishListData(int $userId, WishList $wishList): UserWishesDTO
+    public function getWishListData(User $user, WishList $wishList): UserWishesDTO
     {
-        $user = User::findOrFail($userId);
         $wishes = $wishList->wishes()->with('reservation.user')->get();
 
         return UserWishesDTO::fromUserWithSelectedWishList(
@@ -172,41 +114,11 @@ class WishService
     }
 
     /**
-     * Handle image upload.
-     */
-    public function handleImageUpload(UploadedFile $file): string
-    {
-        $path = $file->store(self::STORAGE_PATH, 'public');
-        return '/storage/' . $path;
-    }
-
-    /**
-     * Create wish with image handling.
-     */
-    public function createWishWithImage(array $wishData, WishList $wishList, ?UploadedFile $imageFile = null): Wish
-    {
-        if ($imageFile) {
-            $imagePath = $this->handleImageUpload($imageFile);
-
-            $wishData['image'] = $imagePath;
-            $wishData['wish_list_id'] = $wishList->id;
-
-            $wish = Wish::create($wishData);
-
-            $this->cacheManager->clearWishListCache($wishList->id, Auth::id());
-
-            return $wish;
-        }
-
-        return $this->createWish($wishData, $wishList);
-    }
-
-    /**
      * Get index data for wish list with caching.
      */
-    public function getIndexData(WishList $wishList, int $userId): WishDTO
+    public function getIndexData(WishList $wishList, User $user): WishDTO
     {
-        $cacheKey = "wishes_list_{$wishList->id}_user_$userId";
+        $cacheKey = "wishes_list_{$wishList->id}_user_{$user->id}";
 
         $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
 
@@ -214,10 +126,10 @@ class WishService
             return unserialize($cachedData);
         }
 
-        $wishes = $this->findWishesByWishList($wishList);
-        $stats = $this->getWishListStatistics($wishList);
+        $wishes = $this->findWishes($wishList);
+        $stats = $this->getStatistics($wishList);
 
-        $dto = WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
+        $dto = WishDTO::fromWishListData($wishList, $wishes, $user->id, $stats);
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
 
@@ -225,25 +137,28 @@ class WishService
     }
 
     /**
-     * Get available data for wish list.
+     * Get wish list data with optional filter.
      */
-    public function getAvailableData(WishList $wishList, int $userId): WishDTO
+    public function getData(WishList $wishList, User $user, ?string $filter = null): WishDTO
     {
-        $wishes = $this->getAvailableWishes($wishList);
-        $stats = $this->getWishListStatistics($wishList);
+        $wishes = match ($filter) {
+            'available' => Wish::forWishList($wishList->id)->available()->get(),
+            'reserved' => Wish::forWishList($wishList->id)->reserved()->with('reservation.user')->get(),
+            default => $this->findWishes($wishList)
+        };
 
-        return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
+        $stats = $this->getStatistics($wishList);
+
+        return WishDTO::fromWishListData($wishList, $wishes, $user->id, $stats);
     }
 
     /**
-     * Get reserved data for wish list.
+     * Handle image upload.
      */
-    public function getReservedData(WishList $wishList, int $userId): WishDTO
+    private function uploadImage(UploadedFile $file): string
     {
-        $wishes = $this->getReservedWishes($wishList);
-        $stats = $this->getWishListStatistics($wishList);
-
-        return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
+        $path = $file->store(self::STORAGE_PATH, 'public');
+        return '/storage/' . $path;
     }
 
 }

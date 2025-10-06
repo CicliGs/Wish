@@ -27,7 +27,7 @@ class WishListController extends Controller
      */
     public function index(): View
     {
-        $wishListDTO = $this->service->getIndexData(Auth::id());
+        $wishListDTO = $this->service->getIndexData(Auth::user());
 
         return view('wishlists.index', $wishListDTO->toArray());
     }
@@ -55,7 +55,7 @@ class WishListController extends Controller
      */
     public function store(CreateWishListRequest $request): RedirectResponse
     {
-        $this->service->create($request->validated(), Auth::id());
+        $this->service->create($request->validated(), Auth::user());
 
         return redirect()->route('wish-lists.index')
             ->with('success', __('messages.wishlist_created'));
@@ -93,7 +93,7 @@ class WishListController extends Controller
      */
     public function public(string $uuid): View
     {
-        $publicWishListDTO = $this->service->getPublicWishListData($uuid);
+        $publicWishListDTO = $this->service->getPublicData($uuid, Auth::user());
 
         return view('wishlists.public', $publicWishListDTO->toArray());
     }

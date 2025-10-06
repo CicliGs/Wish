@@ -6,10 +6,10 @@ namespace App\Services;
 
 use App\DTOs\WishListDTO;
 use App\DTOs\PublicWishListDTO;
+use App\Models\User;
 use App\Models\WishList;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Log;
 
 class WishListService
 {
@@ -17,20 +17,23 @@ class WishListService
         protected CacheManagerService $cacheManager
     ) {}
 
-    public function findWishListsByUser(int $userId): Collection
+    /**
+     * Find wish lists by user.
+     */
+    public function findWishLists(User $user): Collection
     {
-        return WishList::forUser($userId)->with('wishes')->get();
+        return WishList::forUser($user->id)->with('wishes')->get();
     }
 
     /**
      * Create a new wish list.
      */
-    public function create(array $data, int $userId): WishList
+    public function create(array $data, User $user): WishList
     {
-        $data['user_id'] = $userId;
+        $data['user_id'] = $user->id;
 
         $wishList = WishList::create($data);
-        $this->cacheManager->clearUserCache($userId);
+        $this->cacheManager->clearUserCache($user->id);
 
         return $wishList;
     }
@@ -58,53 +61,25 @@ class WishListService
      */
     public function delete(WishList $wishList): bool
     {
-        try {
-            $this->clearRelatedCaches($wishList);
+        $this->clearRelatedCaches($wishList);
 
-            $result = $wishList->delete();
-
-            return $result;
-        } catch (\Exception $e) {
-            $this->logError('Error deleting wish list', [
-                'wish_list_id' => $wishList->id,
-                'user_id' => $wishList->user_id,
-                'error' => $e->getMessage(),
-            ]);
-
-            throw $e;
-        }
+        return $wishList->delete();
     }
 
     /**
-     * Clear caches related to the wish list.
+     * Find public wish list by UUID.
      */
-    private function clearRelatedCaches(WishList $wishList): void
-    {
-        $this->cacheManager->clearUserCache($wishList->user_id);
-
-        $this->cacheManager->clearWishListCache($wishList->id, $wishList->user_id);
-
-        if ($wishList->uuid) {
-            $this->cacheManager->clearPublicWishListCache($wishList->uuid);
-        }
-    }
-
-    /**
-     * Centralized error logging method.
-     */
-    private function logError(string $message, array $context = []): void
-    {
-        Log::error("WishListService: $message", $context);
-    }
-
-    public function findPublicWishListByUuid(string $uuid): ?WishList
+    public function findPublicByUuid(string $uuid): ?WishList
     {
         return WishList::public()->where('uuid', $uuid)->with('wishes')->first();
     }
 
-    public function getUserStatistics(int $userId): array
+    /**
+     * Get user statistics.
+     */
+    public function getStatistics(User $user): array
     {
-        $wishLists = $this->findWishListsByUser($userId);
+        $wishLists = $this->findWishLists($user);
 
         return [
             'total_wish_lists' => $wishLists->count(),
@@ -114,44 +89,52 @@ class WishListService
         ];
     }
 
-    public function getPublicWishListData(string $uuid): PublicWishListDTO
+    /**
+     * Get public wish list data.
+     */
+    public function getPublicData(string $uuid, ?User $currentUser = null): PublicWishListDTO
     {
-        $cacheKey = "public_wishlist_$uuid";
-        $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
-
-        if ($cachedData) {
-            return unserialize($cachedData);
-        }
-
-        $wishList = $this->findPublicWishListByUuid($uuid);
+        $wishList = $this->findPublicByUuid($uuid);
 
         if (!$wishList) {
             throw new ModelNotFoundException();
         }
 
-        $dto = PublicWishListDTO::fromWishList($wishList);
-
-        $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
-
-        return $dto;
+        return PublicWishListDTO::fromWishList($wishList, $currentUser);
     }
 
-    public function getIndexData(int $userId): WishListDTO
+    /**
+     * Get index data with caching.
+     */
+    public function getIndexData(User $user): WishListDTO
     {
-        $cacheKey = "user_wishlists_$userId";
+        $cacheKey = "user_wishlists_{$user->id}";
         $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
 
         if ($cachedData) {
             return unserialize($cachedData);
         }
 
-        $wishLists = $this->findWishListsByUser($userId);
-        $stats = $this->getUserStatistics($userId);
+        $wishLists = $this->findWishLists($user);
+        $stats = $this->getStatistics($user);
 
-        $dto = WishListDTO::fromWishLists($wishLists, $userId, $stats);
+        $dto = WishListDTO::fromWishLists($wishLists, $user->id, $stats);
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 3600);
 
         return $dto;
+    }
+
+    /**
+     * Clear caches related to the wish list.
+     */
+    private function clearRelatedCaches(WishList $wishList): void
+    {
+        $this->cacheManager->clearUserCache($wishList->user_id);
+        $this->cacheManager->clearWishListCache($wishList->id, $wishList->user_id);
+
+        if ($wishList->uuid) {
+            $this->cacheManager->clearPublicWishListCache($wishList->uuid);
+        }
     }
 }

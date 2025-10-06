@@ -11,10 +11,10 @@ use Illuminate\Database\Eloquent\Collection;
 readonly class UserWishesDTO implements BaseDTO
 {
     public function __construct(
-        public User        $user,
-        public Collection  $wishLists,
-        public ?WishList   $selectedWishList = null,
-        public ?Collection $wishes = null
+        public User       $user,
+        public Collection $wishLists,
+        public ?WishList  $selectedWishList = null,
+        public Collection $wishes = new Collection()
     ) {}
 
     public function toArray(): array
@@ -22,14 +22,11 @@ readonly class UserWishesDTO implements BaseDTO
         $data = [
             'user' => $this->user,
             'wishLists' => $this->wishLists,
+            'wishes' => $this->wishes,
         ];
 
         if ($this->selectedWishList) {
             $data['selectedWishList'] = $this->selectedWishList;
-        }
-
-        if ($this->wishes) {
-            $data['wishes'] = $this->wishes;
         }
 
         return $data;
@@ -41,7 +38,7 @@ readonly class UserWishesDTO implements BaseDTO
             user: $data['user'],
             wishLists: $data['wishLists'],
             selectedWishList: $data['selectedWishList'] ?? null,
-            wishes: $data['wishes'] ?? null,
+            wishes: $data['wishes'] ?? new Collection(),
         );
     }
 
@@ -52,7 +49,8 @@ readonly class UserWishesDTO implements BaseDTO
     {
         return new self(
             user: $user,
-            wishLists: $wishLists
+            wishLists: $wishLists,
+            wishes: new Collection()
         );
     }
 

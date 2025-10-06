@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Reservation;
+use App\Models\User;
 use App\Models\Wish;
+use App\Models\WishList;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Exception;
+use RuntimeException;
 
 class ReservationService
 {
@@ -18,119 +19,92 @@ class ReservationService
     ) {}
 
     /**
-     * Reserve a wish for a user.
+     * Reserve a wish.
+     *
+     * @throws RuntimeException
      */
-    public function reserveWishForUser(Wish $wish, int $userId): bool|string
+    public function reserve(Wish $wish, User $user): void
     {
         if ($wish->is_reserved) {
-            return __('messages.wish_already_reserved');
+            throw new RuntimeException(__('messages.wish_already_reserved'));
         }
 
-        try {
-            DB::transaction(function () use ($wish, $userId) {
-                $this->createReservationRecord($wish, $userId);
-                $this->markWishAsReserved($wish);
-            });
+        DB::transaction(function () use ($wish, $user) {
+            $this->createReservationRecord($wish, $user);
+            $this->markWishAsReserved($wish);
+        });
 
-            $wishListUserId = $wish->wishList->user_id ?? 0;
-            $this->cacheManager->clearReservationCache($wish->id, $userId, $wishListUserId);
-
-        } catch (Exception $e) {
-            return __('messages.error_reserving_wish') . $e->getMessage();
-        }
-
-        return true;
+        $wishListUserId = $wish->wishList->user_id ?? 0;
+        $this->cacheManager->clearReservationCache($wish->id, $user->id, $wishListUserId);
     }
 
     /**
-     * Unreserve a wish for a user.
+     * Unreserve a wish.
+     *
+     * @throws RuntimeException
      */
-    public function unreserveWishForUser(Wish $wish, int $userId): bool|string
+    public function unreserve(Wish $wish, User $user): void
     {
-        $reservation = $this->findReservationByUserAndWish($wish->id, $userId);
+        $reservation = $this->findReservation($wish->id, $user->id);
 
         if (!$reservation) {
-            return __('messages.wish_not_reserved_by_user');
+            throw new RuntimeException(__('messages.wish_not_reserved_by_user'));
         }
 
-        try {
-            DB::transaction(function () use ($reservation, $wish) {
-                $this->deleteReservationRecord($reservation);
-                $this->markWishAsAvailable($wish);
-            });
+        DB::transaction(function () use ($reservation, $wish) {
+            $this->deleteReservationRecord($reservation);
+            $this->markWishAsAvailable($wish);
+        });
 
-            $wishListUserId = $wish->wishList->user_id ?? 0;
-            $this->cacheManager->clearReservationCache($wish->id, $userId, $wishListUserId);
-
-        } catch (Exception $e) {
-            return __('messages.error_unreserving_wish') . $e->getMessage();
-        }
-
-        return true;
+        $wishListUserId = $wish->wishList->user_id ?? 0;
+        $this->cacheManager->clearReservationCache($wish->id, $user->id, $wishListUserId);
     }
 
     /**
-     * Get user reservations.
+     * Get reservations for user or wish list.
      */
-    public function getUserReservations(int $userId): Collection
+    public function getReservations(User|WishList $entity): Collection
     {
-        return Reservation::where('user_id', $userId)
-            ->with(['wish.wishList', 'wish.wishList.user'])
-            ->get();
-    }
+        if ($entity instanceof User) {
+            return Reservation::where('user_id', $entity->id)
+                ->with(['wish.wishList', 'wish.wishList.user'])
+                ->get();
+        }
 
-    /**
-     * Get wish list reservations.
-     */
-    public function getWishListReservations(int $wishListId): Collection
-    {
-        return Reservation::whereHas('wish', function ($query) use ($wishListId) {
-            $query->where('wish_list_id', $wishListId);
+        return Reservation::whereHas('wish', function ($query) use ($entity) {
+            $query->where('wish_list_id', $entity->id);
         })->with(['wish', 'user'])->get();
     }
 
     /**
-     * Get user reservation statistics.
+     * Get reservation statistics for user or wish list.
      */
-    public function getUserReservationStatistics(int $userId): array
+    public function getStatistics(User|WishList $entity): array
     {
-        $reservations = $this->getUserReservations($userId);
+        $reservations = $this->getReservations($entity);
 
-        return [
+        $stats = [
             'total_reservations' => $reservations->count(),
-            'total_value' => $reservations->sum(function ($reservation) {
-
-                return $reservation->wish->price ?? 0;
-            }),
-            'total_reserved_wishes' => $reservations->count(),
+            'total_value' => $this->calculateTotalValue($reservations),
         ];
-    }
 
-    /**
-     * Get wish list reservation statistics.
-     */
-    public function getWishListReservationStatistics(int $wishListId): array
-    {
-        $reservations = $this->getWishListReservations($wishListId);
+        if ($entity instanceof User) {
+            $stats['total_reserved_wishes'] = $reservations->count();
+        } else {
+            $stats['reserved_wishes'] = $reservations->pluck('wish');
+        }
 
-        return [
-            'total_reservations' => $reservations->count(),
-            'total_value' => $reservations->sum(function ($reservation) {
-
-                return $reservation->wish->price ?? 0;
-            }),
-            'reserved_wishes' => $reservations->pluck('wish'),
-        ];
+        return $stats;
     }
 
     /**
      * Create reservation record in database.
      */
-    private function createReservationRecord(Wish $wish, int $userId): void
+    private function createReservationRecord(Wish $wish, User $user): void
     {
         Reservation::create([
             'wish_id' => $wish->id,
-            'user_id' => $userId,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -151,9 +125,17 @@ class ReservationService
     }
 
     /**
-     * Find reservation by user and wish.
+     * Calculate total value of reservations.
      */
-    private function findReservationByUserAndWish(int $wishId, int $userId): ?Reservation
+    private function calculateTotalValue(Collection $reservations): float
+    {
+        return $reservations->sum(fn($reservation) => $reservation->wish->price ?? 0);
+    }
+
+    /**
+     * Find reservation.
+     */
+    private function findReservation(int $wishId, int $userId): ?Reservation
     {
         return Reservation::where('wish_id', $wishId)
             ->where('user_id', $userId)

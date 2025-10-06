@@ -11,6 +11,7 @@ use App\Models\FriendRequest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class FriendService
@@ -20,31 +21,31 @@ class FriendService
     ) {}
 
     /**
-     * Send friend request from one user to another.
+     * Send friend request.
+     *
+     * @throws RuntimeException
      */
-    public function sendFriendRequestToUser(User $sender, int $receiverId): bool|string
+    public function sendRequest(User $sender, User $receiver): void
     {
-        if ($sender->id === $receiverId) {
-            return __('messages.cannot_add_self_as_friend');
+        if ($sender->id === $receiver->id) {
+            throw new RuntimeException(__('messages.cannot_add_self_as_friend'));
         }
 
-        $this->deleteAllFriendRequestsBetweenUsers($sender->id, $receiverId);
+        $this->deleteBetween($sender->id, $receiver->id);
 
         FriendRequest::create([
             'sender_id' => $sender->id,
-            'receiver_id' => $receiverId,
+            'receiver_id' => $receiver->id,
             'status' => FriendRequestStatus::PENDING->value,
         ]);
 
-        $this->cacheManager->clearFriendshipCache($sender->id, $receiverId);
-
-        return true;
+        $this->cacheManager->clearFriendshipCache($sender->id, $receiver->id);
     }
 
     /**
-     * Accept friend request by request ID.
+     * Accept friend request.
      */
-    public function acceptFriendRequestById(int $requestId, int $receiverId): void
+    public function acceptRequest(int $requestId, int $receiverId): void
     {
         $request = FriendRequest::findOrFail($requestId);
 
@@ -55,7 +56,7 @@ class FriendService
         DB::transaction(function () use ($request) {
             $request->update(['status' => FriendRequestStatus::ACCEPTED->value]);
 
-            $reverseRequest = $this->findExistingFriendRequestBetweenUsers($request->receiver_id, $request->sender_id);
+            $reverseRequest = $this->findBetween($request->receiver_id, $request->sender_id);
             if ($reverseRequest) {
                 $reverseRequest->update(['status' => FriendRequestStatus::ACCEPTED->value]);
             }
@@ -65,9 +66,9 @@ class FriendService
     }
 
     /**
-     * Decline friend request by request ID.
+     * Decline friend request.
      */
-    public function declineFriendRequestById(int $requestId, int $receiverId): void
+    public function declineRequest(int $requestId, int $receiverId): void
     {
         $request = FriendRequest::findOrFail($requestId);
 
@@ -80,21 +81,20 @@ class FriendService
     }
 
     /**
-     * Remove friendship between two users.
+     * Remove friendship.
      */
-    public function removeFriendshipBetweenUsers(User $user, int $friendId): void
+    public function removeFriendship(User $user, User $friend): void
     {
-        $this->deleteAllFriendRequestsBetweenUsers($user->id, $friendId);
-        $this->cacheManager->clearFriendshipCache($user->id, $friendId);
+        $this->deleteBetween($user->id, $friend->id);
+        $this->cacheManager->clearFriendshipCache($user->id, $friend->id);
     }
 
     /**
      * Get user's friends list.
-     */
-    /**
+     *
      * @return Collection<int, User>
      */
-    public function getFriendsForUser(User $user): Collection
+    public function getFriends(User $user): Collection
     {
         return FriendRequest::where('status', FriendRequestStatus::ACCEPTED->value)
             ->where(function ($query) use ($user) {
@@ -112,9 +112,9 @@ class FriendService
     }
 
     /**
-     * Get incoming friend requests (requests received by the user).
+     * Get incoming requests.
      */
-    public function getIncomingFriendRequests(User $receiver): Collection
+    public function getIncomingRequests(User $receiver): Collection
     {
         return FriendRequest::where('receiver_id', $receiver->id)
             ->where('status', FriendRequestStatus::PENDING->value)
@@ -123,9 +123,9 @@ class FriendService
     }
 
     /**
-     * Get outgoing friend requests (requests sent by the user).
+     * Get outgoing requests.
      */
-    public function getOutgoingFriendRequests(User $sender): Collection
+    public function getOutgoingRequests(User $sender): Collection
     {
         return FriendRequest::where('sender_id', $sender->id)
             ->where('status', FriendRequestStatus::PENDING->value)
@@ -134,21 +134,21 @@ class FriendService
     }
 
     /**
-     * Get friends page data.
+     * Get page data.
      */
-    public function getFriendsPageData(User $user, ?int $selectedFriendId = null): FriendsDTO
+    public function getPageData(User $user, ?int $selectedFriendId = null): FriendsDTO
     {
-        $friends = $this->getFriendsForUser($user);
+        $friends = $this->getFriends($user);
 
         $selectedFriend = $selectedFriendId ? $friends->firstWhere('id', $selectedFriendId) : null;
 
-        return FriendsDTO::fromFriendsData($friends, $this->getIncomingFriendRequests($user), $this->getOutgoingFriendRequests($user), $selectedFriend);
+        return FriendsDTO::fromFriendsData($friends, $this->getIncomingRequests($user), $this->getOutgoingRequests($user), $selectedFriend);
     }
 
     /**
-     * Search friends with status and return DTO.
+     * Search with status.
      */
-    public function searchUsersWithFriendStatus(string $searchTerm, User $currentUser): FriendsSearchDTO
+    public function searchWithStatus(string $searchTerm, User $currentUser): FriendsSearchDTO
     {
         $searchTerm = trim($searchTerm);
 
@@ -165,18 +165,18 @@ class FriendService
             ->get();
 
         $friendStatuses = $users->mapWithKeys(fn($user) => [
-            $user->id => $this->getFriendshipStatusBetweenUsers($currentUser, $user->id)
+            $user->id => $this->getStatusBetween($currentUser, $user->id)
         ]);
 
         return FriendsSearchDTO::fromSearchResults($users, $searchTerm, $friendStatuses->toArray());
     }
 
     /**
-     * Get friendship status between users.
+     * Get status between users.
      */
-    private function getFriendshipStatusBetweenUsers(User $currentUser, int $otherUserId): string
+    private function getStatusBetween(User $currentUser, int $otherUserId): string
     {
-        $request = $this->findExistingFriendRequestBetweenUsers($currentUser->id, $otherUserId);
+        $request = $this->findBetween($currentUser->id, $otherUserId);
 
         return match ($request?->status) {
             FriendRequestStatus::ACCEPTED->value => 'friends',
@@ -186,30 +186,32 @@ class FriendService
     }
 
     /**
-     * Find existing friend request between users.
+     * Build query for requests between two users.
      */
-    private function findExistingFriendRequestBetweenUsers(int $senderId, int $receiverId): ?FriendRequest
+    private function queryBetween(int $userId1, int $userId2)
     {
-        return FriendRequest::where(function ($query) use ($senderId, $receiverId) {
-            $query->where('sender_id', $senderId)
-                  ->where('receiver_id', $receiverId);
-        })->orWhere(function ($query) use ($senderId, $receiverId) {
-            $query->where('sender_id', $receiverId)
-                  ->where('receiver_id', $senderId);
-        })->first();
-    }
-
-    /**
-     * Delete all friend requests between two users.
-     */
-    private function deleteAllFriendRequestsBetweenUsers(int $userId1, int $userId2): void
-    {
-        FriendRequest::where(function ($query) use ($userId1, $userId2) {
+        return FriendRequest::where(function ($query) use ($userId1, $userId2) {
             $query->where('sender_id', $userId1)
                   ->where('receiver_id', $userId2);
         })->orWhere(function ($query) use ($userId1, $userId2) {
             $query->where('sender_id', $userId2)
                   ->where('receiver_id', $userId1);
-        })->delete();
+        });
+    }
+
+    /**
+     * Find request between users.
+     */
+    private function findBetween(int $userId1, int $userId2): ?FriendRequest
+    {
+        return $this->queryBetween($userId1, $userId2)->first();
+    }
+
+    /**
+     * Delete all requests between users.
+     */
+    private function deleteBetween(int $userId1, int $userId2): void
+    {
+        $this->queryBetween($userId1, $userId2)->delete();
     }
 }
