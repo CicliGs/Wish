@@ -16,9 +16,6 @@ class WishList extends Model
 {
     use HasFactory;
 
-    /** @phpstan-ignore-next-line */
-    public bool $is_public;
-
     /**
      * The attributes that are mass assignable.
      *

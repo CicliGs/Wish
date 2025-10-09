@@ -146,13 +146,19 @@ class WishController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function unreserve(Wish $wish): RedirectResponse
+    public function unreserve(Wish $wish): RedirectResponse|JsonResponse
     {
         $this->authorize('unreserve', $wish);
 
         $this->reservationService->unreserve($wish, Auth::user());
 
-        return back()->with('success', __('messages.wish_unreserved'));
+        $message = __('messages.wish_unreserved');
+
+        if (request()->wantsJson()) {
+            return response()->json(['success' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 
     /**
@@ -160,40 +166,18 @@ class WishController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function reserve(Wish $wish): RedirectResponse
+    public function reserve(Wish $wish): RedirectResponse|JsonResponse
     {
         $this->authorize('reserve', $wish);
 
         $this->reservationService->reserve($wish, Auth::user());
 
-        return back()->with('success', __('messages.wish_reserved'));
-    }
+        $message = __('messages.wish_reserved');
 
-    /**
-     * Unreserve a wish via AJAX.
-     *
-     * @throws AuthorizationException
-     */
-    public function unreserveAjax(Wish $wish): JsonResponse
-    {
-        $this->authorize('unreserve', $wish);
+        if (request()->wantsJson()) {
+            return response()->json(['success' => $message]);
+        }
 
-        $this->reservationService->unreserve($wish, Auth::user());
-
-        return response()->json(['success' => __('messages.wish_unreserved')]);
-    }
-
-    /**
-     * Reserve a wish via AJAX.
-     *
-     * @throws AuthorizationException
-     */
-    public function reserveAjax(Wish $wish): JsonResponse
-    {
-        $this->authorize('reserve', $wish);
-
-        $this->reservationService->reserve($wish, Auth::user());
-
-        return response()->json(['success' => __('messages.wish_reserved')]);
+        return back()->with('success', $message);
     }
 }

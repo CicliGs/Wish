@@ -13,16 +13,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Обработка ошибки 419
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
+    const loginForm = document.getElementById('loginForm');
+    loginForm.addEventListener('submit', function(e) {
         const submitBtn = document.getElementById('loginBtn');
         const originalText = submitBtn.innerHTML;
+        
+        // Проверяем, не отправляется ли форма уже
+        if (submitBtn.disabled) {
+            return;
+        }
+        
+        e.preventDefault(); // Предотвращаем стандартную отправку
         
         submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Вход...';
         submitBtn.disabled = true;
         
         // Обновляем CSRF токен перед отправкой формы
         updateCsrfToken().then(() => {
-            // Форма будет отправлена с новым токеном
+            // Отправляем форму после обновления токена
+            loginForm.submit();
         }).catch(error => {
             console.error('Failed to update CSRF token:', error);
             submitBtn.innerHTML = originalText;

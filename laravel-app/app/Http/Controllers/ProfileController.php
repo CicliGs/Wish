@@ -46,7 +46,7 @@ class ProfileController extends Controller
         $friendService->sendRequest(Auth::user(), $user);
         $message = __('messages.friend_request_sent');
         
-        if ($this->isAjaxRequest()) {
+        if (request()->wantsJson()) {
             return response()->json(['success' => true, 'message' => $message]);
         }
         
@@ -108,13 +108,5 @@ class ProfileController extends Controller
         }
 
         return redirect()->route('profile')->with('success', __('messages.profile_updated'));
-    }
-
-    /**
-     * Check if request is AJAX
-     */
-    private function isAjaxRequest(): bool
-    {
-        return request()->ajax() || request()->wantsJson();
     }
 }

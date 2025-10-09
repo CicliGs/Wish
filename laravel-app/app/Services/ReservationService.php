@@ -34,8 +34,7 @@ class ReservationService
             $this->markWishAsReserved($wish);
         });
 
-        $wishListUserId = $wish->wishList->user_id ?? 0;
-        $this->cacheManager->clearReservationCache($wish->id, $user->id, $wishListUserId);
+        $this->clearWishCache($wish, $user);
     }
 
     /**
@@ -56,8 +55,7 @@ class ReservationService
             $this->markWishAsAvailable($wish);
         });
 
-        $wishListUserId = $wish->wishList->user_id ?? 0;
-        $this->cacheManager->clearReservationCache($wish->id, $user->id, $wishListUserId);
+        $this->clearWishCache($wish, $user);
     }
 
     /**
@@ -148,5 +146,14 @@ class ReservationService
     private function deleteReservationRecord(Reservation $reservation): void
     {
         $reservation->delete();
+    }
+
+    /**
+     * Clear cache related to wish reservation.
+     */
+    private function clearWishCache(Wish $wish, User $user): void
+    {
+        $wishListUserId = $wish->wishList->user_id ?? 0;
+        $this->cacheManager->clearReservationCache($wish->id, $user->id, $wishListUserId);
     }
 }

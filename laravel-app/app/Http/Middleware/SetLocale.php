@@ -16,7 +16,9 @@ class SetLocale
      * Handle an incoming request.
      *
      * @param Request $request
+     * 
      * @param Closure(Request): (Response|RedirectResponse|JsonResponse) $next
+     * 
      * @return Response|RedirectResponse|JsonResponse
      */
     public function handle(Request $request, Closure $next): Response|RedirectResponse|JsonResponse
