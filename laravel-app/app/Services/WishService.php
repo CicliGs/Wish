@@ -9,6 +9,8 @@ use App\DTOs\UserWishesDTO;
 use App\Models\Wish;
 use App\Models\WishList;
 use App\Models\User;
+use App\Repositories\Contracts\WishRepositoryInterface;
+use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 
@@ -16,8 +18,13 @@ class WishService
 {
     private const STORAGE_PATH = 'wishes';
 
+    /**
+     * Create a new service instance.
+     */
     public function __construct(
-        protected CacheManagerService $cacheManager
+        protected CacheManagerService $cacheManager,
+        protected WishRepositoryInterface $wishRepository,
+        protected WishListRepositoryInterface $wishListRepository
     ) {}
 
     /**
@@ -25,7 +32,7 @@ class WishService
      */
     public function findWishes(WishList $wishList): Collection
     {
-        return Wish::forWishList($wishList->id)->with('reservation.user')->get();
+        return $this->wishRepository->findByWishList($wishList);
     }
 
     /**
@@ -38,7 +45,7 @@ class WishService
         }
 
         $wishData['wish_list_id'] = $wishList->id;
-        $wish = Wish::create($wishData);
+        $wish = $this->wishRepository->create($wishData);
 
         $this->cacheManager->clearWishListCache($wishList->id, $user->id);
 
@@ -50,11 +57,11 @@ class WishService
      */
     public function update(Wish $wish, array $wishData, User $user): Wish
     {
-        $wish->update($wishData);
+        $wish = $this->wishRepository->update($wish, $wishData);
 
         $this->cacheManager->clearWishCache($wish->wish_list_id, $user->id);
 
-        return $wish->fresh();
+        return $wish;
     }
 
     /**
@@ -62,7 +69,7 @@ class WishService
      */
     public function delete(Wish $wish, User $user): bool
     {
-        $result = $wish->delete();
+        $result = $this->wishRepository->delete($wish);
 
         if ($result) {
             $this->cacheManager->clearWishCache($wish->wish_list_id, $user->id);
@@ -76,14 +83,7 @@ class WishService
      */
     public function getStatistics(WishList $wishList): array
     {
-        $wishes = Wish::forWishList($wishList->id);
-
-        return [
-            'total_wishes' => $wishes->count(),
-            'available_wishes' => $wishes->available()->count(),
-            'reserved_wishes' => $wishes->reserved()->count(),
-            'total_value' => $wishes->sum('price'),
-        ];
+        return $this->wishRepository->getStatistics($wishList)->toArray();
     }
 
     /**
@@ -91,9 +91,7 @@ class WishService
      */
     public function getWishListsData(User $user): UserWishesDTO
     {
-        $wishLists = WishList::where('user_id', $user->id)
-            ->withCount('wishes')
-            ->get();
+        $wishLists = $this->wishListRepository->findWithWishesCount($user);
 
         return UserWishesDTO::fromUserWishLists($user, $wishLists);
     }
@@ -103,11 +101,13 @@ class WishService
      */
     public function getWishListData(User $user, WishList $wishList): UserWishesDTO
     {
-        $wishes = $wishList->wishes()->with('reservation.user')->get();
+        $wishes = $this->wishRepository->findWithReservations($wishList);
+        
+        $wishLists = $this->wishListRepository->findByUserId($user->id);
 
         return UserWishesDTO::fromUserWithSelectedWishList(
             user: $user,
-            wishLists: WishList::where('id', $wishList->id)->get(),
+            wishLists: $wishLists,
             wishes: $wishes,
             selectedWishList: $wishList
         );
@@ -142,8 +142,8 @@ class WishService
     public function getData(WishList $wishList, User $user, ?string $filter = null): WishDTO
     {
         $wishes = match ($filter) {
-            'available' => Wish::forWishList($wishList->id)->available()->get(),
-            'reserved' => Wish::forWishList($wishList->id)->reserved()->with('reservation.user')->get(),
+            'available' => $this->wishRepository->findAvailableInWishList($wishList),
+            'reserved' => $this->wishRepository->findReservedByUser($user)->where('wish_list_id', $wishList->id),
             default => $this->findWishes($wishList)
         };
 

@@ -18,6 +18,9 @@ class WishListController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(
         protected WishListService $service
     ) {}

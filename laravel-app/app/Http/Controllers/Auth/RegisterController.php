@@ -12,13 +12,22 @@ use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(protected UserService $userService) {}
 
+    /**
+     * Show the registration form.
+     */
     public function showRegistrationForm(): View
     {
         return view('register');
     }
 
+    /**
+     * Handle user registration.
+     */
     public function register(RegisterRequest $request): RedirectResponse
     {
         $this->userService->registerNewUser($request->validated());

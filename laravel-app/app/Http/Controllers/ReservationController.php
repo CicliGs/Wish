@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Wish;
 use App\Models\WishList;
 use App\Services\ReservationService;
+use App\Repositories\Contracts\WishRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -17,8 +18,12 @@ class ReservationController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(
-        protected ReservationService $service
+        protected ReservationService $service,
+        protected WishRepositoryInterface $wishRepository
     ) {}
 
     /**
@@ -80,7 +85,12 @@ class ReservationController extends Controller
      */
     private function findWish(int $wishId): Wish
     {
-        return Wish::with(['wishList', 'reservation.user'])
-            ->findOrFail($wishId);
+        $wish = $this->wishRepository->findById($wishId);
+        
+        if (!$wish) {
+            abort(404, 'Wish not found');
+        }
+        
+        return $wish;
     }
 }

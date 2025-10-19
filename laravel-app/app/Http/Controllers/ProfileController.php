@@ -47,7 +47,7 @@ class ProfileController extends Controller
         $message = __('messages.friend_request_sent');
         
         if (request()->wantsJson()) {
-            return response()->json(['success' => true, 'message' => $message]);
+            return response()->json(['message' => $message]);
         }
         
         return back()->with('success', $message);

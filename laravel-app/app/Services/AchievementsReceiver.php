@@ -25,11 +25,27 @@ class AchievementsReceiver
     }
 
     /**
+     * Compatibility: config('achievements') expects method name 'checkGift'.
+     */
+    public function checkGift(User $user): bool
+    {
+        return $this->checkFirstGiftAchievement($user);
+    }
+
+    /**
      * First reservation (has at least one reservation).
      */
     public function checkFirstReservationAchievement(User $user): bool
     {
         return $user->reservations()->count() > 0;
+    }
+
+    /**
+     * Compatibility: expected checker method 'checkReserve'.
+     */
+    public function checkReserve(User $user): bool
+    {
+        return $this->checkFirstReservationAchievement($user);
     }
 
     /**
@@ -41,11 +57,27 @@ class AchievementsReceiver
     }
 
     /**
+     * Compatibility: expected checker method 'checkFriend'.
+     */
+    public function checkFriend(User $user): bool
+    {
+        return $this->checkFirstFriendAchievement($user);
+    }
+
+    /**
      * Gift master (50+ added gifts).
      */
     public function checkGiftMasterAchievement(User $user): bool
     {
         return $this->getWishCountForUser($user) >= self::GIFT_MASTER_THRESHOLD;
+    }
+
+    /**
+     * Compatibility: expected checker method 'checkGiftMaster'.
+     */
+    public function checkGiftMaster(User $user): bool
+    {
+        return $this->checkGiftMasterAchievement($user);
     }
 
     /**
@@ -57,11 +89,27 @@ class AchievementsReceiver
     }
 
     /**
+     * Compatibility: expected checker method 'checkReserveMaster'.
+     */
+    public function checkReserveMaster(User $user): bool
+    {
+        return $this->checkReservationMasterAchievement($user);
+    }
+
+    /**
      * Social butterfly (10+ friends).
      */
     public function checkSocialButterflyAchievement(User $user): bool
     {
         return $this->getAcceptedFriendsCountForUser($user) >= self::SOCIAL_BUTTERFLY_THRESHOLD;
+    }
+
+    /**
+     * Compatibility: expected checker method 'checkSocialButterfly'.
+     */
+    public function checkSocialButterfly(User $user): bool
+    {
+        return $this->checkSocialButterflyAchievement($user);
     }
 
     /**
@@ -75,7 +123,17 @@ class AchievementsReceiver
     }
 
     /**
+     * Compatibility: expected checker method 'checkVeteran'.
+     */
+    public function checkVeteran(User $user): bool
+    {
+        return $this->checkSiteVeteranAchievement($user);
+    }
+
+    /**
      * Get user wish count.
+     *
+     * @return int Number of wishes created by user
      */
     private function getWishCountForUser(User $user): int
     {
@@ -86,6 +144,8 @@ class AchievementsReceiver
 
     /**
      * Check if user has accepted friends.
+     *
+     * @return bool True if user has at least one accepted friend
      */
     private function userHasAcceptedFriends(User $user): bool
     {
@@ -100,6 +160,8 @@ class AchievementsReceiver
 
     /**
      * Get accepted friends count.
+     *
+     * @return int Number of accepted friends for user
      */
     private function getAcceptedFriendsCountForUser(User $user): int
     {

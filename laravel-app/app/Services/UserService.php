@@ -9,6 +9,9 @@ use App\Services\CacheManagerService;
 
 class UserService
 {
+    /**
+     * Create a new service instance.
+     */
     public function __construct(
         protected CacheManagerService $cacheManager
     ) {}

@@ -11,6 +11,9 @@ use Illuminate\Validation\Rule;
 
 trait MoneyValidationTrait
 {
+    /**
+     * Get money validation rules.
+     */
     protected function getMoneyRules(): array
     {
         return [
@@ -22,6 +25,9 @@ trait MoneyValidationTrait
         ];
     }
 
+    /**
+     * Get money validation error messages.
+     */
     protected function getMoneyMessages(): array
     {
         return [
@@ -29,6 +35,9 @@ trait MoneyValidationTrait
         ];
     }
 
+    /**
+     * Validate and normalize price input.
+     */
     protected function validatePrice(?string $price): ?float
     {
         if ($price === null || $price === '') {
@@ -46,6 +55,9 @@ trait MoneyValidationTrait
         return $floatValue >= 0 ? $floatValue : null;
     }
 
+    /**
+     * Get currency from request, route, or user preferences.
+     */
     protected function getCurrency(): ?string
     {
         $currency = $this->input('currency');
@@ -65,6 +77,9 @@ trait MoneyValidationTrait
         return null;
     }
 
+    /**
+     * Validate money price with currency.
+     */
     protected function validateMoneyPrice(?float $price, ?string $currency): bool
     {
         if ($price === null) {

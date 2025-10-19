@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Auth;
 
 class WishController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(
         private readonly WishService $wishService,
         private readonly ReservationService $reservationService
@@ -146,7 +149,7 @@ class WishController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function unreserve(Wish $wish): RedirectResponse|JsonResponse
+    public function unreserve(WishList $wishList, Wish $wish): RedirectResponse|JsonResponse
     {
         $this->authorize('unreserve', $wish);
 
@@ -155,7 +158,7 @@ class WishController extends Controller
         $message = __('messages.wish_unreserved');
 
         if (request()->wantsJson()) {
-            return response()->json(['success' => $message]);
+            return response()->json(['message' => $message]);
         }
 
         return back()->with('success', $message);
@@ -166,7 +169,7 @@ class WishController extends Controller
      *
      * @throws AuthorizationException
      */
-    public function reserve(Wish $wish): RedirectResponse|JsonResponse
+    public function reserve(WishList $wishList, Wish $wish): RedirectResponse|JsonResponse
     {
         $this->authorize('reserve', $wish);
 
@@ -175,7 +178,7 @@ class WishController extends Controller
         $message = __('messages.wish_reserved');
 
         if (request()->wantsJson()) {
-            return response()->json(['success' => $message]);
+            return response()->json(['message' => $message]);
         }
 
         return back()->with('success', $message);

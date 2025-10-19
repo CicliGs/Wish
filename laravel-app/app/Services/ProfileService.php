@@ -13,6 +13,9 @@ class ProfileService
 {
     private const AVATAR_STORAGE_PATH = 'avatars';
 
+    /**
+     * Create a new service instance.
+     */
     public function __construct(
         private readonly WishListService $wishListService,
         private readonly ReservationService $reservationService,
@@ -53,6 +56,8 @@ class ProfileService
 
     /**
      * Get user achievements
+     *
+     * @return array<int, array<string, mixed>> Array of achievements with status
      */
     public function getAchievements(User $user): array
     {
@@ -111,6 +116,8 @@ class ProfileService
 
     /**
      * Create user achievement
+     *
+     * @param string $achievementKey The achievement key to create
      */
     private function createUserAchievement(User $user, string $achievementKey): void
     {

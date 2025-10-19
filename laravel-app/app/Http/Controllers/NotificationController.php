@@ -6,11 +6,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarkNotificationAsReadRequest;
 use App\Services\NotificationService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(
         private readonly NotificationService $notificationService
     ) {}
@@ -31,6 +35,8 @@ class NotificationController extends Controller
 
     /**
      * Mark notification as read
+     *
+     * @throws ModelNotFoundException
      */
     public function markAsRead(MarkNotificationAsReadRequest $request): JsonResponse
     {
@@ -38,10 +44,7 @@ class NotificationController extends Controller
         $notification = $this->notificationService->findUnread(Auth::user(), $notificationId);
 
         if (!$notification) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Notification not found or not accessible'
-            ], 404);
+            throw new ModelNotFoundException('Notification not found or not accessible');
         }
 
         $this->notificationService->markAsRead($notification);

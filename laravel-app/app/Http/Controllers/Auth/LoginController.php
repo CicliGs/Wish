@@ -14,13 +14,22 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(protected UserService $userService) {}
 
+    /**
+     * Show the login form.
+     */
     public function showLoginForm(): View
     {
         return view('login');
     }
 
+    /**
+     * Handle user login.
+     */
     public function login(LoginRequest $request): RedirectResponse
     {
         $credentials = $request->validated();
@@ -36,6 +45,9 @@ class LoginController extends Controller
         ])->onlyInput('email');
     }
 
+    /**
+     * Handle user logout.
+     */
     public function logout(Request $request): RedirectResponse
     {
         $userId = Auth::id();

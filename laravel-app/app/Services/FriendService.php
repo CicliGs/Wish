@@ -16,6 +16,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class FriendService
 {
+    /**
+     * Create a new service instance.
+     */
     public function __construct(
         protected CacheManagerService $cacheManager
     ) {}

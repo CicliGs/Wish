@@ -12,6 +12,9 @@ use Illuminate\View\View;
 
 class CacheController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(
         protected CacheManagerService $cacheManager
     ) {}
@@ -53,9 +56,7 @@ class CacheController extends Controller
     {
         try {
             $success = $this->cacheManager->clearCacheByType(CacheType::STATIC_CONTENT);
-
         } catch (Exception $e) {
-
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to clear static content cache: ' . $e->getMessage()

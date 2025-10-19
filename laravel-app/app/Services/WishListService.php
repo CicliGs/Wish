@@ -8,13 +8,18 @@ use App\DTOs\WishListDTO;
 use App\DTOs\PublicWishListDTO;
 use App\Models\User;
 use App\Models\WishList;
+use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class WishListService
 {
+    /**
+     * Create a new service instance.
+     */
     public function __construct(
-        protected CacheManagerService $cacheManager
+        protected CacheManagerService $cacheManager,
+        protected WishListRepositoryInterface $wishListRepository
     ) {}
 
     /**
@@ -22,7 +27,7 @@ class WishListService
      */
     public function findWishLists(User $user): Collection
     {
-        return WishList::forUser($user->id)->with('wishes')->get();
+        return $this->wishListRepository->findByUser($user);
     }
 
     /**
@@ -32,7 +37,7 @@ class WishListService
     {
         $data['user_id'] = $user->id;
 
-        $wishList = WishList::create($data);
+        $wishList = $this->wishListRepository->create($data);
         $this->cacheManager->clearUserCache($user->id);
 
         return $wishList;
@@ -46,14 +51,14 @@ class WishListService
         $wasPublic = $wishList->is_public;
         $willBePublic = $data['is_public'] ?? $wasPublic;
 
-        $wishList->update($data);
+        $wishList = $this->wishListRepository->update($wishList, $data);
         $this->cacheManager->clearUserCache($wishList->user_id);
 
         if ($wasPublic !== $willBePublic && $wishList->uuid) {
             $this->cacheManager->clearPublicWishListCache($wishList->uuid);
         }
 
-        return $wishList->fresh();
+        return $wishList;
     }
 
     /**
@@ -63,7 +68,7 @@ class WishListService
     {
         $this->clearRelatedCaches($wishList);
 
-        return $wishList->delete();
+        return $this->wishListRepository->delete($wishList);
     }
 
     /**
@@ -71,7 +76,7 @@ class WishListService
      */
     public function findPublicByUuid(string $uuid): ?WishList
     {
-        return WishList::public()->where('uuid', $uuid)->with('wishes')->first();
+        return $this->wishListRepository->findPublicByUuid($uuid);
     }
 
     /**
@@ -79,14 +84,7 @@ class WishListService
      */
     public function getStatistics(User $user): array
     {
-        $wishLists = $this->findWishLists($user);
-
-        return [
-            'total_wish_lists' => $wishLists->count(),
-            'total_wishes' => $wishLists->sum(fn($wishList) => $wishList->wishes->count()),
-            'total_reserved_wishes' => $wishLists->sum(fn($wishList) => $wishList->wishes->where('is_reserved', true)->count()),
-            'public_wish_lists' => $wishLists->whereNotNull('uuid')->count(),
-        ];
+        return $this->wishListRepository->getStatistics($user)->toArray();
     }
 
     /**

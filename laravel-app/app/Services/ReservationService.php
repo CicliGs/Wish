@@ -8,14 +8,21 @@ use App\Models\Reservation;
 use App\Models\User;
 use App\Models\Wish;
 use App\Models\WishList;
+use App\Repositories\Contracts\ReservationRepositoryInterface;
+use App\Repositories\Contracts\WishRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class ReservationService
 {
+    /**
+     * Create a new service instance.
+     */
     public function __construct(
-        protected CacheManagerService $cacheManager
+        protected CacheManagerService $cacheManager,
+        protected ReservationRepositoryInterface $reservationRepository,
+        protected WishRepositoryInterface $wishRepository
     ) {}
 
     /**
@@ -25,7 +32,7 @@ class ReservationService
      */
     public function reserve(Wish $wish, User $user): void
     {
-        if ($wish->is_reserved) {
+        if ($this->wishRepository->isReserved($wish)) {
             throw new RuntimeException(__('messages.wish_already_reserved'));
         }
 
@@ -44,7 +51,7 @@ class ReservationService
      */
     public function unreserve(Wish $wish, User $user): void
     {
-        $reservation = $this->findReservation($wish->id, $user->id);
+        $reservation = $this->reservationRepository->findByWishAndUser($wish, $user);
 
         if (!$reservation) {
             throw new RuntimeException(__('messages.wish_not_reserved_by_user'));
@@ -63,15 +70,7 @@ class ReservationService
      */
     public function getReservations(User|WishList $entity): Collection
     {
-        if ($entity instanceof User) {
-            return Reservation::where('user_id', $entity->id)
-                ->with(['wish.wishList', 'wish.wishList.user'])
-                ->get();
-        }
-
-        return Reservation::whereHas('wish', function ($query) use ($entity) {
-            $query->where('wish_list_id', $entity->id);
-        })->with(['wish', 'user'])->get();
+        return $this->reservationRepository->findWithRelations($entity);
     }
 
     /**
@@ -79,20 +78,7 @@ class ReservationService
      */
     public function getStatistics(User|WishList $entity): array
     {
-        $reservations = $this->getReservations($entity);
-
-        $stats = [
-            'total_reservations' => $reservations->count(),
-            'total_value' => $this->calculateTotalValue($reservations),
-        ];
-
-        if ($entity instanceof User) {
-            $stats['total_reserved_wishes'] = $reservations->count();
-        } else {
-            $stats['reserved_wishes'] = $reservations->pluck('wish');
-        }
-
-        return $stats;
+        return $this->reservationRepository->getStatistics($entity)->toArray();
     }
 
     /**
@@ -100,7 +86,7 @@ class ReservationService
      */
     private function createReservationRecord(Wish $wish, User $user): void
     {
-        Reservation::create([
+        $this->reservationRepository->create([
             'wish_id' => $wish->id,
             'user_id' => $user->id,
         ]);
@@ -111,7 +97,7 @@ class ReservationService
      */
     private function markWishAsReserved(Wish $wish): void
     {
-        $wish->update(['is_reserved' => true]);
+        $this->wishRepository->update($wish, ['is_reserved' => true]);
     }
 
     /**
@@ -119,25 +105,7 @@ class ReservationService
      */
     private function markWishAsAvailable(Wish $wish): void
     {
-        $wish->update(['is_reserved' => false]);
-    }
-
-    /**
-     * Calculate total value of reservations.
-     */
-    private function calculateTotalValue(Collection $reservations): float
-    {
-        return $reservations->sum(fn($reservation) => $reservation->wish->price ?? 0);
-    }
-
-    /**
-     * Find reservation.
-     */
-    private function findReservation(int $wishId, int $userId): ?Reservation
-    {
-        return Reservation::where('wish_id', $wishId)
-            ->where('user_id', $userId)
-            ->first();
+        $this->wishRepository->update($wish, ['is_reserved' => false]);
     }
 
     /**
@@ -145,7 +113,7 @@ class ReservationService
      */
     private function deleteReservationRecord(Reservation $reservation): void
     {
-        $reservation->delete();
+        $this->reservationRepository->delete($reservation);
     }
 
     /**
