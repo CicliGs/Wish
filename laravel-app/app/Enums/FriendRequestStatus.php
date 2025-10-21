@@ -10,6 +10,11 @@ enum FriendRequestStatus: string
     case ACCEPTED = 'accepted';
     case DECLINED = 'declined';
 
+    /**
+     * Get the localized label for this friend request status.
+     *
+     * @return string Localized status label
+     */
     public function label(): string
     {
         return match($this) {

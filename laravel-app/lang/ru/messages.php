@@ -226,7 +226,10 @@ return [
     
     // Ошибки
     'cannot_add_yourself' => 'Нельзя добавить себя в друзья.',
+    'cannot_add_self_as_friend' => 'Нельзя добавить себя в друзья.',
     'already_friends_or_requested' => 'Заявка уже отправлена или вы уже друзья.',
+    'friend_request_already_sent' => 'Заявка уже отправлена.',
+    'already_friends' => 'Вы уже друзья.',
     'cannot_reserve' => 'Нельзя забронировать этот подарок.',
     'cannot_unreserve' => 'Вы не можете отменить эту бронь.',
     'access_denied' => 'Доступ запрещён',

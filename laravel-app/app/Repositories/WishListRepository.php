@@ -36,7 +36,9 @@ class WishListRepository extends BaseRepository implements WishListRepositoryInt
      */
     public function findByUserId(int $userId): Collection
     {
-        return $this->model->forUser($userId)->with('wishes')->get();
+        /** @var WishList $model */
+        $model = $this->model;
+        return $model->forUser($userId)->with('wishes')->get();
     }
 
     /**
@@ -44,7 +46,9 @@ class WishListRepository extends BaseRepository implements WishListRepositoryInt
      */
     public function findPublicByUuid(string $uuid): ?WishList
     {
-        return $this->model->public()->where('uuid', $uuid)->with('wishes')->first();
+        /** @var WishList $model */
+        $model = $this->model;
+        return $model->public()->where('uuid', $uuid)->with('wishes')->first();
     }
 
     /**
@@ -52,7 +56,9 @@ class WishListRepository extends BaseRepository implements WishListRepositoryInt
      */
     public function findPublic(): Collection
     {
-        return $this->model->public()->with('wishes')->get();
+        /** @var WishList $model */
+        $model = $this->model;
+        return $model->public()->with('wishes')->get();
     }
 
     /**
@@ -60,7 +66,9 @@ class WishListRepository extends BaseRepository implements WishListRepositoryInt
      */
     public function findWithWishesCount(User $user): Collection
     {
-        return $this->model->forUser($user->id)
+        /** @var WishList $model */
+        $model = $this->model;
+        return $model->forUser($user->id)
             ->withCount('wishes')
             ->get();
     }

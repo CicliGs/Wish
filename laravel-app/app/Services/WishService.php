@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 
 class WishService
@@ -38,7 +39,7 @@ class WishService
     /**
      * Create a new wish.
      */
-    public function create(array $wishData, WishList $wishList, User $user, ?UploadedFile $imageFile = null): Wish
+    public function create(array $wishData, WishList $wishList, User $user, ?UploadedFile $imageFile = null): Model
     {
         if ($imageFile) {
             $wishData['image'] = $this->uploadImage($imageFile);
@@ -55,7 +56,7 @@ class WishService
     /**
      * Update an existing wish.
      */
-    public function update(Wish $wish, array $wishData, User $user): Wish
+    public function update(Wish $wish, array $wishData, User $user): Model
     {
         $wish = $this->wishRepository->update($wish, $wishData);
 
@@ -102,7 +103,7 @@ class WishService
     public function getWishListData(User $user, WishList $wishList): UserWishesDTO
     {
         $wishes = $this->wishRepository->findWithReservations($wishList);
-        
+
         $wishLists = $this->wishListRepository->findByUserId($user->id);
 
         return UserWishesDTO::fromUserWithSelectedWishList(

@@ -21,6 +21,7 @@ trait ErrorHandlingTrait
             return $operation();
         } catch (Exception $e) {
             $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]));
+
             return null;
         }
     }

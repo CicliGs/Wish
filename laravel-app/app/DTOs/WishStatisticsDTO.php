@@ -35,18 +35,4 @@ readonly class WishStatisticsDTO implements BaseDTO
             averagePrice: $data['average_price'] ?? null,
         );
     }
-
-    /**
-     * Create DTO from wish statistics array.
-     */
-    public static function fromWishStats(array $stats): static
-    {
-        return new self(
-            totalWishes: $stats['total_wishes'] ?? 0,
-            reservedWishes: $stats['reserved_wishes'] ?? 0,
-            availableWishes: $stats['available_wishes'] ?? 0,
-            totalPrice: $stats['total_price'] ?? 0.0,
-            averagePrice: $stats['average_price'] ?? null,
-        );
-    }
 }

@@ -87,7 +87,7 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
             return new ReservationStatisticsDTO(
                 totalReservations: $reservations->count(),
                 totalValue: $reservations->sum(fn($reservation) => $reservation->wish->price ?? 0),
-                averagePrice: $reservations->avg(fn($reservation) => $reservation->wish->price ?? 0),
+                averagePrice: $reservations->avg(fn($reservation) => $reservation->wish->price ?? 0) ?? 0.0,
             );
         }
 
@@ -95,7 +95,7 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
         return new ReservationStatisticsDTO(
             totalReservations: $reservations->count(),
             totalValue: $reservations->sum(fn($reservation) => $reservation->wish->price ?? 0),
-            averagePrice: $reservations->avg(fn($reservation) => $reservation->wish->price ?? 0),
+            averagePrice: $reservations->avg(fn($reservation) => $reservation->wish->price ?? 0) ?? 0.0,
             uniqueUsers: $reservations->pluck('user_id')->unique()->count(),
         );
     }

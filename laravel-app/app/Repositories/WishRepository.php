@@ -37,7 +37,9 @@ class WishRepository extends BaseRepository implements WishRepositoryInterface
      */
     public function findByWishListId(int $wishListId): Collection
     {
-        return $this->model->forWishList($wishListId)->with('reservation.user')->get();
+        /** @var Wish $model */
+        $model = $this->model;
+        return $model->forWishList($wishListId)->with('reservation.user')->get();
     }
 
     /**
@@ -63,7 +65,9 @@ class WishRepository extends BaseRepository implements WishRepositoryInterface
      */
     public function findAvailableInWishList(WishList $wishList): Collection
     {
-        return $this->model->forWishList($wishList->id)
+        /** @var Wish $model */
+        $model = $this->model;
+        return $model->forWishList($wishList->id)
             ->where('is_reserved', false)
             ->get();
     }
@@ -73,7 +77,9 @@ class WishRepository extends BaseRepository implements WishRepositoryInterface
      */
     public function findWithReservations(WishList $wishList): Collection
     {
-        return $this->model->forWishList($wishList->id)
+        /** @var Wish $model */
+        $model = $this->model;
+        return $model->forWishList($wishList->id)
             ->with(['reservation', 'reservation.user'])
             ->get();
     }
@@ -91,7 +97,9 @@ class WishRepository extends BaseRepository implements WishRepositoryInterface
      */
     public function getStatistics(WishList $wishList): WishStatisticsDTO
     {
-        $wishesQuery = $this->model->forWishList($wishList->id);
+        /** @var Wish $model */
+        $model = $this->model;
+        $wishesQuery = $model->forWishList($wishList->id);
         $wishes = $wishesQuery->get();
 
         return new WishStatisticsDTO(

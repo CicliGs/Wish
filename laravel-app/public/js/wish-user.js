@@ -1,6 +1,43 @@
 document.addEventListener('DOMContentLoaded', function() {
     // CSRF token для AJAX запросов
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Function to get wish list ID from URL or data attribute
+    function getWishListId() {
+        // Try to get from URL path: /user/{user}/wish-list/{wishList}
+        const userListMatch = window.location.pathname.match(/\/user\/\d+\/wish-list\/(\d+)/);
+        if (userListMatch) {
+            return userListMatch[1];
+        }
+
+        // Try to get from URL path: /wish-lists/{wishList}
+        const pathMatch = window.location.pathname.match(/\/wish-lists\/(\d+)/);
+        if (pathMatch) {
+            return pathMatch[1];
+        }
+        
+        // Try to get from data attribute on body
+        const body = document.body;
+        if (body && body.dataset.wishListId) {
+            return body.dataset.wishListId;
+        }
+        
+        // Try to get from any element with data-wish-list-id
+        const element = document.querySelector('[data-wish-list-id]');
+        if (element) {
+            return element.dataset.wishListId;
+        }
+        
+        // Fallback: try to extract from current URL
+        const urlParts = window.location.pathname.split('/');
+        const wishListIndex = urlParts.indexOf('wish-lists');
+        if (wishListIndex !== -1 && urlParts[wishListIndex + 1]) {
+            return urlParts[wishListIndex + 1];
+        }
+        
+        console.error('Could not determine wish list ID');
+        return null;
+    }
 
     // Handle reserve button clicks
     document.querySelectorAll('.reserve-btn').forEach(function(button) {
@@ -21,7 +58,14 @@ document.addEventListener('DOMContentLoaded', function() {
         button.disabled = true;
         button.textContent = 'Обработка...';
         
-        fetch(`/ajax/wishes/${wishId}/reserve`, {
+        const wishListId = getWishListId();
+        if (!wishListId) {
+            console.error('Wish list ID not found');
+            showAlert('error', 'Не удалось определить список желаний');
+            return;
+        }
+
+        fetch(`/wish-lists/${wishListId}/wishes/${wishId}/reserve`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -29,7 +73,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 // Show success message
@@ -80,7 +129,14 @@ document.addEventListener('DOMContentLoaded', function() {
         button.disabled = true;
         button.textContent = 'Обработка...';
         
-        fetch(`/ajax/wishes/${wishId}/unreserve`, {
+        const wishListId = getWishListId();
+        if (!wishListId) {
+            console.error('Wish list ID not found');
+            showAlert('error', 'Не удалось определить список желаний');
+            return;
+        }
+
+        fetch(`/wish-lists/${wishListId}/wishes/${wishId}/unreserve`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -88,7 +144,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 // Show success message

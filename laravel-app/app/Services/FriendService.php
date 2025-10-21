@@ -34,6 +34,20 @@ class FriendService
             throw new RuntimeException(__('messages.cannot_add_self_as_friend'));
         }
 
+        $existingRequest = FriendRequest::where('sender_id', $sender->id)
+            ->where('receiver_id', $receiver->id)
+            ->where('status', FriendRequestStatus::PENDING->value)
+            ->first();
+
+        if ($existingRequest) {
+            throw new RuntimeException(__('messages.friend_request_already_sent'));
+        }
+
+        $existingFriendship = $this->findBetween($sender->id, $receiver->id);
+        if ($existingFriendship && $existingFriendship->status === FriendRequestStatus::ACCEPTED->value) {
+            throw new RuntimeException(__('messages.already_friends'));
+        }
+
         $this->deleteBetween($sender->id, $receiver->id);
 
         FriendRequest::create([

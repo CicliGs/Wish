@@ -158,7 +158,7 @@ class WishController extends Controller
         $message = __('messages.wish_unreserved');
 
         if (request()->wantsJson()) {
-            return response()->json(['message' => $message]);
+            return response()->json(['success' => $message]);
         }
 
         return back()->with('success', $message);
@@ -178,7 +178,7 @@ class WishController extends Controller
         $message = __('messages.wish_reserved');
 
         if (request()->wantsJson()) {
-            return response()->json(['message' => $message]);
+            return response()->json(['success' => $message]);
         }
 
         return back()->with('success', $message);

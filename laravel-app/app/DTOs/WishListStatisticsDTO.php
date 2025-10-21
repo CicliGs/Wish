@@ -32,17 +32,4 @@ readonly class WishListStatisticsDTO implements BaseDTO
             publicWishLists: $data['public_wish_lists'] ?? 0,
         );
     }
-
-    /**
-     * Create DTO from wish list statistics array.
-     */
-    public static function fromWishListStats(array $stats): static
-    {
-        return new self(
-            totalWishLists: $stats['total_wish_lists'] ?? 0,
-            totalWishes: $stats['total_wishes'] ?? 0,
-            totalReservedWishes: $stats['total_reserved_wishes'] ?? 0,
-            publicWishLists: $stats['public_wish_lists'] ?? 0,
-        );
-    }
 }

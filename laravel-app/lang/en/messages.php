@@ -222,7 +222,10 @@ return [
     
     // Errors
     'cannot_add_yourself' => 'You cannot add yourself as a friend.',
+    'cannot_add_self_as_friend' => 'You cannot add yourself as a friend.',
     'already_friends_or_requested' => 'Friend request already sent or you are already friends.',
+    'friend_request_already_sent' => 'Friend request already sent.',
+    'already_friends' => 'You are already friends.',
     'cannot_reserve' => 'Cannot reserve this gift.',
     'cannot_unreserve' => 'You cannot cancel this reservation.',
     'access_denied' => 'Access denied',

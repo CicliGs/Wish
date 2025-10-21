@@ -117,7 +117,7 @@ class Wish extends Model
         } catch (Exception $e) {
             Log::error('Error formatting price', [
                 'price' => $this->price ?? 'null',
-                'user_id' => $user?->id ?? 'null',
+                'user_id' => $user->id ?? 'null',
                 'error' => $e->getMessage()
             ]);
 

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Repositories;
 
+use App\DTOs\ReservationStatisticsDTO;
+use App\DTOs\UserStatisticsDTO;
+use App\DTOs\WishListStatisticsDTO;
+use App\DTOs\WishStatisticsDTO;
 use App\Models\User;
 use App\Models\WishList;
 use App\Models\Wish;
@@ -12,6 +16,10 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\WishListRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
+use App\Repositories\ReservationRepository;
+use App\Repositories\UserRepository;
+use App\Repositories\WishListRepository;
+use App\Repositories\WishRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -32,10 +40,10 @@ class RepositoryTest extends TestCase
         $wishRepo = app(WishRepositoryInterface::class);
         $reservationRepo = app(ReservationRepositoryInterface::class);
 
-        $this->assertInstanceOf(\App\Repositories\UserRepository::class, $userRepo);
-        $this->assertInstanceOf(\App\Repositories\WishListRepository::class, $wishListRepo);
-        $this->assertInstanceOf(\App\Repositories\WishRepository::class, $wishRepo);
-        $this->assertInstanceOf(\App\Repositories\ReservationRepository::class, $reservationRepo);
+        $this->assertInstanceOf(UserRepository::class, $userRepo);
+        $this->assertInstanceOf(WishListRepository::class, $wishListRepo);
+        $this->assertInstanceOf(WishRepository::class, $wishRepo);
+        $this->assertInstanceOf(ReservationRepository::class, $reservationRepo);
     }
 
     /**
@@ -45,30 +53,26 @@ class RepositoryTest extends TestCase
     {
         $userRepo = app(UserRepositoryInterface::class);
 
-        // Create test user
         $user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com'
         ]);
 
-        // Test findById
         $foundUser = $userRepo->findById($user->id);
         $this->assertNotNull($foundUser);
         $this->assertEquals($user->id, $foundUser->id);
 
-        // Test findByEmail
         $foundByEmail = $userRepo->findByEmail('test@example.com');
         $this->assertNotNull($foundByEmail);
         $this->assertEquals($user->id, $foundByEmail->id);
 
-        // Test findByName
         $foundByName = $userRepo->findByName('Test');
         $this->assertCount(1, $foundByName);
+        $this->assertNotNull($foundByName->first());
         $this->assertEquals($user->id, $foundByName->first()->id);
 
-        // Test getStatistics (skip friends-related methods for now)
         $stats = $userRepo->getStatistics($user);
-        $this->assertInstanceOf(\App\DTOs\UserStatisticsDTO::class, $stats);
+        $this->assertInstanceOf(UserStatisticsDTO::class, $stats);
         $this->assertEquals(0, $stats->totalWishLists);
     }
 
@@ -79,7 +83,6 @@ class RepositoryTest extends TestCase
     {
         $wishListRepo = app(WishListRepositoryInterface::class);
 
-        // Create test user and wish list
         $user = User::factory()->create();
         $wishList = WishList::create([
             'user_id' => $user->id,
@@ -89,18 +92,16 @@ class RepositoryTest extends TestCase
             'currency' => 'BYN'
         ]);
 
-        // Test findByUser
         $foundWishLists = $wishListRepo->findByUser($user);
         $this->assertCount(1, $foundWishLists);
+        $this->assertNotNull($foundWishLists->first());
         $this->assertEquals($wishList->id, $foundWishLists->first()->id);
 
-        // Test findByUserId
         $foundByUserId = $wishListRepo->findByUserId($user->id);
         $this->assertCount(1, $foundByUserId);
 
-        // Test getStatistics
         $stats = $wishListRepo->getStatistics($user);
-        $this->assertInstanceOf(\App\DTOs\WishListStatisticsDTO::class, $stats);
+        $this->assertInstanceOf(WishListStatisticsDTO::class, $stats);
         $this->assertEquals(1, $stats->totalWishLists);
     }
 
@@ -111,7 +112,6 @@ class RepositoryTest extends TestCase
     {
         $wishRepo = app(WishRepositoryInterface::class);
 
-        // Create test data
         $user = User::factory()->create();
         $wishList = WishList::create([
             'user_id' => $user->id,
@@ -127,18 +127,16 @@ class RepositoryTest extends TestCase
             'price' => 100.00
         ]);
 
-        // Test findByWishList
         $foundWishes = $wishRepo->findByWishList($wishList);
         $this->assertCount(1, $foundWishes);
+        $this->assertNotNull($foundWishes->first());
         $this->assertEquals($wish->id, $foundWishes->first()->id);
 
-        // Test findByWishListId
         $foundByWishListId = $wishRepo->findByWishListId($wishList->id);
         $this->assertCount(1, $foundByWishListId);
 
-        // Test getStatistics
         $stats = $wishRepo->getStatistics($wishList);
-        $this->assertInstanceOf(\App\DTOs\WishStatisticsDTO::class, $stats);
+        $this->assertInstanceOf(WishStatisticsDTO::class, $stats);
         $this->assertEquals(1, $stats->totalWishes);
         $this->assertEquals(100.00, $stats->totalPrice);
     }
@@ -150,7 +148,6 @@ class RepositoryTest extends TestCase
     {
         $reservationRepo = app(ReservationRepositoryInterface::class);
 
-        // Create test data
         $user = User::factory()->create();
         $wishList = WishList::create([
             'user_id' => $user->id,
@@ -171,22 +168,18 @@ class RepositoryTest extends TestCase
             'user_id' => $user->id
         ]);
 
-        // Test findByWishAndUser
         $foundReservation = $reservationRepo->findByWishAndUser($wish, $user);
         $this->assertNotNull($foundReservation);
         $this->assertEquals($reservation->id, $foundReservation->id);
 
-        // Test findByUser
         $foundByUser = $reservationRepo->findByUser($user);
         $this->assertCount(1, $foundByUser);
 
-        // Test findByWishList
         $foundByWishList = $reservationRepo->findByWishList($wishList);
         $this->assertCount(1, $foundByWishList);
 
-        // Test getStatistics
         $stats = $reservationRepo->getStatistics($user);
-        $this->assertInstanceOf(\App\DTOs\ReservationStatisticsDTO::class, $stats);
+        $this->assertInstanceOf(ReservationStatisticsDTO::class, $stats);
         $this->assertEquals(1, $stats->totalReservations);
     }
 }

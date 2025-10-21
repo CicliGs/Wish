@@ -51,7 +51,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
      */
     public function findFriendsOf(User $user): Collection
     {
-        return $user->friendsOf()->get();
+        return $user->friendOf()->get();
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\WishList;
 use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class WishListService
@@ -33,7 +34,7 @@ class WishListService
     /**
      * Create a new wish list.
      */
-    public function create(array $data, User $user): WishList
+    public function create(array $data, User $user): Model
     {
         $data['user_id'] = $user->id;
 
@@ -46,7 +47,7 @@ class WishListService
     /**
      * Update an existing wish list.
      */
-    public function update(WishList $wishList, array $data): WishList
+    public function update(WishList $wishList, array $data): Model
     {
         $wasPublic = $wishList->is_public;
         $willBePublic = $data['is_public'] ?? $wasPublic;

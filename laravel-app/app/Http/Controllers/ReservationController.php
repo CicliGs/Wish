@@ -10,6 +10,7 @@ use App\Services\ReservationService;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -86,11 +87,11 @@ class ReservationController extends Controller
     private function findWish(int $wishId): Wish
     {
         $wish = $this->wishRepository->findById($wishId);
-        
-        if (!$wish) {
+
+        if (!$wish || !($wish instanceof Wish)) {
             abort(404, 'Wish not found');
         }
-        
+
         return $wish;
     }
 }
