@@ -5,6 +5,8 @@ services:
     build: .
     container_name: laravel-app
     restart: unless-stopped
+    env_file:
+      - ../.env
     volumes:
       - ../:/var/www/html
     depends_on:
@@ -19,12 +21,14 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
-      - CACHE_STORE=${CACHE_STORE}
+      - CACHE_STORE=${CACHE_STORE:-file}
 
   db:
     image: postgres:16
     container_name: postgres-laravel
     restart: unless-stopped
+    env_file:
+      - ../.env
     environment:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
@@ -38,16 +42,31 @@ services:
     image: redis:7-alpine
     container_name: redis-laravel
     restart: unless-stopped
+    env_file:
+      - ../.env
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
       - redisdata:/data
     command: redis-server --appendonly yes
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-laravel
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
   nginx:
     image: nginx:alpine
     container_name: nginx-laravel
     restart: unless-stopped
+    env_file:
+      - ../.env
     ports:
       - "${APP_PORT}:80"
     volumes:

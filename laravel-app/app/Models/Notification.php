@@ -12,7 +12,11 @@ class Notification extends Model
 {
     use HasFactory;
 
-
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
     protected $fillable = [
         'user_id',
         'friend_id',
@@ -30,7 +34,9 @@ class Notification extends Model
     ];
 
     /**
-     * User
+     * Get the user that owns the notification.
+     *
+     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -38,7 +44,9 @@ class Notification extends Model
     }
 
     /**
-     * Friend
+     * Get the friend who triggered the notification.
+     *
+     * @return BelongsTo
      */
     public function friend(): BelongsTo
     {
@@ -46,7 +54,9 @@ class Notification extends Model
     }
 
     /**
-     * Gift
+     * Get the wish that is related to this notification.
+     *
+     * @return BelongsTo
      */
     public function wish(): BelongsTo
     {

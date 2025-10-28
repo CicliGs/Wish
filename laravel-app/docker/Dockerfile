@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     nodejs \
     npm \
+    supervisor \
     && docker-php-ext-install pdo pdo_pgsql \
     && pecl install redis \
     && docker-php-ext-enable redis \
@@ -23,6 +24,11 @@ WORKDIR /var/www/html
 # Копируем файлы из корня проекта (../)
 COPY --chown=www-data:www-data ../ /var/www/html
 
+# Копируем конфигурацию supervisor
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 USER www-data
 
 EXPOSE 80
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

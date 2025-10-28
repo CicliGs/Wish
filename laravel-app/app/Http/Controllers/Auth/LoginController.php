@@ -9,21 +9,34 @@ use App\Http\Requests\LoginRequest;
 use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class LoginController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(protected UserService $userService) {}
 
+    /**
+     * Show the login form.
+     */
     public function showLoginForm(): View
     {
         return view('login');
     }
 
-    public function login(LoginRequest $request):RedirectResponse
+    /**
+     * Handle user login.
+     */
+    public function login(LoginRequest $request): RedirectResponse
     {
         $credentials = $request->validated();
-        if ($this->userService->authenticateUser($credentials, $request->boolean('remember'))) {
+        
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            
             return redirect()->intended(route('wish-lists.index'));
         }
 
@@ -32,9 +45,21 @@ class LoginController extends Controller
         ])->onlyInput('email');
     }
 
+    /**
+     * Handle user logout.
+     */
     public function logout(Request $request): RedirectResponse
     {
-        $this->userService->logoutUser();
+        $userId = Auth::id();
+        
+        if ($userId !== null) {
+            $this->userService->clearUserCacheOnLogout((int) $userId);
+        }
+        
+        Auth::logout();
+        
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect('/');
     }

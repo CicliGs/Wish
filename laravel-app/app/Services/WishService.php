@@ -9,37 +9,46 @@ use App\DTOs\UserWishesDTO;
 use App\Models\Wish;
 use App\Models\WishList;
 use App\Models\User;
+use App\Repositories\Contracts\WishRepositoryInterface;
+use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 
 class WishService
 {
     private const STORAGE_PATH = 'wishes';
 
+    /**
+     * Create a new service instance.
+     */
     public function __construct(
-        protected CacheManagerService $cacheManager
+        protected CacheManagerService $cacheManager,
+        protected WishRepositoryInterface $wishRepository,
+        protected WishListRepositoryInterface $wishListRepository
     ) {}
 
     /**
-     * Find wishes by wish list ID.
+     * Find wishes by wish list.
      */
-    public function findWishesByWishList(int $wishListId): Collection
+    public function findWishes(WishList $wishList): Collection
     {
-        return Wish::forWishList($wishListId)->with('reservation.user')->get();
+        return $this->wishRepository->findByWishList($wishList);
     }
 
     /**
      * Create a new wish.
      */
-    public function createWish(array $wishData, int $wishListId): Wish
+    public function create(array $wishData, WishList $wishList, User $user, ?UploadedFile $imageFile = null): Model
     {
-        $wishData['wish_list_id'] = $wishListId;
+        if ($imageFile) {
+            $wishData['image'] = $this->uploadImage($imageFile);
+        }
 
-        $wish = Wish::create($wishData);
+        $wishData['wish_list_id'] = $wishList->id;
+        $wish = $this->wishRepository->create($wishData);
 
-        $this->cacheManager->clearWishListCache($wishListId, Auth::id());
+        $this->cacheManager->clearWishListCache($wishList->id, $user->id);
 
         return $wish;
     }
@@ -47,110 +56,43 @@ class WishService
     /**
      * Update an existing wish.
      */
-    public function updateWish(Wish $wish, array $wishData): Wish
+    public function update(Wish $wish, array $wishData, User $user): Model
     {
-        $wish->update($wishData);
+        $wish = $this->wishRepository->update($wish, $wishData);
 
-        $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
+        $this->cacheManager->clearWishCache($wish->wish_list_id, $user->id);
 
-        return $wish->fresh();
+        return $wish;
     }
 
     /**
      * Delete a wish.
      */
-    public function deleteWish(Wish $wish): bool
+    public function delete(Wish $wish, User $user): bool
     {
-        $result = $wish->delete();
+        $result = $this->wishRepository->delete($wish);
 
         if ($result) {
-            $this->cacheManager->clearWishCache($wish->wish_list_id, Auth::id());
+            $this->cacheManager->clearWishCache($wish->wish_list_id, $user->id);
         }
 
         return $result;
-    }
-
-    /**
-     * Reserve a wish for a user.
-     */
-    public function reserveWish(Wish $wish, int $userId): bool
-    {
-        if (!$wish->isAvailable()) {
-            return false;
-        }
-
-        $result = $wish->reserveForUser($userId);
-
-        if ($result) {
-            $this->cacheManager->clearWishCache($wish->wish_list_id, $userId);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Unreserve a wish.
-     */
-    public function unreserveWish(Wish $wish, int $userId): bool
-    {
-        if (!$wish->hasReservation()) {
-            return false;
-        }
-
-        $reservedByUser = $wish->getReservedByUser();
-        if (!$reservedByUser || $reservedByUser->id !== $userId) {
-            return false;
-        }
-
-        $result = $wish->dereserve();
-
-        if ($result) {
-            $this->cacheManager->clearWishCache($wish->wish_list_id, $userId);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get available wishes for a wish list.
-     */
-    public function getAvailableWishes(int $wishListId): Collection
-    {
-        return Wish::forWishList($wishListId)->available()->get();
-    }
-
-    /**
-     * Get reserved wishes for a wish list.
-     */
-    public function getReservedWishes(int $wishListId): Collection
-    {
-        return Wish::forWishList($wishListId)->reserved()->with('reservation.user')->get();
     }
 
     /**
      * Get wish list statistics.
      */
-    public function getWishListStatistics(int $wishListId): array
+    public function getStatistics(WishList $wishList): array
     {
-        $wishes = Wish::forWishList($wishListId);
-
-        return [
-            'total_wishes' => $wishes->count(),
-            'available_wishes' => $wishes->available()->count(),
-            'reserved_wishes' => $wishes->reserved()->count(),
-            'total_value' => $wishes->sum('price'),
-        ];
+        return $this->wishRepository->getStatistics($wishList)->toArray();
     }
 
     /**
      * Get data for user wish lists page.
      */
-    public function getUserWishListsData(int $userId): UserWishesDTO
+    public function getWishListsData(User $user): UserWishesDTO
     {
-        $user = User::findOrFail($userId);
-        $wishLists = WishList::where('user_id', $userId)
-            ->withCount('wishes')
-            ->get();
+        $wishLists = $this->wishListRepository->findWithWishesCount($user);
 
         return UserWishesDTO::fromUserWishLists($user, $wishLists);
     }
@@ -158,56 +100,26 @@ class WishService
     /**
      * Get data for specific user wish list page.
      */
-    public function getUserWishListData(int $userId, int $wishListId): UserWishesDTO
+    public function getWishListData(User $user, WishList $wishList): UserWishesDTO
     {
-        $user = User::findOrFail($userId);
-        $wishList = $this->findWishListByUser($wishListId, $userId);
-        $wishes = $wishList->wishes()->with('reservation.user')->get();
+        $wishes = $this->wishRepository->findWithReservations($wishList);
+
+        $wishLists = $this->wishListRepository->findByUserId($user->id);
 
         return UserWishesDTO::fromUserWithSelectedWishList(
             user: $user,
-            wishLists: WishList::where('id', $wishList->id)->get(),
+            wishLists: $wishLists,
             wishes: $wishes,
             selectedWishList: $wishList
         );
     }
 
     /**
-     * Handle image upload.
-     */
-    public function handleImageUpload(UploadedFile $file): string
-    {
-        $path = $file->store(self::STORAGE_PATH, 'public');
-        return '/storage/' . $path;
-    }
-
-    /**
-     * Create wish with image handling.
-     */
-    public function createWishWithImage(array $wishData, int $wishListId, ?UploadedFile $imageFile = null): Wish
-    {
-        if ($imageFile) {
-            $imagePath = $this->handleImageUpload($imageFile);
-
-            $wishData['image'] = $imagePath;
-            $wishData['wish_list_id'] = $wishListId;
-
-            $wish = Wish::create($wishData);
-
-            $this->cacheManager->clearWishListCache($wishListId, Auth::id());
-
-            return $wish;
-        }
-
-        return $this->createWish($wishData, $wishListId);
-    }
-
-    /**
      * Get index data for wish list with caching.
      */
-    public function getIndexData(int $wishListId, int $userId): WishDTO
+    public function getIndexData(WishList $wishList, User $user): WishDTO
     {
-        $cacheKey = "wishes_list_{$wishListId}_user_$userId";
+        $cacheKey = "wishes_list_{$wishList->id}_user_{$user->id}";
 
         $cachedData = $this->cacheManager->cacheService->getStaticContent($cacheKey);
 
@@ -215,11 +127,10 @@ class WishService
             return unserialize($cachedData);
         }
 
-        $wishList = WishList::findOrFail($wishListId);
-        $wishes = $this->findWishesByWishList($wishListId);
-        $stats = $this->getWishListStatistics($wishListId);
+        $wishes = $this->findWishes($wishList);
+        $stats = $this->getStatistics($wishList);
 
-        $dto = WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
+        $dto = WishDTO::fromWishListData($wishList, $wishes, $user->id, $stats);
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
 
@@ -227,36 +138,28 @@ class WishService
     }
 
     /**
-     * Get available data for wish list.
+     * Get wish list data with optional filter.
      */
-    public function getAvailableData(int $wishListId, int $userId): WishDTO
+    public function getData(WishList $wishList, User $user, ?string $filter = null): WishDTO
     {
-        $wishList = WishList::findOrFail($wishListId);
-        $wishes = $this->getAvailableWishes($wishListId);
-        $stats = $this->getWishListStatistics($wishListId);
+        $wishes = match ($filter) {
+            'available' => $this->wishRepository->findAvailableInWishList($wishList),
+            'reserved' => $this->wishRepository->findReservedByUser($user)->where('wish_list_id', $wishList->id),
+            default => $this->findWishes($wishList)
+        };
 
-        return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
+        $stats = $this->getStatistics($wishList);
+
+        return WishDTO::fromWishListData($wishList, $wishes, $user->id, $stats);
     }
 
     /**
-     * Get reserved data for wish list.
+     * Handle image upload.
      */
-    public function getReservedData(int $wishListId, int $userId): WishDTO
+    private function uploadImage(UploadedFile $file): string
     {
-        $wishList = WishList::findOrFail($wishListId);
-        $wishes = $this->getReservedWishes($wishListId);
-        $stats = $this->getWishListStatistics($wishListId);
-
-        return WishDTO::fromWishListData($wishList, $wishes, $userId, $stats);
+        $path = $file->store(self::STORAGE_PATH, 'public');
+        return '/storage/' . $path;
     }
 
-    /**
-     * Find wish list by user.
-     */
-    private function findWishListByUser(int $wishListId, int $userId): WishList
-    {
-        return WishList::where('id', $wishListId)
-            ->where('user_id', $userId)
-            ->firstOrFail();
-    }
 }

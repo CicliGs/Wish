@@ -14,10 +14,16 @@ class CacheStaticContent
     private const CACHE_TTL = 3600;
     private const CACHE_PREFIX = 'static_page_';
 
+    /**
+     * Create a new middleware instance.
+     */
     public function __construct(
         protected CacheService $cacheService
     ) {}
 
+    /**
+     * Handle an incoming request.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         if (!$this->shouldCache($request)) {
@@ -40,6 +46,9 @@ class CacheStaticContent
         return $response;
     }
 
+    /**
+     * Determine if the request should be cached.
+     */
     private function shouldCache(Request $request): bool
     {
         return $request->isMethod('GET') &&
@@ -49,11 +58,17 @@ class CacheStaticContent
                !$request->is('admin/*');
     }
 
+    /**
+     * Generate cache key for the request.
+     */
     private function generateCacheKey(Request $request): string
     {
         return self::CACHE_PREFIX . hash('xxh3', $request->fullUrl());
     }
 
+    /**
+     * Check if the response can be cached.
+     */
     private function isResponseCacheable(Response $response): bool
     {
         if (!$response->isSuccessful()) {
@@ -65,6 +80,9 @@ class CacheStaticContent
         return str_contains($contentType, 'text/html');
     }
 
+    /**
+     * Cache the response content.
+     */
     private function cacheResponse(string $cacheKey, Response $response): void
     {
         $content = $response->getContent();

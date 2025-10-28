@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Services;
+declare(strict_types=1);
+
+namespace App\Enums;
 
 enum CacheType: string
 {
@@ -9,6 +11,11 @@ enum CacheType: string
     case CSS_JS = 'css_js';
     case AVATARS = 'avatars';
 
+    /**
+     * Get the time-to-live (TTL) in seconds for this cache type.
+     *
+     * @return int TTL in seconds
+     */
     public function getTTL(): int
     {
         return match ($this) {
@@ -18,6 +25,11 @@ enum CacheType: string
         };
     }
 
+    /**
+     * Get the cache key prefix for this cache type.
+     *
+     * @return string Cache key prefix
+     */
     public function getPrefix(): string
     {
         return match ($this) {
@@ -28,3 +40,4 @@ enum CacheType: string
         };
     }
 }
+

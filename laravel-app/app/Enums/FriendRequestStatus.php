@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Enums;
 
 enum FriendRequestStatus: string
 {
@@ -10,6 +10,11 @@ enum FriendRequestStatus: string
     case ACCEPTED = 'accepted';
     case DECLINED = 'declined';
 
+    /**
+     * Get the localized label for this friend request status.
+     *
+     * @return string Localized status label
+     */
     public function label(): string
     {
         return match($this) {
@@ -19,3 +24,4 @@ enum FriendRequestStatus: string
         };
     }
 }
+

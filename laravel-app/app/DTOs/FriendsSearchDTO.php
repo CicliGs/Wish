@@ -10,7 +10,7 @@ readonly class FriendsSearchDTO implements BaseDTO
 {
     public function __construct(
         public Collection $users,
-        public ?string    $query,
+        public string     $query,
         public array      $friendStatuses = []
     ) {}
 
@@ -27,7 +27,7 @@ readonly class FriendsSearchDTO implements BaseDTO
     {
         return new self(
             users: $data['users'],
-            query: $data['query'] ?? null,
+            query: $data['query'] ?? '',
             friendStatuses: $data['friendStatuses'] ?? [],
         );
     }
@@ -35,7 +35,7 @@ readonly class FriendsSearchDTO implements BaseDTO
     /**
      * Create DTO from search results.
      */
-    public static function fromSearchResults(Collection $users, ?string $query = null, array $friendStatuses = []): static
+    public static function fromSearchResults(Collection $users, string $query = '', array $friendStatuses = []): static
     {
         return new self(
             users: $users,
@@ -51,7 +51,7 @@ readonly class FriendsSearchDTO implements BaseDTO
     {
         return new self(
             users: new Collection(),
-            query: null,
+            query: '',
             friendStatuses: []
         );
     }

@@ -6,11 +6,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarkNotificationAsReadRequest;
 use App\Services\NotificationService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
     public function __construct(
         private readonly NotificationService $notificationService
     ) {}
@@ -20,8 +24,7 @@ class NotificationController extends Controller
      */
     public function getUnreadNotifications(): JsonResponse
     {
-        $userId = Auth::id();
-        $notifications = $this->notificationService->getUnreadNotificationsForUser($userId);
+        $notifications = $this->notificationService->getUnread(Auth::user());
 
         return response()->json([
             'success' => true,
@@ -32,17 +35,24 @@ class NotificationController extends Controller
 
     /**
      * Mark notification as read
+     *
+     * @throws ModelNotFoundException
      */
     public function markAsRead(MarkNotificationAsReadRequest $request): JsonResponse
     {
-        $result = $this->notificationService->markNotificationAsReadForUser(
-            $request->input('notification_id'),
-            Auth::id()
-        );
+        $notificationId = $request->input('notification_id');
+        $notification = $this->notificationService->findUnread(Auth::user(), $notificationId);
 
-        $statusCode = $result['success'] ? 200 : 404;
+        if (!$notification) {
+            throw new ModelNotFoundException('Notification not found or not accessible');
+        }
 
-        return response()->json($result, $statusCode);
+        $this->notificationService->markAsRead($notification);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification marked as read'
+        ]);
     }
 
     /**
@@ -50,12 +60,11 @@ class NotificationController extends Controller
      */
     public function markAllAsRead(): JsonResponse
     {
-        $userId = Auth::id();
-        $count = $this->notificationService->markAllNotificationsAsReadForUser($userId);
+        $count = $this->notificationService->markAllAsRead(Auth::user());
 
         return response()->json([
             'success' => true,
-            'message' => 'Marked {$count} notifications as read',
+            'message' => "Marked {$count} notifications as read",
             'count' => $count
         ]);
     }

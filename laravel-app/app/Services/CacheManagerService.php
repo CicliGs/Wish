@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\CacheType;
+use App\Traits\ErrorHandlingTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -15,11 +17,15 @@ use App\Models\WishList;
  */
 class CacheManagerService
 {
+    use ErrorHandlingTrait;
     /**
      * @var array<int, WishList|null>
      */
     private array $wishListCache = [];
 
+    /**
+     * Create a new service instance.
+     */
     public function __construct(
         public readonly CacheService $cacheService
     ) {}
@@ -93,6 +99,18 @@ class CacheManagerService
     }
 
     /**
+     * Clear public wish list cache by UUID
+     */
+    public function clearPublicWishListCache(string $uuid): bool
+    {
+        return $this->withErrorHandling(function () use ($uuid) {
+            $publicCacheKey = "static_content:public_wishlist_" . $uuid;
+            Cache::forget($publicCacheKey);
+            return true;
+        }, "Failed to clear public wish list cache for UUID: $uuid") ?? false;
+    }
+
+    /**
      * Get cache configuration statistics
      */
     public function getCacheStats(): array
@@ -155,27 +173,5 @@ class CacheManagerService
         }
 
         return $this->wishListCache[$wishListId];
-    }
-
-    /**
-     * Execute operation safely with error handling and logging
-     */
-    private function withErrorHandling(callable $operation, string $errorMessage, array $context = [])
-    {
-        try {
-            return $operation();
-        } catch (Exception $e) {
-            $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]));
-
-            return null;
-        }
-    }
-
-    /**
-     * Log error with context
-     */
-    private function logError(string $message, array $context = []): void
-    {
-        Log::error("CacheManager: $message", $context);
     }
 }

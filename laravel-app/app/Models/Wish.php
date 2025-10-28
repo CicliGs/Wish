@@ -100,21 +100,7 @@ class Wish extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        try {
-            if (!$this->hasValidPrice()) {
-                return '';
-            }
-
-            $money = $this->getMoneyObject();
-            return MoneyHelper::format($money);
-        } catch (Exception $e) {
-            Log::error('Error formatting price', [
-                'price' => $this->price ?? 'null',
-                'error' => $e->getMessage()
-            ]);
-
-            return '';
-        }
+        return $this->getFormattedPriceForUser();
     }
 
     /**
@@ -129,7 +115,7 @@ class Wish extends Model
 
             return MoneyHelper::format($this->getMoneyObject());
         } catch (Exception $e) {
-            Log::error('Error formatting price for user', [
+            Log::error('Error formatting price', [
                 'price' => $this->price ?? 'null',
                 'user_id' => $user->id ?? 'null',
                 'error' => $e->getMessage()

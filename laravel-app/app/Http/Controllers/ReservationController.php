@@ -5,48 +5,56 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Wish;
+use App\Models\WishList;
 use App\Services\ReservationService;
+use App\Repositories\Contracts\WishRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 
 class ReservationController extends Controller
 {
     use AuthorizesRequests;
 
-    public function __construct(protected ReservationService $service) {}
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct(
+        protected ReservationService $service,
+        protected WishRepositoryInterface $wishRepository
+    ) {}
 
     /**
      * Reserve a wish.
+     *
      * @throws AuthorizationException
      */
     public function reserve(int $wishId): RedirectResponse
     {
         $wish = $this->findWish($wishId);
         $this->authorize('reserve', $wish);
-        
-        $result = $this->service->reserveWishForUser($wish, auth()->id());
 
-        return $result === true
-            ? back()->with('success', __('messages.wish_reserved'))
-            : back()->with('error', $result);
+        $this->service->reserve($wish, Auth::user());
+
+        return back()->with('success', __('messages.wish_reserved'));
     }
 
     /**
      * Unreserve a wish.
+     *
      * @throws AuthorizationException
      */
     public function unreserve(int $wishId): RedirectResponse
     {
         $wish = $this->findWish($wishId);
         $this->authorize('unreserve', $wish);
-        
-        $result = $this->service->unreserveWishForUser($wish, auth()->id());
 
-        return $result === true
-            ? back()->with('success', __('messages.wish_unreserved'))
-            : back()->with('error', $result);
+        $this->service->unreserve($wish, Auth::user());
+
+        return back()->with('success', __('messages.wish_unreserved'));
     }
 
     /**
@@ -54,8 +62,10 @@ class ReservationController extends Controller
      */
     public function index(): View
     {
-        $reservations = $this->service->getUserReservations(auth()->id());
-        $statistics = $this->service->getUserReservationStatistics(auth()->id());
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $reservations = $this->service->getReservations($user);
+        $statistics = $this->service->getStatistics($user);
 
         return view('reservations.index', compact('reservations', 'statistics'));
     }
@@ -63,10 +73,10 @@ class ReservationController extends Controller
     /**
      * Display wish list reservations.
      */
-    public function wishList(int $wishListId): View
+    public function wishList(WishList $wishList): View
     {
-        $reservations = $this->service->getWishListReservations($wishListId);
-        $statistics = $this->service->getWishListReservationStatistics($wishListId);
+        $reservations = $this->service->getReservations($wishList);
+        $statistics = $this->service->getStatistics($wishList);
 
         return view('reservations.wish-list', compact('reservations', 'statistics'));
     }
@@ -76,8 +86,12 @@ class ReservationController extends Controller
      */
     private function findWish(int $wishId): Wish
     {
-        return Wish::with(['wishList', 'reservation.user'])
-            ->findOrFail($wishId);
-    }
+        $wish = $this->wishRepository->findById($wishId);
 
+        if (!$wish || !($wish instanceof Wish)) {
+            abort(404, 'Wish not found');
+        }
+
+        return $wish;
+    }
 }

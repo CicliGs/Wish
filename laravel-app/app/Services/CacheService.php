@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\CacheType;
+use App\Traits\ErrorHandlingTrait;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\Config;
  */
 class CacheService
 {
+    use ErrorHandlingTrait;
     private const CACHE_KEYS_TTL = 86400;
     private const CACHE_KEYS_STORAGE = 'cache_keys';
 
@@ -123,9 +126,9 @@ class CacheService
     }
 
     /**
-     * Store data in cache with automatic key tracking
+     * Store data in cache with error handling
      */
-    private function storeInCache(CacheType $type, $key, $data, ?int $ttl = null): bool
+    private function storeInCache(CacheType $type, string $key, mixed $data, ?int $ttl = null): bool
     {
         return $this->withErrorHandling(function () use ($type, $key, $data, $ttl) {
             $ttl = $ttl ?? $type->getTTL();
@@ -144,7 +147,7 @@ class CacheService
     /**
      * Retrieve data from cache
      */
-    private function retrieveFromCache(CacheType $type, $key)
+    private function retrieveFromCache(CacheType $type, string $key): mixed
     {
         return $this->withErrorHandling(function () use ($type, $key) {
             return Cache::get($this->buildCacheKey($type, $key));
@@ -157,7 +160,7 @@ class CacheService
     /**
      * Build cache key with type prefix
      */
-    private function buildCacheKey(CacheType $type, $key): string
+    private function buildCacheKey(CacheType $type, string $key): string
     {
         return $type->getPrefix() . ":$key";
     }
@@ -227,27 +230,5 @@ class CacheService
         foreach ($keys as $key) {
             Cache::forget($key);
         }
-    }
-
-    /**
-     * Execute operation with error handling and logging
-     */
-    private function withErrorHandling(callable $operation, string $errorMessage, array $context = [])
-    {
-        try {
-            return $operation();
-        } catch (Exception $e) {
-            $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]));
-
-            return null;
-        }
-    }
-
-    /**
-     * Log error with context
-     */
-    private function logError(string $message, array $context = []): void
-    {
-        Log::error("CacheService: $message", $context);
     }
 }

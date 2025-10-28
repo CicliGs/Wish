@@ -7,14 +7,14 @@ namespace App\Observers;
 use App\DTOs\NotificationDTO;
 use App\Jobs\ProcessNotificationJob;
 use App\Models\Wish;
-use App\Services\NotificationService;
+use App\Services\FriendService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
 readonly class WishObserver
 {
     public function __construct(
-        private NotificationService $notificationService
+        private FriendService $friendService
     ) {}
 
     /**
@@ -31,30 +31,6 @@ readonly class WishObserver
                 'trace' => $e->getTraceAsString()
             ]);
         }
-    }
-
-    /**
-     * Handle the Wish "updated" event.
-     */
-    public function updated(Wish $wish): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Wish "deleted" event.
-     */
-    public function deleted(Wish $wish): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Wish "restored" event.
-     */
-    public function restored(Wish $wish): void
-    {
-        //
     }
 
     /**
@@ -78,14 +54,14 @@ readonly class WishObserver
                 return;
             }
 
-            $friends = $this->notificationService->getFriendsForUser($user->id);
-            if (empty($friends)) {
+            $friends = $this->friendService->getFriends($user);
+            if ($friends->isEmpty()) {
                 return;
             }
 
             foreach ($friends as $friend) {
                 $notificationDTO = NotificationDTO::forNewWish(
-                    userId: $friend['id'],
+                    userId: $friend->id,
                     friendId: $user->id,
                     wishId: $wish->id,
                     friendName: $user->name,

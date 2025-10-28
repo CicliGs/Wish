@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -44,27 +43,14 @@ class ProfileController extends Controller
      */
     public function sendFriendRequest(User $user, FriendService $friendService): RedirectResponse|JsonResponse
     {
-        try {
-            $result = $friendService->sendFriendRequestToUser(Auth::user(), $user->id);
-
-            if ($this->isAjaxRequest()) {
-                return response()->json([
-                    'success' => $result === true,
-                    'message' => $result === true ? __('messages.friend_request_sent') : $result
-                ]);
-            }
-
-            return $result === true
-                ? back()->with('success', __('messages.friend_request_sent'))
-                : back()->with('error', $result);
-
-        } catch (Exception $e) {
-            if ($this->isAjaxRequest()) {
-                return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
-            }
-
-            return back()->with('error', 'Server error: ' . $e->getMessage());
+        $friendService->sendRequest(Auth::user(), $user);
+        $message = __('messages.friend_request_sent');
+        
+        if (request()->wantsJson()) {
+            return response()->json(['message' => $message]);
         }
+        
+        return back()->with('success', $message);
     }
 
     /**
@@ -72,7 +58,7 @@ class ProfileController extends Controller
      */
     public function acceptFriendRequest(int $requestId, FriendService $friendService): RedirectResponse
     {
-        $friendService->acceptFriendRequestById($requestId, Auth::id());
+        $friendService->acceptRequest($requestId, Auth::id());
 
         return back()->with('success', __('messages.friend_request_accepted'));
     }
@@ -82,7 +68,7 @@ class ProfileController extends Controller
      */
     public function declineFriendRequest(int $requestId, FriendService $friendService): RedirectResponse
     {
-        $friendService->declineFriendRequestById($requestId, Auth::id());
+        $friendService->declineRequest($requestId, Auth::id());
 
         return back()->with('success', __('messages.friend_request_declined'));
     }
@@ -92,7 +78,7 @@ class ProfileController extends Controller
      */
     public function removeFriend(User $user, FriendService $friendService): RedirectResponse
     {
-        $friendService->removeFriendshipBetweenUsers(Auth::user(), $user->id);
+        $friendService->removeFriendship(Auth::user(), $user);
 
         return back()->with('success', __('messages.friend_removed'));
     }
@@ -110,10 +96,8 @@ class ProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request, ProfileService $profileService): RedirectResponse
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user) {
-            return redirect()->route('login');
-        }
 
         if ($request->has('name') && $request->name !== $user->name) {
             $profileService->updateUserName($user, $request->name);
@@ -124,13 +108,5 @@ class ProfileController extends Controller
         }
 
         return redirect()->route('profile')->with('success', __('messages.profile_updated'));
-    }
-
-    /**
-     * Check if request is AJAX
-     */
-    private function isAjaxRequest(): bool
-    {
-        return request()->ajax() || request()->wantsJson();
     }
 }

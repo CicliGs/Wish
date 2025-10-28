@@ -95,7 +95,7 @@ class WishPolicy
      */
     private function isAvailable(Wish $wish): bool
     {
-        return !$wish->is_reserved && $wish->reservation === null;
+        return !$wish->is_reserved && !$wish->reservation()->exists();
     }
 
     /**
@@ -103,7 +103,7 @@ class WishPolicy
      */
     private function isReservedByUser(User $user, Wish $wish): bool
     {
-        if (!$wish->is_reserved || !$wish->reservation) {
+        if (!$wish->is_reserved || !$wish->reservation()->exists()) {
             return false;
         }
 

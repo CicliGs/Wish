@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('wish_lists', function (Blueprint $table) {
-            //
+            $table->boolean('is_public')->default(false)->after('uuid');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('wish_lists', function (Blueprint $table) {
-            //
+            $table->dropColumn('is_public');
         });
     }
 };

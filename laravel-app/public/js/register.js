@@ -19,12 +19,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             
+            // Проверяем, не отправляется ли форма уже
+            if (submitBtn.disabled) {
+                return;
+            }
+            
+            e.preventDefault(); // Предотвращаем стандартную отправку
+            
             submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Регистрация...';
             submitBtn.disabled = true;
             
             // Обновляем CSRF токен перед отправкой формы
             updateCsrfToken().then(() => {
-                // Форма будет отправлена с новым токеном
+                // Отправляем форму после обновления токена
+                registerForm.submit();
             }).catch(error => {
                 console.error('Failed to update CSRF token:', error);
                 submitBtn.innerHTML = originalText;

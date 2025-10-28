@@ -6,7 +6,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Services\CacheManagerService;
-use App\Services\CacheType;
+use App\Enums\CacheType;
 use Mockery\Exception;
 
 class CacheManageCommand extends Command

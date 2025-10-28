@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class UpdateProfileRequest extends FormRequest
 {
     private const MAX_NAME_LENGTH = 255;
-    private const MAX_AVATAR_SIZE = 2048; // 2MB in KB
+    private const MAX_AVATAR_SIZE = 2048;
 
     /**
      * Determine if the user is authorized to make this request.
