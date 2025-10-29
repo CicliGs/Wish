@@ -139,7 +139,7 @@ class WishController extends Controller
     {
         $wishDTO = $this->wishService->getWishListData($user, $wishList);
         $data = $wishDTO->toArray();
-        $data['isGuest'] = !auth()->check();
+        $data['isGuest'] = !Auth::check();
 
         return view('wishes.user', $data);
     }

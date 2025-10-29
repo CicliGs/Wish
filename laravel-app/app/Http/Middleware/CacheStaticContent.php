@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Services\CacheService;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CacheStaticContent
@@ -52,7 +53,7 @@ class CacheStaticContent
     private function shouldCache(Request $request): bool
     {
         return $request->isMethod('GET') &&
-               auth()->guest() &&
+               Auth::guest() &&
                !$request->hasHeader('Authorization') &&
                !$request->is('cache/*') &&
                !$request->is('admin/*');

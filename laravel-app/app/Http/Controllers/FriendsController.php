@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class FriendsController extends Controller
 {
+
     /**
      * Display friends page
      */

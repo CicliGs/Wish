@@ -33,10 +33,10 @@ class LoginController extends Controller
     public function login(LoginRequest $request): RedirectResponse
     {
         $credentials = $request->validated();
-        
+
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            
+
             return redirect()->intended(route('wish-lists.index'));
         }
 
@@ -51,13 +51,13 @@ class LoginController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         $userId = Auth::id();
-        
+
         if ($userId !== null) {
             $this->userService->clearUserCacheOnLogout((int) $userId);
         }
-        
+
         Auth::logout();
-        
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

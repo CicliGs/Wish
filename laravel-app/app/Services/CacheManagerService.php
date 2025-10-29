@@ -7,8 +7,7 @@ namespace App\Services;
 use App\Enums\CacheType;
 use App\Traits\ErrorHandlingTrait;
 use Exception;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use App\Models\WishList;
 
 /**
@@ -27,7 +26,8 @@ class CacheManagerService
      * Create a new service instance.
      */
     public function __construct(
-        public readonly CacheService $cacheService
+        public readonly CacheService $cacheService,
+        private readonly CacheRepository $cache
     ) {}
 
     /**
@@ -105,7 +105,7 @@ class CacheManagerService
     {
         return $this->withErrorHandling(function () use ($uuid) {
             $publicCacheKey = "static_content:public_wishlist_" . $uuid;
-            Cache::forget($publicCacheKey);
+            $this->cache->forget($publicCacheKey);
             return true;
         }, "Failed to clear public wish list cache for UUID: $uuid") ?? false;
     }
@@ -159,7 +159,7 @@ class CacheManagerService
         ]);
 
         foreach ($cacheKeys as $key) {
-            Cache::forget($key);
+            $this->cache->forget($key);
         }
     }
 

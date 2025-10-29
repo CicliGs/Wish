@@ -18,7 +18,7 @@ use App\Models\WishList;
 use App\Models\Wish;
 use App\Models\Reservation;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
+use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Support\Facades\Auth;
 
 class AppServiceProvider extends ServiceProvider
@@ -52,12 +52,15 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot(ViewFactory $view): void
     {
-        View::composer('layouts.app', function ($view) {
+        $view->composer('layouts.app', function ($view) {
             if (Auth::check()) {
-                $incomingRequestsCount = Auth::user()->incomingRequests()->where('status', 'pending')->count();
-                $view->with('incomingRequestsCount', $incomingRequestsCount);
+                $user = Auth::user();
+                if ($user) {
+                    $incomingRequestsCount = $user->incomingRequests()->where('status', 'pending')->count();
+                    $view->with('incomingRequestsCount', $incomingRequestsCount);
+                }
             }
         });
     }

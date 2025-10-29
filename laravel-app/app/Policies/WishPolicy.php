@@ -6,7 +6,6 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Wish;
-use Illuminate\Support\Facades\Auth;
 
 class WishPolicy
 {

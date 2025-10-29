@@ -10,7 +10,7 @@ use App\Enums\FriendRequestStatus;
 use App\Models\FriendRequest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\ConnectionInterface;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -20,7 +20,8 @@ class FriendService
      * Create a new service instance.
      */
     public function __construct(
-        protected CacheManagerService $cacheManager
+        protected CacheManagerService $cacheManager,
+        private readonly ConnectionInterface $db
     ) {}
 
     /**
@@ -70,7 +71,7 @@ class FriendService
             throw new HttpException(403, __('messages.access_denied'));
         }
 
-        DB::transaction(function () use ($request) {
+        $this->db->transaction(function () use ($request) {
             $request->update(['status' => FriendRequestStatus::ACCEPTED->value]);
 
             $reverseRequest = $this->findBetween($request->receiver_id, $request->sender_id);

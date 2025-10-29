@@ -7,11 +7,19 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Contracts\Session\Session;
+use Illuminate\Contracts\Foundation\Application;
 
 class SetLocale
 {
+    /**
+     * Create a new middleware instance.
+     */
+    public function __construct(
+        private readonly Session $session,
+        private readonly Application $app
+    ) {}
+
     /**
      * Handle an incoming request.
      *
@@ -23,9 +31,9 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next): Response|RedirectResponse|JsonResponse
     {
-        $locale = Session::get('locale', 'ru');
+        $locale = $this->session->get('locale', 'ru');
 
-        App::setLocale($locale);
+        $this->app->setLocale($locale);
 
         return $next($request);
     }

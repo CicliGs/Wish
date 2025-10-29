@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Money\Money;
 
@@ -186,8 +187,8 @@ class Wish extends Model
             return $this->wishList->currency;
         }
 
-        if (auth()->check() && auth()->user()) {
-            return auth()->user()->currency;
+        if (Auth::check() && Auth::user()) {
+            return Auth::user()->currency;
         }
 
         return User::DEFAULT_CURRENCY;
