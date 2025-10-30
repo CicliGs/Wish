@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Contracts\Hashing\Hasher;
 
 class User extends Authenticatable
 {
@@ -124,9 +124,9 @@ class User extends Authenticatable
     /**
      * Register a new user.
      */
-    public static function register(array $data): self
+    public static function register(array $data, Hasher $hasher): self
     {
-        $data['password'] = Hash::make($data['password']);
+        $data['password'] = $hasher->make($data['password']);
         $data['currency'] = $data['currency'] ?? self::DEFAULT_CURRENCY;
 
         return self::create($data);

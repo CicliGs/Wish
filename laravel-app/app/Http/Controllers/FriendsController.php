@@ -7,17 +7,19 @@ namespace App\Http\Controllers;
 use App\Services\FriendService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\Guard;
 
 class FriendsController extends Controller
 {
+    public function __construct(private readonly Guard $auth) {}
+
     /**
      * Display friends page
      */
     public function index(FriendService $friendService): View
     {
         $selectedFriendId = $this->getSelectedFriendId();
-        $friendsDTO = $friendService->getPageData(Auth::user(), $selectedFriendId);
+        $friendsDTO = $friendService->getPageData($this->auth->user(), $selectedFriendId);
 
         return view('friends.index', $friendsDTO->toArray());
     }
@@ -28,7 +30,7 @@ class FriendsController extends Controller
     public function search(Request $request, FriendService $friendService): View
     {
         $query = $request->input('search') ?? '';
-        $searchDTO = $friendService->searchWithStatus($query, Auth::user());
+        $searchDTO = $friendService->searchWithStatus($query, $this->auth->user());
 
         return view('friends.search', $searchDTO->toArray());
     }

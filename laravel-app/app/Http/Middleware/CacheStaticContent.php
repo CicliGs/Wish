@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Services\CacheService;
+use Illuminate\Contracts\Auth\Guard;
 use Symfony\Component\HttpFoundation\Response;
 
 class CacheStaticContent
@@ -18,7 +19,8 @@ class CacheStaticContent
      * Create a new middleware instance.
      */
     public function __construct(
-        protected CacheService $cacheService
+        protected CacheService $cacheService,
+        private readonly Guard $auth
     ) {}
 
     /**
@@ -52,7 +54,7 @@ class CacheStaticContent
     private function shouldCache(Request $request): bool
     {
         return $request->isMethod('GET') &&
-               auth()->guest() &&
+               $this->auth->guest() &&
                !$request->hasHeader('Authorization') &&
                !$request->is('cache/*') &&
                !$request->is('admin/*');

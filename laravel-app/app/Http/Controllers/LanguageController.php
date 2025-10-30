@@ -5,13 +5,21 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Contracts\Session\Session;
+use Illuminate\Contracts\Foundation\Application;
 
 class LanguageController extends Controller
 {
     private const SUPPORTED_LOCALES = ['en', 'ru'];
     private const DEFAULT_LOCALE = 'ru';
+
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct(
+        private readonly Session $session,
+        private readonly Application $app
+    ) {}
 
     /**
      * Switch language.
@@ -38,7 +46,7 @@ class LanguageController extends Controller
      */
     private function setLocale(string $locale): void
     {
-        Session::put('locale', $locale);
-        App::setLocale($locale);
+        $this->session->put('locale', $locale);
+        $this->app->setLocale($locale);
     }
 }

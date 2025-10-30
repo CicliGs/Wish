@@ -7,9 +7,9 @@ namespace App\Services;
 use App\Enums\CacheType;
 use App\Traits\ErrorHandlingTrait;
 use Exception;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Contracts\Cache\Factory as CacheFactory;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
 
 /**
  * Core cache service for application data caching
@@ -18,6 +18,15 @@ use Illuminate\Support\Facades\Config;
 class CacheService
 {
     use ErrorHandlingTrait;
+
+    /**
+     * Create a new service instance.
+     */
+    public function __construct(
+        private readonly CacheRepository $cache,
+        private readonly CacheFactory $cacheFactory,
+        private readonly ConfigRepository $config
+    ) {}
     private const CACHE_KEYS_TTL = 86400;
     private const CACHE_KEYS_STORAGE = 'cache_keys';
 
@@ -43,7 +52,14 @@ class CacheService
     public function clearAllCache(): bool
     {
         return $this->withErrorHandling(function () {
-            Cache::flush();
+            $keys = $this->cache->get(self::CACHE_KEYS_STORAGE, []);
+            $this->removeCacheKeys($keys);
+            
+            $store = $this->cacheFactory->store();
+            if (method_exists($store, 'flush')) {
+                $store->flush();
+            }
+            
             return true;
         }, 'Failed to clear all cache');
     }
@@ -83,9 +99,9 @@ class CacheService
         return $this->withErrorHandling(function () {
 
             return [
-                'driver' => Config::get('cache.default'),
-                'store' => Config::get('cache.stores.' . Config::get('cache.default') . '.driver'),
-                'prefix' => Config::get('cache.prefix'),
+                'driver' => $this->config->get('cache.default'),
+                'store' => $this->config->get('cache.stores.' . $this->config->get('cache.default') . '.driver'),
+                'prefix' => $this->config->get('cache.prefix'),
                 'ttl_settings' => $this->buildTtlSettings(),
                 'description' => 'Caching static page elements for performance',
             ];
@@ -99,7 +115,7 @@ class CacheService
     {
         return $this->withErrorHandling(function () use ($type, $key) {
 
-            return Cache::has($this->buildCacheKey($type, $key));
+            return $this->cache->has($this->buildCacheKey($type, $key));
         }, 'Failed to check cache existence', [
             'type' => $type->value,
             'key' => $key
@@ -114,7 +130,7 @@ class CacheService
         return $this->withErrorHandling(function () use ($type, $key) {
             $cacheKey = $this->buildCacheKey($type, $key);
 
-            if (!Cache::has($cacheKey)) {
+            if (!$this->cache->has($cacheKey)) {
                 return null;
             }
 
@@ -134,7 +150,7 @@ class CacheService
             $ttl = $ttl ?? $type->getTTL();
             $cacheKey = $this->buildCacheKey($type, $key);
 
-            Cache::put($cacheKey, $data, $ttl);
+            $this->cache->put($cacheKey, $data, $ttl);
             $this->trackCacheKey($cacheKey);
 
             return true;
@@ -150,7 +166,7 @@ class CacheService
     private function retrieveFromCache(CacheType $type, string $key): mixed
     {
         return $this->withErrorHandling(function () use ($type, $key) {
-            return Cache::get($this->buildCacheKey($type, $key));
+            return $this->cache->get($this->buildCacheKey($type, $key));
         }, "Failed to get {$type->value}", [
             'key' => $key,
             'type' => $type->value
@@ -184,11 +200,11 @@ class CacheService
     private function trackCacheKey(string $cacheKey): void
     {
         $this->withErrorHandling(function () use ($cacheKey) {
-            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
+            $keys = $this->cache->get(self::CACHE_KEYS_STORAGE, []);
 
             if (!in_array($cacheKey, $keys, true)) {
                 $keys[] = $cacheKey;
-                Cache::put(self::CACHE_KEYS_STORAGE, $keys, self::CACHE_KEYS_TTL);
+                $this->cache->put(self::CACHE_KEYS_STORAGE, $keys, self::CACHE_KEYS_TTL);
             }
         }, 'Failed to track cache key', ['key' => $cacheKey]);
     }
@@ -199,7 +215,7 @@ class CacheService
     private function getCacheKeysByPattern(string $pattern): array
     {
         return $this->withErrorHandling(function () use ($pattern) {
-            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
+            $keys = $this->cache->get(self::CACHE_KEYS_STORAGE, []);
             return array_filter($keys, fn($key) => fnmatch($pattern, $key));
         }, 'Failed to get cache keys by pattern', ['pattern' => $pattern]) ?? [];
     }
@@ -210,7 +226,7 @@ class CacheService
     private function getUserCacheKeys(int $userId): array
     {
         return $this->withErrorHandling(function () use ($userId) {
-            $keys = Cache::get(self::CACHE_KEYS_STORAGE, []);
+            $keys = $this->cache->get(self::CACHE_KEYS_STORAGE, []);
 
             return array_filter($keys, function($key) use ($userId) {
 
@@ -228,7 +244,7 @@ class CacheService
     private function removeCacheKeys(array $keys): void
     {
         foreach ($keys as $key) {
-            Cache::forget($key);
+            $this->cache->forget($key);
         }
     }
 }

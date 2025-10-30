@@ -12,7 +12,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\Guard;
 
 class WishListController extends Controller
 {
@@ -22,7 +22,8 @@ class WishListController extends Controller
      * Create a new controller instance.
      */
     public function __construct(
-        protected WishListService $service
+        protected WishListService $service,
+        private readonly Guard $auth
     ) {}
 
     /**
@@ -30,7 +31,7 @@ class WishListController extends Controller
      */
     public function index(): View
     {
-        $wishListDTO = $this->service->getIndexData(Auth::user());
+        $wishListDTO = $this->service->getIndexData($this->auth->user());
 
         return view('wishlists.index', $wishListDTO->toArray());
     }
@@ -58,7 +59,7 @@ class WishListController extends Controller
      */
     public function store(CreateWishListRequest $request): RedirectResponse
     {
-        $this->service->create($request->validated(), Auth::user());
+        $this->service->create($request->validated(), $this->auth->user());
 
         return redirect()->route('wish-lists.index')
             ->with('success', __('messages.wishlist_created'));
@@ -96,7 +97,7 @@ class WishListController extends Controller
      */
     public function public(string $uuid): View
     {
-        $publicWishListDTO = $this->service->getPublicData($uuid, Auth::user());
+        $publicWishListDTO = $this->service->getPublicData($uuid, $this->auth->user());
 
         return view('wishlists.public', $publicWishListDTO->toArray());
     }

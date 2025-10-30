@@ -11,7 +11,7 @@ use App\Models\WishList;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\ConnectionInterface;
 use RuntimeException;
 
 class ReservationService
@@ -22,7 +22,8 @@ class ReservationService
     public function __construct(
         protected CacheManagerService $cacheManager,
         protected ReservationRepositoryInterface $reservationRepository,
-        protected WishRepositoryInterface $wishRepository
+        protected WishRepositoryInterface $wishRepository,
+        private readonly ConnectionInterface $db
     ) {}
 
     /**
@@ -36,7 +37,7 @@ class ReservationService
             throw new RuntimeException(__('messages.wish_already_reserved'));
         }
 
-        DB::transaction(function () use ($wish, $user) {
+        $this->db->transaction(function () use ($wish, $user) {
             $this->createReservationRecord($wish, $user);
             $this->markWishAsReserved($wish);
         });
@@ -57,7 +58,7 @@ class ReservationService
             throw new RuntimeException(__('messages.wish_not_reserved_by_user'));
         }
 
-        DB::transaction(function () use ($reservation, $wish) {
+        $this->db->transaction(function () use ($reservation, $wish) {
             $this->deleteReservationRecord($reservation);
             $this->markWishAsAvailable($wish);
         });

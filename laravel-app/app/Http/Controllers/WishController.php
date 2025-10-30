@@ -15,7 +15,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\Guard;
 
 class WishController extends Controller
 {
@@ -24,7 +24,8 @@ class WishController extends Controller
      */
     public function __construct(
         private readonly WishService $wishService,
-        private readonly ReservationService $reservationService
+        private readonly ReservationService $reservationService,
+        private readonly Guard $auth
     ) {}
 
     /**
@@ -32,7 +33,7 @@ class WishController extends Controller
      */
     public function index(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getIndexData($wishList, Auth::user());
+        $wishDTO = $this->wishService->getIndexData($wishList, $this->auth->user());
 
         return view('wishes.index', $wishDTO->toArray());
     }
@@ -51,7 +52,7 @@ class WishController extends Controller
     public function store(StoreWishRequest $request, WishList $wishList): RedirectResponse
     {
         $imageFile = $request->hasFile('image_file') ? $request->file('image_file') : null;
-        $this->wishService->create($request->getWishData(), $wishList, Auth::user(), $imageFile);
+        $this->wishService->create($request->getWishData(), $wishList, $this->auth->user(), $imageFile);
 
         return redirect()
             ->route('wishes.index', $wishList)
@@ -79,7 +80,7 @@ class WishController extends Controller
     {
         $this->authorize('update', $wish);
 
-        $this->wishService->update($wish, $request->getWishData(), Auth::user());
+        $this->wishService->update($wish, $request->getWishData(), $this->auth->user());
 
         return redirect()
             ->route('wishes.index', $wishList)
@@ -95,7 +96,7 @@ class WishController extends Controller
     {
         $this->authorize('delete', $wish);
 
-        $this->wishService->delete($wish, Auth::user());
+        $this->wishService->delete($wish, $this->auth->user());
 
         return redirect()
             ->route('wishes.index', $wishList)
@@ -107,7 +108,7 @@ class WishController extends Controller
      */
     public function available(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getData($wishList, Auth::user(), 'available');
+        $wishDTO = $this->wishService->getData($wishList, $this->auth->user(), 'available');
 
         return view('wishes.available', $wishDTO->toArray());
     }
@@ -117,7 +118,7 @@ class WishController extends Controller
      */
     public function reserved(WishList $wishList): View
     {
-        $wishDTO = $this->wishService->getData($wishList, Auth::user(), 'reserved');
+        $wishDTO = $this->wishService->getData($wishList, $this->auth->user(), 'reserved');
 
         return view('wishes.reserved', $wishDTO->toArray());
     }
@@ -139,7 +140,7 @@ class WishController extends Controller
     {
         $wishDTO = $this->wishService->getWishListData($user, $wishList);
         $data = $wishDTO->toArray();
-        $data['isGuest'] = !auth()->check();
+        $data['isGuest'] = !$this->auth->check();
 
         return view('wishes.user', $data);
     }
@@ -153,7 +154,7 @@ class WishController extends Controller
     {
         $this->authorize('unreserve', $wish);
 
-        $this->reservationService->unreserve($wish, Auth::user());
+        $this->reservationService->unreserve($wish, $this->auth->user());
 
         $message = __('messages.wish_unreserved');
 
@@ -173,7 +174,7 @@ class WishController extends Controller
     {
         $this->authorize('reserve', $wish);
 
-        $this->reservationService->reserve($wish, Auth::user());
+        $this->reservationService->reserve($wish, $this->auth->user());
 
         $message = __('messages.wish_reserved');
 

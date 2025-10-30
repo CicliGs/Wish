@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Models\WishList;
 use App\Support\MoneyHelper;
 use Exception;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Validation\Rule;
 
 trait MoneyValidationTrait
@@ -70,8 +71,9 @@ trait MoneyValidationTrait
             return $wishList->currency;
         }
 
-        if (auth()->check() && auth()->user()) {
-            return auth()->user()->currency;
+        $auth = app(Guard::class);
+        if ($auth->check() && $auth->user()) {
+            return $auth->user()->currency;
         }
 
         return null;
