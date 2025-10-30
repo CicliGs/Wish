@@ -13,7 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\Guard;
 
 class ReservationController extends Controller
 {
@@ -24,7 +24,8 @@ class ReservationController extends Controller
      */
     public function __construct(
         protected ReservationService $service,
-        protected WishRepositoryInterface $wishRepository
+        protected WishRepositoryInterface $wishRepository,
+        private readonly Guard $auth
     ) {}
 
     /**
@@ -37,7 +38,7 @@ class ReservationController extends Controller
         $wish = $this->findWish($wishId);
         $this->authorize('reserve', $wish);
 
-        $this->service->reserve($wish, Auth::user());
+        $this->service->reserve($wish, $this->auth->user());
 
         return back()->with('success', __('messages.wish_reserved'));
     }
@@ -52,7 +53,7 @@ class ReservationController extends Controller
         $wish = $this->findWish($wishId);
         $this->authorize('unreserve', $wish);
 
-        $this->service->unreserve($wish, Auth::user());
+        $this->service->unreserve($wish, $this->auth->user());
 
         return back()->with('success', __('messages.wish_unreserved'));
     }
@@ -63,7 +64,7 @@ class ReservationController extends Controller
     public function index(): View
     {
         /** @var \App\Models\User $user */
-        $user = Auth::user();
+        $user = $this->auth->user();
         $reservations = $this->service->getReservations($user);
         $statistics = $this->service->getStatistics($user);
 

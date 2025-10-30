@@ -60,7 +60,7 @@
                                                     
                                                     <!-- Action Button -->
                                                     <div>
-                                                        @if($user->id === Auth::id())
+                                                        @if($user->id === auth()->id())
                                                             <div class="status-badge status-you">
                                                                 <i class="bi bi-person-circle me-1"></i>
                                                                 {{ __('messages.this_is_you') }}

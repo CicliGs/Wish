@@ -15,7 +15,7 @@
             </div>
             <div class="d-flex align-items-center gap-2 mb-3">
                 <h2 class="mb-0">{{ $user->name }}</h2>
-                @if($user->id === Auth::id())
+                @if($user->id === auth()->id())
                 <a href="{{ route('profile.edit') }}" class="btn btn-outline-dark btn-sm" title="{{ __('messages.edit_profile') }}"><i class="bi bi-pencil"></i></a>
                 @endif
             </div>
@@ -107,7 +107,7 @@
             </div>
         </div>
         <hr class="my-3" style="border-top: 1.5px solid #e0e0e0;">
-        @if($user->id === Auth::id())
+        @if($user->id === auth()->id())
         <form method="POST" action="{{ route('logout') }}" class="mb-0">
             @csrf
             <button type="submit" class="btn btn-outline-danger w-100">{{ __('messages.logout_account') }}</button>

@@ -9,7 +9,7 @@ use App\Http\Requests\LoginRequest;
 use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -17,7 +17,10 @@ class LoginController extends Controller
     /**
      * Create a new controller instance.
      */
-    public function __construct(protected UserService $userService) {}
+    public function __construct(
+        protected UserService $userService,
+        private readonly StatefulGuard $auth
+    ) {}
 
     /**
      * Show the login form.
@@ -34,7 +37,7 @@ class LoginController extends Controller
     {
         $credentials = $request->validated();
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if ($this->auth->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             return redirect()->intended(route('wish-lists.index'));
@@ -50,17 +53,18 @@ class LoginController extends Controller
      */
     public function logout(Request $request): RedirectResponse
     {
-        $userId = Auth::id();
+        $userId = $this->auth->id();
 
         if ($userId !== null) {
             $this->userService->clearUserCacheOnLogout((int) $userId);
         }
 
-        Auth::logout();
+        $this->auth->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect('/');
     }
+ 
 }
