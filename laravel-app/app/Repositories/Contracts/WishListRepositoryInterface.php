@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
-use App\Models\WishList;
-use App\Models\User;
 use App\DTOs\WishListStatisticsDTO;
-use Illuminate\Database\Eloquent\Collection;
 
 /**
  * WishList repository interface
@@ -16,36 +13,49 @@ interface WishListRepositoryInterface extends BaseRepositoryInterface
 {
     /**
      * Find wish lists by user
+     * 
+     * @return array<object>
      */
-    public function findByUser(User $user): Collection;
+    public function findByUser(object $user): array;
 
     /**
      * Find wish lists by user ID
+     * 
+     * @return array<object>
      */
-    public function findByUserId(int $userId): Collection;
+    public function findByUserId(int $userId): array;
 
     /**
      * Find public wish list by UUID
      */
-    public function findPublicByUuid(string $uuid): ?WishList;
+    public function findPublicByUuid(string $uuid): ?object;
 
     /**
      * Find public wish lists
+     * 
+     * @return array<object>
      */
-    public function findPublic(): Collection;
+    public function findPublic(): array;
 
     /**
      * Find wish lists with wishes count
+     * 
+     * @return array<object>
      */
-    public function findWithWishesCount(User $user): Collection;
+    public function findWithWishesCount(object $user): array;
 
     /**
      * Get wish list statistics for user
      */
-    public function getStatistics(User $user): WishListStatisticsDTO;
+    public function getStatistics(object $user): WishListStatisticsDTO;
 
     /**
      * Check if user owns wish list
      */
-    public function isOwnedBy(WishList $wishList, User $user): bool;
+    public function isOwnedBy(object $wishList, object $user): bool;
+
+    /**
+     * Find user for wish list
+     */
+    public function findUserForWishList(object $wishList): ?object;
 }

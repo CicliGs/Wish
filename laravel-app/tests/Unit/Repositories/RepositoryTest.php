@@ -60,16 +60,21 @@ class RepositoryTest extends TestCase
 
         $foundUser = $userRepo->findById($user->id);
         $this->assertNotNull($foundUser);
+        $this->assertInstanceOf(User::class, $foundUser);
         $this->assertEquals($user->id, $foundUser->id);
 
         $foundByEmail = $userRepo->findByEmail('test@example.com');
         $this->assertNotNull($foundByEmail);
+        $this->assertInstanceOf(User::class, $foundByEmail);
         $this->assertEquals($user->id, $foundByEmail->id);
 
         $foundByName = $userRepo->findByName('Test');
         $this->assertCount(1, $foundByName);
-        $this->assertNotNull($foundByName->first());
-        $this->assertEquals($user->id, $foundByName->first()->id);
+        $this->assertNotEmpty($foundByName);
+        $firstUser = $foundByName[0] ?? null;
+        $this->assertNotNull($firstUser);
+        $this->assertInstanceOf(User::class, $firstUser);
+        $this->assertEquals($user->id, $firstUser->id);
 
         $stats = $userRepo->getStatistics($user);
         $this->assertInstanceOf(UserStatisticsDTO::class, $stats);
@@ -94,8 +99,11 @@ class RepositoryTest extends TestCase
 
         $foundWishLists = $wishListRepo->findByUser($user);
         $this->assertCount(1, $foundWishLists);
-        $this->assertNotNull($foundWishLists->first());
-        $this->assertEquals($wishList->id, $foundWishLists->first()->id);
+        $this->assertNotEmpty($foundWishLists);
+        $firstWishList = $foundWishLists[0] ?? null;
+        $this->assertNotNull($firstWishList);
+        $this->assertInstanceOf(WishList::class, $firstWishList);
+        $this->assertEquals($wishList->id, $firstWishList->id);
 
         $foundByUserId = $wishListRepo->findByUserId($user->id);
         $this->assertCount(1, $foundByUserId);
@@ -129,8 +137,11 @@ class RepositoryTest extends TestCase
 
         $foundWishes = $wishRepo->findByWishList($wishList);
         $this->assertCount(1, $foundWishes);
-        $this->assertNotNull($foundWishes->first());
-        $this->assertEquals($wish->id, $foundWishes->first()->id);
+        $this->assertNotEmpty($foundWishes);
+        $firstWish = $foundWishes[0] ?? null;
+        $this->assertNotNull($firstWish);
+        $this->assertInstanceOf(Wish::class, $firstWish);
+        $this->assertEquals($wish->id, $firstWish->id);
 
         $foundByWishListId = $wishRepo->findByWishListId($wishList->id);
         $this->assertCount(1, $foundByWishListId);
@@ -170,12 +181,15 @@ class RepositoryTest extends TestCase
 
         $foundReservation = $reservationRepo->findByWishAndUser($wish, $user);
         $this->assertNotNull($foundReservation);
+        $this->assertInstanceOf(Reservation::class, $foundReservation);
         $this->assertEquals($reservation->id, $foundReservation->id);
 
         $foundByUser = $reservationRepo->findByUser($user);
+        $this->assertIsArray($foundByUser);
         $this->assertCount(1, $foundByUser);
 
         $foundByWishList = $reservationRepo->findByWishList($wishList);
+        $this->assertIsArray($foundByWishList);
         $this->assertCount(1, $foundByWishList);
 
         $stats = $reservationRepo->getStatistics($user);

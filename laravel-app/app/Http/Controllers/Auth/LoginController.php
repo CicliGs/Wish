@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\View\View;
 
-class LoginController extends Controller
+final class LoginController extends Controller
 {
     /**
      * Create a new controller instance.

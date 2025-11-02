@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Support\MoneyHelper;
+use App\Support\MoneyService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,7 +51,7 @@ class WishList extends Model
      */
     public static function getSupportedCurrencies(): array
     {
-        return array_keys(MoneyHelper::getSupportedCurrencies());
+        return array_keys(MoneyService::getSupportedCurrencies());
     }
 
     /**

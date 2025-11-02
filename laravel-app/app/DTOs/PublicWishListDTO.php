@@ -6,14 +6,13 @@ namespace App\DTOs;
 
 use App\Models\WishList;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
 
 readonly class PublicWishListDTO implements BaseDTO
 {
     public function __construct(
         public WishList   $wishList,
         public User       $user,
-        public Collection $wishes,
+        public array      $wishes,
         public bool       $isGuest,
         public bool       $isFriend,
         public bool       $isOwner
@@ -45,17 +44,43 @@ readonly class PublicWishListDTO implements BaseDTO
 
     /**
      * Create DTO from WishList with authentication context.
+     * 
+     * @deprecated Use fromData() instead. This method uses direct model relationships.
      */
     public static function fromWishList(WishList $wishList, ?User $currentUser = null): static
     {
         $isGuest = $currentUser === null;
-        $isFriend = $currentUser && $currentUser->friends()->where('friend_id', $wishList->user_id)->exists();
+        $isFriend = false;
         $isOwner = $currentUser && $currentUser->id === $wishList->user_id;
+        
+        $wishes = $wishList->wishes;
+        $wishesArray = $wishes->all();
         
         return new self(
             wishList: $wishList,
             user: $wishList->user,
-            wishes: $wishList->wishes,
+            wishes: $wishesArray,
+            isGuest: $isGuest,
+            isFriend: $isFriend,
+            isOwner: $isOwner
+        );
+    }
+
+    /**
+     * Create DTO from data loaded through repositories.
+     */
+    public static function fromData(
+        WishList $wishList,
+        User $user,
+        array $wishes,
+        bool $isGuest,
+        bool $isFriend,
+        bool $isOwner
+    ): static {
+        return new self(
+            wishList: $wishList,
+            user: $user,
+            wishes: $wishes,
             isGuest: $isGuest,
             isFriend: $isFriend,
             isOwner: $isOwner

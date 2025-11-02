@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace App\DTOs;
 
 use App\Models\WishList;
-use Illuminate\Database\Eloquent\Collection;
 
 readonly class WishListDTO implements BaseDTO
 {
     public function __construct(
-        public Collection $wishLists,
+        public array      $wishLists,
         public array      $stats = [],
         public int        $userId = 0,
         public ?WishList  $wishList = null
@@ -42,9 +41,9 @@ readonly class WishListDTO implements BaseDTO
     }
 
     /**
-     * Create DTO from wish lists collection and user ID.
+     * Create DTO from wish lists array and user ID.
      */
-    public static function fromWishLists(Collection $wishLists, int $userId, array $stats = []): static
+    public static function fromWishLists(array $wishLists, int $userId, array $stats = []): static
     {
         return new self(
             wishLists: $wishLists,

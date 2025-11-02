@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Repositories\Contracts\BaseRepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -29,23 +28,24 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Find model by ID
      */
-    public function findById(int $id): ?Model
+    public function findById(int $id): ?object
     {
         return $this->model->find($id);
     }
 
     /**
      * Find all models
+     * @return array<object>
      */
-    public function findAll(): Collection
+    public function findAll(): array
     {
-        return $this->model->all();
+        return $this->model->all()->all();
     }
 
     /**
      * Create new model
      */
-    public function create(array $data): Model
+    public function create(array $data): object
     {
         return $this->model->create($data);
     }
@@ -53,8 +53,11 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Update existing model
      */
-    public function update(Model $model, array $data): Model
+    public function update(object $model, array $data): object
     {
+        if (!$model instanceof Model) {
+            throw new \InvalidArgumentException('Model must be an instance of ' . Model::class);
+        }
         $model->update($data);
         return $model->fresh();
     }
@@ -62,15 +65,19 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Delete model
      */
-    public function delete(Model $model): bool
+    public function delete(object $model): bool
     {
+        if (!$model instanceof Model) {
+            throw new \InvalidArgumentException('Model must be an instance of ' . Model::class);
+        }
         return $model->delete();
     }
 
     /**
      * Find models by criteria
+     * @return array<object>
      */
-    public function findBy(array $criteria): Collection
+    public function findBy(array $criteria): array
     {
         $query = $this->model->newQuery();
 
@@ -78,13 +85,13 @@ abstract class BaseRepository implements BaseRepositoryInterface
             $query->where($field, $value);
         }
 
-        return $query->get();
+        return $query->get()->all();
     }
 
     /**
      * Find single model by criteria
      */
-    public function findOneBy(array $criteria): ?Model
+    public function findOneBy(array $criteria): ?object
     {
         $query = $this->model->newQuery();
 

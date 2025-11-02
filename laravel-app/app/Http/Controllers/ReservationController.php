@@ -15,7 +15,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\Auth\Guard;
 
-class ReservationController extends Controller
+final class ReservationController extends Controller
 {
     use AuthorizesRequests;
 

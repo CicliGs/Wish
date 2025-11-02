@@ -9,6 +9,8 @@ use App\Traits\ErrorHandlingTrait;
 use Exception;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use App\Models\WishList;
+use App\Repositories\Contracts\WishListRepositoryInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Centralized cache management service
@@ -27,7 +29,9 @@ class CacheManagerService
      */
     public function __construct(
         public readonly CacheService $cacheService,
-        private readonly CacheRepository $cache
+        private readonly CacheRepository $cache,
+        private readonly WishListRepositoryInterface $wishListRepository,
+        private readonly LoggerInterface $logger
     ) {}
 
     /**
@@ -37,7 +41,7 @@ class CacheManagerService
     {
         return $this->withErrorHandling(function () {
             return $this->cacheService->clearAllCache();
-        }, 'Failed to clear all cache') ?? false;
+        }, 'Failed to clear all cache', [], $this->logger) ?? false;
     }
 
     /**
@@ -47,7 +51,7 @@ class CacheManagerService
     {
         return $this->withErrorHandling(function () use ($type) {
             return $this->cacheService->clearCacheByType($type);
-        }, "Failed to clear cache for type: {$type->value}") ?? false;
+        }, "Failed to clear cache for type: {$type->value}", [], $this->logger) ?? false;
     }
 
     /**
@@ -57,7 +61,7 @@ class CacheManagerService
     {
         return $this->withErrorHandling(function () use ($userId) {
             return $this->cacheService->clearUserCache($userId);
-        }, "Failed to clear cache for user: $userId") ?? false;
+        }, "Failed to clear cache for user: $userId", [], $this->logger) ?? false;
     }
 
     /**
@@ -84,7 +88,7 @@ class CacheManagerService
         return $this->withErrorHandling(function () use ($reserverId, $ownerId) {
             $this->clearMultipleUserCaches([$reserverId, $ownerId]);
             return true;
-        }, "Failed to clear cache for reservation: wish $wishId") ?? false;
+        }, "Failed to clear cache for reservation: wish $wishId", [], $this->logger) ?? false;
     }
 
     /**
@@ -95,7 +99,7 @@ class CacheManagerService
         return $this->withErrorHandling(function () use ($firstUserId, $secondUserId) {
             $this->clearMultipleUserCaches([$firstUserId, $secondUserId]);
             return true;
-        }, "Failed to clear friendship cache between users: $firstUserId and $secondUserId") ?? false;
+        }, "Failed to clear friendship cache between users: $firstUserId and $secondUserId", [], $this->logger) ?? false;
     }
 
     /**
@@ -107,7 +111,7 @@ class CacheManagerService
             $publicCacheKey = "static_content:public_wishlist_" . $uuid;
             $this->cache->forget($publicCacheKey);
             return true;
-        }, "Failed to clear public wish list cache for UUID: $uuid") ?? false;
+        }, "Failed to clear public wish list cache for UUID: $uuid", [], $this->logger) ?? false;
     }
 
     /**
@@ -117,7 +121,7 @@ class CacheManagerService
     {
         return $this->withErrorHandling(function () {
             return $this->cacheService->getCacheStats();
-        }, 'Failed to get cache statistics') ?? [];
+        }, 'Failed to get cache statistics', [], $this->logger) ?? [];
     }
 
     /**
@@ -129,7 +133,7 @@ class CacheManagerService
             $this->cacheService->clearUserCache($userId);
             $this->clearWishListSpecificCaches($wishListId);
             return true;
-        }, "Failed to clear cache for $type: $wishListId") ?? false;
+        }, "Failed to clear cache for $type: $wishListId", [], $this->logger) ?? false;
     }
 
     /**
@@ -169,7 +173,8 @@ class CacheManagerService
     private function getWishList(int $wishListId): ?WishList
     {
         if (!isset($this->wishListCache[$wishListId])) {
-            $this->wishListCache[$wishListId] = WishList::find($wishListId);
+            $wishList = $this->wishListRepository->findById($wishListId);
+            $this->wishListCache[$wishListId] = $wishList instanceof WishList ? $wishList : null;
         }
 
         return $this->wishListCache[$wishListId];

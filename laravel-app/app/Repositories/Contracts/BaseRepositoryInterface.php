@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
-
 /**
  * Base repository interface providing common CRUD operations
  */
@@ -15,35 +12,39 @@ interface BaseRepositoryInterface
     /**
      * Find model by ID
      */
-    public function findById(int $id): ?Model;
+    public function findById(int $id): ?object;
 
     /**
      * Find all models
+     * 
+     * @return array<object>
      */
-    public function findAll(): Collection;
+    public function findAll(): array;
 
     /**
      * Create new model
      */
-    public function create(array $data): Model;
+    public function create(array $data): object;
 
     /**
      * Update existing model
      */
-    public function update(Model $model, array $data): Model;
+    public function update(object $model, array $data): object;
 
     /**
      * Delete model
      */
-    public function delete(Model $model): bool;
+    public function delete(object $model): bool;
 
     /**
      * Find models by criteria
+     * 
+     * @return array<object>
      */
-    public function findBy(array $criteria): Collection;
+    public function findBy(array $criteria): array;
 
     /**
      * Find single model by criteria
      */
-    public function findOneBy(array $criteria): ?Model;
+    public function findOneBy(array $criteria): ?object;
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Observers\WishObserver;
-use App\Support\MoneyHelper;
+use App\Support\MoneyService;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,8 +13,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Support\Facades\Log;
 use Money\Money;
 
 #[ObservedBy(WishObserver::class)]
@@ -114,14 +112,8 @@ class Wish extends Model
                 return '';
             }
 
-            return MoneyHelper::format($this->getMoneyObject());
+            return MoneyService::format($this->getMoneyObject());
         } catch (Exception $e) {
-            Log::error('Error formatting price', [
-                'price' => $this->price ?? 'null',
-                'user_id' => $user->id ?? 'null',
-                'error' => $e->getMessage()
-            ]);
-
             return '';
         }
     }
@@ -144,7 +136,7 @@ class Wish extends Model
      */
     private function getMoneyObject(): Money
     {
-        return MoneyHelper::create($this->getPriceAsFloat(), $this->getWishListCurrency());
+        return MoneyService::create($this->getPriceAsFloat(), $this->getWishListCurrency());
     }
 
     /**
@@ -187,11 +179,6 @@ class Wish extends Model
             return $this->wishList->currency;
         }
 
-        $auth = app(Guard::class);
-        if ($auth->check() && $auth->user()) {
-            return $auth->user()->currency;
-        }
-
         return User::DEFAULT_CURRENCY;
     }
 
@@ -207,11 +194,6 @@ class Wish extends Model
 
             return $this->getMoneyObject();
         } catch (Exception $e) {
-            Log::error('Error creating Money object', [
-                'price' => $this->price ?? 'null',
-                'error' => $e->getMessage()
-            ]);
-
             return null;
         }
     }

@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Database\Eloquent\Collection;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Contracts\AchievementRepositoryInterface;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use App\DTOs\ProfileDTO;
 
 class ProfileService
 {
-    private const AVATAR_STORAGE_PATH = 'avatars';
-
     /**
      * Create a new service instance.
      */
@@ -20,7 +19,10 @@ class ProfileService
         private readonly WishListService $wishListService,
         private readonly ReservationService $reservationService,
         private readonly AchievementsReceiver $achievementsReceiver,
-        private readonly CacheManagerService $cacheManager
+        private readonly CacheManagerService $cacheManager,
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly AchievementRepositoryInterface $achievementRepository,
+        private readonly ConfigRepository $config
     ) {}
 
     /**
@@ -37,11 +39,9 @@ class ProfileService
     /**
      * Update user avatar
      */
-    public function updateAvatar(User $user, UploadedFile $avatarFile): void
+    public function updateAvatar(User $user, string $avatarPath): void
     {
-        $path = $avatarFile->store(self::AVATAR_STORAGE_PATH, 'public');
-        $user->update(['avatar' => '/storage/' . $path]);
-
+        $this->userRepository->update($user, ['avatar' => $avatarPath]);
         $this->cacheManager->clearUserCache($user->id);
     }
 
@@ -50,7 +50,7 @@ class ProfileService
      */
     public function updateUserName(User $user, string $name): void
     {
-        $user->update(['name' => $name]);
+        $this->userRepository->update($user, ['name' => $name]);
         $this->cacheManager->clearUserCache($user->id);
     }
 
@@ -62,11 +62,11 @@ class ProfileService
     public function getAchievements(User $user): array
     {
         /** @var array<int, array<string, mixed>> $achievements */
-        $achievements = config('achievements', []);
+        $achievements = $this->config->get('achievements', []);
 
         return collect($achievements)->map(function ($achievement) use ($user) {
             $achievementKey = $achievement['key'];
-            $received = $user->hasAchievement($achievementKey);
+            $received = $this->achievementRepository->userHasAchievement($user, $achievementKey);
 
             if (!$received && !($achievement['auto_grant'] ?? false)) {
                 $checker = $achievement['checker'] ?? null;
@@ -102,11 +102,11 @@ class ProfileService
         $dto = ProfileDTO::fromUserWithData(
             user: $user,
             stats: $this->getStatistics($user),
-            friends: $friendService->getFriends($user),
-            incomingRequests: $friendService->getIncomingRequests($user),
-            outgoingRequests: $friendService->getOutgoingRequests($user),
+            friends: $friendService->getFriends($user)->all(),
+            incomingRequests: $friendService->getIncomingRequests($user)->all(),
+            outgoingRequests: $friendService->getOutgoingRequests($user)->all(),
             achievements: $this->getAchievements($user),
-            wishLists: $this->wishListService->findWishLists($user)
+            wishLists: $this->wishListService->findWishLists($user)->all()
         );
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 900);
@@ -121,9 +121,6 @@ class ProfileService
      */
     private function createUserAchievement(User $user, string $achievementKey): void
     {
-        $user->achievements()->create([
-            'achievement_key' => $achievementKey,
-            'received_at' => now(),
-        ]);
+        $this->achievementRepository->createForUser($user, $achievementKey);
     }
 }

@@ -32,7 +32,7 @@
 
                     <!-- Search Results -->
                     @if(request('search'))
-                        @if($users && $users->count() > 0)
+                        @if($users && count($users) > 0)
                             <div class="row g-3">
                                 @foreach($users as $user)
                                     <div class="col-12">

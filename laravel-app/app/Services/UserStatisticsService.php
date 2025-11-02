@@ -5,10 +5,18 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\FriendRequest;
+use App\Repositories\Contracts\FriendRequestRepositoryInterface;
+use App\Repositories\Contracts\WishRepositoryInterface;
+use App\Repositories\Contracts\ReservationRepositoryInterface;
 
 class UserStatisticsService
 {
+    public function __construct(
+        private readonly FriendRequestRepositoryInterface $friendRequestRepository,
+        private readonly WishRepositoryInterface $wishRepository,
+        private readonly ReservationRepositoryInterface $reservationRepository
+    ) {}
+
     /**
      * Get user wish count.
      *
@@ -16,7 +24,7 @@ class UserStatisticsService
      */
     public function getWishCountForUser(User $user): int
     {
-        return $user->wishes()->count();
+        return $this->wishRepository->countByUserId($user->id);
     }
 
     /**
@@ -26,7 +34,7 @@ class UserStatisticsService
      */
     public function getReservationCountForUser(User $user): int
     {
-        return $user->reservations()->count();
+        return $this->reservationRepository->countByUser($user);
     }
 
     /**
@@ -36,11 +44,6 @@ class UserStatisticsService
      */
     public function getAcceptedFriendsCountForUser(User $user): int
     {
-        return FriendRequest::where('status', 'accepted')
-            ->where(function ($query) use ($user) {
-                $query->where('sender_id', $user->id)
-                      ->orWhere('receiver_id', $user->id);
-            })
-            ->count();
+        return $this->friendRequestRepository->countAcceptedForUser($user);
     }
 }

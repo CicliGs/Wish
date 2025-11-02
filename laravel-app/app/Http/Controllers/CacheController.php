@@ -10,7 +10,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 
-class CacheController extends Controller
+final class CacheController extends Controller
 {
     /**
      * Create a new controller instance.

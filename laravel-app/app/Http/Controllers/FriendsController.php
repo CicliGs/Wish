@@ -9,7 +9,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\Guard;
 
-class FriendsController extends Controller
+final class FriendsController extends Controller
 {
     public function __construct(private readonly Guard $auth) {}
 

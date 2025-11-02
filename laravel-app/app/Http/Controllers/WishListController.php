@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\Auth\Guard;
 
-class WishListController extends Controller
+final class WishListController extends Controller
 {
     use AuthorizesRequests;
 

@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\DTOs;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
 
 readonly class FriendsDTO implements BaseDTO
 {
     public function __construct(
-        public Collection $friends,
-        public Collection $incomingRequests,
-        public Collection $outgoingRequests,
+        public array      $friends,
+        public array      $incomingRequests,
+        public array      $outgoingRequests,
         public ?User      $selectedFriend
     ) {}
 
@@ -40,9 +39,9 @@ readonly class FriendsDTO implements BaseDTO
      * Create DTO from friends data.
      */
     public static function fromFriendsData(
-        Collection $friends,
-        Collection $incomingRequests,
-        Collection $outgoingRequests,
+        array $friends,
+        array $incomingRequests,
+        array $outgoingRequests,
         ?User $selectedFriend = null
     ): static {
         return new self(

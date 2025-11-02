@@ -14,7 +14,7 @@
           <button class="btn btn-outline-secondary position-relative" data-bs-toggle="modal" data-bs-target="#friendRequestsModal" aria-label="{{ __('messages.incoming_requests') }}">
             <i class="bi bi-bell"></i>
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-              {{ $incomingRequests->count() }}
+              {{ count($incomingRequests) }}
             </span>
           </button>
           @endif
