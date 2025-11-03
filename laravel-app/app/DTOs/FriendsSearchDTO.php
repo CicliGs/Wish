@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
-use Illuminate\Database\Eloquent\Collection;
-
 readonly class FriendsSearchDTO implements BaseDTO
 {
     public function __construct(
-        public Collection $users,
+        public array      $users,
         public string     $query,
         public array      $friendStatuses = []
     ) {}
@@ -35,7 +33,7 @@ readonly class FriendsSearchDTO implements BaseDTO
     /**
      * Create DTO from search results.
      */
-    public static function fromSearchResults(Collection $users, string $query = '', array $friendStatuses = []): static
+    public static function fromSearchResults(array $users, string $query = '', array $friendStatuses = []): static
     {
         return new self(
             users: $users,
@@ -50,7 +48,7 @@ readonly class FriendsSearchDTO implements BaseDTO
     public static function empty(): static
     {
         return new self(
-            users: new Collection(),
+            users: [],
             query: '',
             friendStatuses: []
         );

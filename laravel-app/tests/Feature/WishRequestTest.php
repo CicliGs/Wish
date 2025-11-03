@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Http\Requests\StoreWishRequest;
 use App\Http\Requests\UpdateWishRequest;
-use App\Support\MoneyHelper;
+use App\Support\MoneyService;
 use Illuminate\Support\Facades\Validator;
 
 class WishRequestTest extends TestCase
@@ -117,9 +117,9 @@ class WishRequestTest extends TestCase
     }
 
     /** @test */
-    public function money_helper_supports_request_currencies()
+    public function money_service_supports_request_currencies()
     {
-        $supportedCurrencies = array_keys(MoneyHelper::getSupportedCurrencies());
+        $supportedCurrencies = array_keys(MoneyService::getSupportedCurrencies());
         
         foreach (['USD', 'EUR', 'GBP', 'RUB'] as $currency) {
             $this->assertContains($currency, $supportedCurrencies);

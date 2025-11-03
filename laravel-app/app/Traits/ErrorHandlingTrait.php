@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Traits;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
 
 /**
  * Trait for error handling and logging
@@ -15,12 +15,12 @@ trait ErrorHandlingTrait
     /**
      * Execute operation with error handling and logging
      */
-    protected function withErrorHandling(callable $operation, string $errorMessage, array $context = []): mixed
+    protected function withErrorHandling(callable $operation, string $errorMessage, array $context = [], ?LoggerInterface $logger = null): mixed
     {
         try {
             return $operation();
         } catch (Exception $e) {
-            $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]));
+            $this->logError($errorMessage, array_merge($context, ['error' => $e->getMessage()]), $logger);
 
             return null;
         }
@@ -29,9 +29,9 @@ trait ErrorHandlingTrait
     /**
      * Log error with context
      */
-    protected function logError(string $message, array $context = []): void
+    protected function logError(string $message, array $context = [], ?LoggerInterface $logger = null): void
     {
         $className = class_basename(static::class);
-        Log::error("$className: $message", $context);
+        $logger?->error("$className: $message", $context);
     }
 }

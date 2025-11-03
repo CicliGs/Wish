@@ -16,16 +16,20 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 
-class WishController extends Controller
+final class WishController extends Controller
 {
+    private const WISH_IMAGE_STORAGE_PATH = 'wishes';
+
     /**
      * Create a new controller instance.
      */
     public function __construct(
         private readonly WishService $wishService,
         private readonly ReservationService $reservationService,
-        private readonly Guard $auth
+        private readonly Guard $auth,
+        private readonly FilesystemFactory $filesystem
     ) {}
 
     /**
@@ -51,12 +55,33 @@ class WishController extends Controller
      */
     public function store(StoreWishRequest $request, WishList $wishList): RedirectResponse
     {
-        $imageFile = $request->hasFile('image_file') ? $request->file('image_file') : null;
-        $this->wishService->create($request->getWishData(), $wishList, $this->auth->user(), $imageFile);
+        $imagePath = $this->uploadImageIfProvided($request);
+
+        $this->wishService->create($request->getWishData(), $wishList, $this->auth->user(), $imagePath);
 
         return redirect()
             ->route('wishes.index', $wishList)
             ->with('success', __('messages.wish_created'));
+    }
+
+    /**
+     * Upload image file if provided and return its public path.
+     */
+    private function uploadImageIfProvided(StoreWishRequest $request): ?string
+    {
+        if (!$request->hasFile('image_file')) {
+            return null;
+        }
+
+        $file = $request->file('image_file');
+        $storage = $this->filesystem->disk('public');
+        $path = $storage->putFile(self::WISH_IMAGE_STORAGE_PATH, $file);
+        
+        if ($path === false) {
+            throw new \RuntimeException('Failed to upload image');
+        }
+        
+        return $storage->url($path);
     }
 
     /**

@@ -6,15 +6,14 @@ namespace App\DTOs;
 
 use App\Models\User;
 use App\Models\WishList;
-use Illuminate\Database\Eloquent\Collection;
 
 readonly class UserWishesDTO implements BaseDTO
 {
     public function __construct(
         public User       $user,
-        public Collection $wishLists,
+        public array      $wishLists,
         public ?WishList  $selectedWishList = null,
-        public Collection $wishes = new Collection()
+        public array      $wishes = []
     ) {}
 
     public function toArray(): array
@@ -38,26 +37,26 @@ readonly class UserWishesDTO implements BaseDTO
             user: $data['user'],
             wishLists: $data['wishLists'],
             selectedWishList: $data['selectedWishList'] ?? null,
-            wishes: $data['wishes'] ?? new Collection(),
+            wishes: $data['wishes'] ?? [],
         );
     }
 
     /**
      * Create DTO from user with wish lists only (for wish lists selection page).
      */
-    public static function fromUserWishLists(User $user, Collection $wishLists): static
+    public static function fromUserWishLists(User $user, array $wishLists): static
     {
         return new self(
             user: $user,
             wishLists: $wishLists,
-            wishes: new Collection()
+            wishes: []
         );
     }
 
     /**
      * Create DTO from user with specific wish list selected (for wish list details page).
      */
-    public static function fromUserWithSelectedWishList(User $user, Collection $wishLists, Collection $wishes, WishList $selectedWishList): static
+    public static function fromUserWithSelectedWishList(User $user, array $wishLists, array $wishes, WishList $selectedWishList): static
     {
         return new self(
             user: $user,

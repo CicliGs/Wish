@@ -10,7 +10,8 @@ use App\Models\Wish;
 use App\Models\WishList;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
+use App\Repositories\Contracts\WishListRepositoryInterface;
+use Illuminate\Support\Collection;
 use Illuminate\Database\ConnectionInterface;
 use RuntimeException;
 
@@ -23,6 +24,7 @@ class ReservationService
         protected CacheManagerService $cacheManager,
         protected ReservationRepositoryInterface $reservationRepository,
         protected WishRepositoryInterface $wishRepository,
+        protected WishListRepositoryInterface $wishListRepository,
         private readonly ConnectionInterface $db
     ) {}
 
@@ -54,7 +56,7 @@ class ReservationService
     {
         $reservation = $this->reservationRepository->findByWishAndUser($wish, $user);
 
-        if (!$reservation) {
+        if (!$reservation || !($reservation instanceof Reservation)) {
             throw new RuntimeException(__('messages.wish_not_reserved_by_user'));
         }
 
@@ -71,7 +73,7 @@ class ReservationService
      */
     public function getReservations(User|WishList $entity): Collection
     {
-        return $this->reservationRepository->findWithRelations($entity);
+        return collect($this->reservationRepository->findWithRelations($entity));
     }
 
     /**
@@ -122,7 +124,8 @@ class ReservationService
      */
     private function clearWishCache(Wish $wish, User $user): void
     {
-        $wishListUserId = $wish->wishList->user_id ?? 0;
+        $wishList = $this->wishListRepository->findById($wish->wish_list_id);
+        $wishListUserId = ($wishList instanceof WishList && isset($wishList->user_id)) ? $wishList->user_id : 0;
         $this->cacheManager->clearReservationCache($wish->id, $user->id, $wishListUserId);
     }
 }

@@ -93,7 +93,7 @@
             </div>
             <div class="col-6 mt-2">
                 <div class="p-3 text-center shadow-sm rounded-4 profile-widget" style="background: #fff; color: #222; font-weight: 600; border-radius: 16px;">
-                    <div style="font-size: 1.6rem;"><i class="bi bi-people-fill me-1"></i>{{ isset($friends) ? $friends->count() : 0 }}</div>
+                    <div style="font-size: 1.6rem;"><i class="bi bi-people-fill me-1"></i>{{ isset($friends) ? count($friends) : 0 }}</div>
                     <div style="font-size: 0.98rem; color: #444;">{{ __('messages.friends_count') }}</div>
                 </div>
                 </a>

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Contracts\AchievementRepositoryInterface;
 use App\Services\CacheManagerService;
 
 class UserService
@@ -13,14 +15,21 @@ class UserService
      * Create a new service instance.
      */
     public function __construct(
-        protected CacheManagerService $cacheManager
+        protected CacheManagerService $cacheManager,
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly AchievementRepositoryInterface $achievementRepository
     ) {}
+    
     /**
      * Register a new user and grant first achievement.
      */
     public function registerNewUser(array $data): User
     {
-        $user = User::create($data);
+        $user = $this->userRepository->create($data);
+
+        if (!($user instanceof User)) {
+            throw new \RuntimeException('Failed to create user');
+        }
 
         $this->grantRegistrationAchievement($user);
         
@@ -40,9 +49,6 @@ class UserService
      */
     private function grantRegistrationAchievement(User $user): void
     {
-        $user->achievements()->create([
-            'achievement_key' => 'register',
-            'received_at' => now(),
-        ]);
+        $this->achievementRepository->createForUser($user, 'register');
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Support\MoneyHelper;
+use App\Support\MoneyService;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -188,7 +188,7 @@ class User extends Authenticatable
      */
     public function setCurrencyAttribute(string $currency): void
     {
-        $this->attributes['currency'] = MoneyHelper::isValidCurrency($currency)
+        $this->attributes['currency'] = MoneyService::isValidCurrency($currency)
             ? $currency
             : self::DEFAULT_CURRENCY;
     }
@@ -198,7 +198,7 @@ class User extends Authenticatable
      */
     public static function getSupportedCurrencies(): array
     {
-        return array_keys(MoneyHelper::getSupportedCurrencies());
+        return array_keys(MoneyService::getSupportedCurrencies());
     }
 
     /**
@@ -206,6 +206,6 @@ class User extends Authenticatable
      */
     public static function isCurrencySupported(string $currency): bool
     {
-        return MoneyHelper::isValidCurrency($currency);
+        return MoneyService::isValidCurrency($currency);
     }
 }

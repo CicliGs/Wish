@@ -10,7 +10,7 @@ use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
-class RegisterController extends Controller
+final class RegisterController extends Controller
 {
     /**
      * Create a new controller instance.

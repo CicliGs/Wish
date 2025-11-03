@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace App\DTOs;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
 
 readonly class ProfileDTO implements BaseDTO
 {
     public function __construct(
         public User       $user,
         public array      $stats,
-        public Collection $friends,
-        public Collection $incomingRequests,
-        public Collection $outgoingRequests,
+        public array      $friends,
+        public array      $incomingRequests,
+        public array      $outgoingRequests,
         public array      $achievements,
-        public Collection $wishLists
+        public array      $wishLists
     ) {}
 
     public function toArray(): array
@@ -51,11 +50,11 @@ readonly class ProfileDTO implements BaseDTO
     public static function fromUserWithData(
         User $user,
         array $stats,
-        Collection $friends,
-        Collection $incomingRequests,
-        Collection $outgoingRequests,
+        array $friends,
+        array $incomingRequests,
+        array $outgoingRequests,
         array $achievements,
-        Collection $wishLists
+        array $wishLists
     ): static {
         return new self(
             user: $user,

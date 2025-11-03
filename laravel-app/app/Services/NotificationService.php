@@ -8,16 +8,31 @@ use App\DTOs\NotificationDTO;
 use App\DTOs\NotificationDisplayDTO;
 use App\Models\Notification;
 use App\Models\User;
+use App\Repositories\Contracts\NotificationRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Contracts\WishRepositoryInterface;
+use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Support\Collection;
 
 class NotificationService
 {
+    public function __construct(
+        private readonly NotificationRepositoryInterface $notificationRepository,
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly WishRepositoryInterface $wishRepository,
+        private readonly WishListRepositoryInterface $wishListRepository
+    ) {}
+
     /**
      * Create a notification in the database.
      */
     public function create(NotificationDTO $notificationDTO): Notification
     {
-        return Notification::create($notificationDTO->toArray());
+        $result = $this->notificationRepository->create($notificationDTO->toArray());
+        if (!($result instanceof Notification)) {
+            throw new \RuntimeException('Failed to create notification');
+        }
+        return $result;
     }
 
     /**
@@ -25,13 +40,60 @@ class NotificationService
      */
     public function getUnread(User $user): Collection
     {
-        $notifications = Notification::with(['friend', 'wish.wishList'])
-            ->where('user_id', $user->id)
-            ->where('is_read', false)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $notifications = $this->notificationRepository->findUnreadForUser($user);
 
-        return NotificationDisplayDTO::fromNotificationCollection($notifications);
+        return collect($notifications)->map(function ($notification) {
+            if (!$notification instanceof Notification) {
+                return null;
+            }
+            
+            $friendId = $notification->friend_id ?? null;
+            $friend = $friendId ? $this->userRepository->findById($friendId) : null;
+            
+            $wishId = $notification->wish_id ?? null;
+            $wish = $wishId ? $this->wishRepository->findById($wishId) : null;
+            
+            $wishList = null;
+            $wishListId = null;
+            if ($wish instanceof \App\Models\Wish) {
+                $wishListId = $wish->wish_list_id ?? null;
+                if ($wishListId) {
+                    $wishList = $this->wishListRepository->findById($wishListId);
+                }
+            }
+
+            $isRead = (bool) ($notification->is_read ?? false);
+            $updatedAt = $notification->updated_at;
+            $createdAt = $notification->created_at;
+
+            $wishTitle = __('messages.unknown_wish');
+            if ($wish instanceof \App\Models\Wish && isset($wish->title)) {
+                $wishTitle = $wish->title;
+            }
+
+            $wishListTitle = __('messages.unknown_wishlist');
+            if ($wishList instanceof \App\Models\WishList && isset($wishList->title)) {
+                $wishListTitle = $wishList->title;
+            }
+
+            $friendName = __('messages.unknown_sender');
+            if ($friend instanceof User && isset($friend->name)) {
+                $friendName = $friend->name;
+            }
+
+            return NotificationDisplayDTO::fromData(
+                id: $notification->id,
+                friendId: (int) ($friendId ?? 0),
+                friendName: $friendName,
+                wishId: (int) ($wishId ?? 0),
+                wishTitle: $wishTitle,
+                wishListId: $wishListId ? (int) $wishListId : null,
+                wishListTitle: $wishListTitle,
+                isRead: $isRead,
+                updatedAt: $updatedAt instanceof \DateTimeInterface ? $updatedAt : null,
+                createdAt: $createdAt instanceof \DateTimeInterface ? $createdAt : null
+            );
+        })->filter();
     }
 
     /**
@@ -39,7 +101,7 @@ class NotificationService
      */
     public function markAsRead(Notification $notification): bool
     {
-        $notification->update(['is_read' => true]);
+        $this->notificationRepository->markAsRead($notification);
 
         return true;
     }
@@ -49,9 +111,7 @@ class NotificationService
      */
     public function markAllAsRead(User $user): int
     {
-        return Notification::where('user_id', $user->id)
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+        return $this->notificationRepository->markAllAsReadForUser($user);
     }
 
     /**
@@ -59,9 +119,6 @@ class NotificationService
      */
     public function findUnread(User $user, int $notificationId): ?Notification
     {
-        return Notification::where('id', $notificationId)
-            ->where('user_id', $user->id)
-            ->where('is_read', false)
-            ->first();
+        return $this->notificationRepository->findUnreadByIdForUser($user, $notificationId);
     }
 }

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
-use App\Models\Notification;
-use Illuminate\Support\Collection;
-
 readonly class NotificationDisplayDTO implements BaseDTO
 {
     public function __construct(
@@ -48,37 +45,32 @@ readonly class NotificationDisplayDTO implements BaseDTO
         );
     }
 
-    /**
-     * Create a collection DTO from model notification
-     */
-    public static function fromNotification(Notification $notification): static
-    {
-        $friendId = $notification->getAttribute('friend_id');
-        $isRead = $notification->getAttribute('is_read');
-        $updatedAt = $notification->getAttribute('updated_at');
-        $createdAt = $notification->getAttribute('created_at');
 
+    /**
+     * Create DTO from data loaded through repositories.
+     */
+    public static function fromData(
+        int $id,
+        int $friendId,
+        string $friendName,
+        int $wishId,
+        string $wishTitle,
+        ?int $wishListId,
+        string $wishListTitle,
+        bool $isRead,
+        ?\DateTimeInterface $updatedAt,
+        ?\DateTimeInterface $createdAt
+    ): static {
         return new self(
-            id: $notification->id,
-            senderName: $notification->friend->name ?? __('messages.unknown_sender'),
-            senderId: $friendId ?? 0,
-            wishTitle: $notification->wish->title ?? __('messages.unknown_wish'),
-            wishListId: $notification->wish?->wish_list_id,
-            wishListTitle: $notification->wish->wishList->title ?? __('messages.unknown_wishlist'),
+            id: $id,
+            senderName: $friendName,
+            senderId: $friendId,
+            wishTitle: $wishTitle,
+            wishListId: $wishListId,
+            wishListTitle: $wishListTitle,
             readAt: $isRead && $updatedAt ? $updatedAt->format('c') : null,
             createdAt: $createdAt ? $createdAt->format('c') : now()->format('c')
         );
     }
 
-    /**
-     * Create a collection DTO
-     *
-     * @param \Illuminate\Database\Eloquent\Collection<int, Notification> $notifications
-     *
-     * @return Collection<int, static>
-     */
-    public static function fromNotificationCollection(\Illuminate\Database\Eloquent\Collection $notifications): Collection
-    {
-        return $notifications->map(fn(Notification $notification) => self::fromNotification($notification));
-    }
 }

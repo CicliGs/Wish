@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use Psr\Log\LoggerInterface;
 
 /**
  * Core cache service for application data caching
@@ -25,7 +26,8 @@ class CacheService
     public function __construct(
         private readonly CacheRepository $cache,
         private readonly CacheFactory $cacheFactory,
-        private readonly ConfigRepository $config
+        private readonly ConfigRepository $config,
+        private readonly LoggerInterface $logger
     ) {}
     private const CACHE_KEYS_TTL = 86400;
     private const CACHE_KEYS_STORAGE = 'cache_keys';
@@ -61,7 +63,7 @@ class CacheService
             }
             
             return true;
-        }, 'Failed to clear all cache');
+        }, 'Failed to clear all cache', [], $this->logger);
     }
 
     /**
@@ -75,7 +77,7 @@ class CacheService
             $this->removeCacheKeys($keys);
 
             return true;
-        }, "Failed to clear cache for type: {$type->value}");
+        }, "Failed to clear cache for type: {$type->value}", [], $this->logger);
     }
 
     /**
@@ -88,7 +90,7 @@ class CacheService
             $this->removeCacheKeys($userKeys);
 
             return true;
-        }, "Failed to clear cache for user: $userId");
+        }, "Failed to clear cache for user: $userId", [], $this->logger);
     }
 
     /**
@@ -105,7 +107,7 @@ class CacheService
                 'ttl_settings' => $this->buildTtlSettings(),
                 'description' => 'Caching static page elements for performance',
             ];
-        }, 'Failed to get cache stats') ?? [];
+        }, 'Failed to get cache stats', [], $this->logger) ?? [];
     }
 
     /**
@@ -119,7 +121,7 @@ class CacheService
         }, 'Failed to check cache existence', [
             'type' => $type->value,
             'key' => $key
-        ]) ?? false;
+        ], $this->logger) ?? false;
     }
 
     /**
@@ -138,7 +140,7 @@ class CacheService
         }, 'Failed to get cache TTL', [
             'type' => $type->value,
             'key' => $key
-        ]);
+        ], $this->logger);
     }
 
     /**
@@ -157,7 +159,7 @@ class CacheService
         }, "Failed to cache {$type->value}", [
             'key' => $key,
             'type' => $type->value
-        ]) ?? false;
+        ], $this->logger) ?? false;
     }
 
     /**
@@ -170,7 +172,7 @@ class CacheService
         }, "Failed to get {$type->value}", [
             'key' => $key,
             'type' => $type->value
-        ]);
+        ], $this->logger);
     }
 
     /**
@@ -206,7 +208,7 @@ class CacheService
                 $keys[] = $cacheKey;
                 $this->cache->put(self::CACHE_KEYS_STORAGE, $keys, self::CACHE_KEYS_TTL);
             }
-        }, 'Failed to track cache key', ['key' => $cacheKey]);
+        }, 'Failed to track cache key', ['key' => $cacheKey], $this->logger);
     }
 
     /**
@@ -217,7 +219,7 @@ class CacheService
         return $this->withErrorHandling(function () use ($pattern) {
             $keys = $this->cache->get(self::CACHE_KEYS_STORAGE, []);
             return array_filter($keys, fn($key) => fnmatch($pattern, $key));
-        }, 'Failed to get cache keys by pattern', ['pattern' => $pattern]) ?? [];
+        }, 'Failed to get cache keys by pattern', ['pattern' => $pattern], $this->logger) ?? [];
     }
 
     /**
@@ -235,7 +237,7 @@ class CacheService
                        str_contains($key, "user_profile_$userId") ||
                        (str_contains($key, "wishes_list_") && str_contains($key, "_user_$userId"));
             });
-        }, 'Failed to get user cache keys', ['user_id' => $userId]) ?? [];
+        }, 'Failed to get user cache keys', ['user_id' => $userId], $this->logger) ?? [];
     }
 
     /**

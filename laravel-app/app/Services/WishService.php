@@ -11,13 +11,10 @@ use App\Models\WishList;
 use App\Models\User;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use App\Repositories\Contracts\WishListRepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 
 class WishService
 {
-    private const STORAGE_PATH = 'wishes';
 
     /**
      * Create a new service instance.
@@ -33,20 +30,23 @@ class WishService
      */
     public function findWishes(WishList $wishList): Collection
     {
-        return $this->wishRepository->findByWishList($wishList);
+        return collect($this->wishRepository->findByWishList($wishList));
     }
 
     /**
      * Create a new wish.
      */
-    public function create(array $wishData, WishList $wishList, User $user, ?UploadedFile $imageFile = null): Model
+    public function create(array $wishData, WishList $wishList, User $user, ?string $imagePath = null): Wish
     {
-        if ($imageFile) {
-            $wishData['image'] = $this->uploadImage($imageFile);
+        if ($imagePath) {
+            $wishData['image'] = $imagePath;
         }
 
         $wishData['wish_list_id'] = $wishList->id;
         $wish = $this->wishRepository->create($wishData);
+        if (!$wish instanceof Wish) {
+            throw new \RuntimeException('Failed to create wish');
+        }
 
         $this->cacheManager->clearWishListCache($wishList->id, $user->id);
 
@@ -56,13 +56,16 @@ class WishService
     /**
      * Update an existing wish.
      */
-    public function update(Wish $wish, array $wishData, User $user): Model
+    public function update(Wish $wish, array $wishData, User $user): Wish
     {
-        $wish = $this->wishRepository->update($wish, $wishData);
+        $updatedWish = $this->wishRepository->update($wish, $wishData);
+        if (!$updatedWish instanceof Wish) {
+            throw new \RuntimeException('Failed to update wish');
+        }
 
-        $this->cacheManager->clearWishCache($wish->wish_list_id, $user->id);
+        $this->cacheManager->clearWishCache($updatedWish->wish_list_id, $user->id);
 
-        return $wish;
+        return $updatedWish;
     }
 
     /**
@@ -130,7 +133,7 @@ class WishService
         $wishes = $this->findWishes($wishList);
         $stats = $this->getStatistics($wishList);
 
-        $dto = WishDTO::fromWishListData($wishList, $wishes, $user->id, $stats);
+        $dto = WishDTO::fromWishListData($wishList, $wishes->all(), $user->id, $stats);
 
         $this->cacheManager->cacheService->cacheStaticContent($cacheKey, serialize($dto), 1800);
 
@@ -144,22 +147,13 @@ class WishService
     {
         $wishes = match ($filter) {
             'available' => $this->wishRepository->findAvailableInWishList($wishList),
-            'reserved' => $this->wishRepository->findReservedByUser($user)->where('wish_list_id', $wishList->id),
-            default => $this->findWishes($wishList)
+            'reserved' => $this->wishRepository->findReservedByUserInWishList($user, $wishList),
+            default => $this->findWishes($wishList)->all()
         };
 
         $stats = $this->getStatistics($wishList);
 
         return WishDTO::fromWishListData($wishList, $wishes, $user->id, $stats);
-    }
-
-    /**
-     * Handle image upload.
-     */
-    private function uploadImage(UploadedFile $file): string
-    {
-        $path = $file->store(self::STORAGE_PATH, 'public');
-        return '/storage/' . $path;
     }
 
 }

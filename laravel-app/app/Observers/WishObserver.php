@@ -5,16 +5,22 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\DTOs\NotificationDTO;
-use App\Jobs\ProcessNotificationJob;
 use App\Models\Wish;
+use App\Models\WishList;
+use App\Models\User;
 use App\Services\FriendService;
+use App\Services\NotificationJobDispatcher;
+use App\Repositories\Contracts\WishListRepositoryInterface;
 use Exception;
-use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
 
 readonly class WishObserver
 {
     public function __construct(
-        private FriendService $friendService
+        private FriendService $friendService,
+        private NotificationJobDispatcher $jobDispatcher,
+        private WishListRepositoryInterface $wishListRepository,
+        private LoggerInterface $logger
     ) {}
 
     /**
@@ -25,7 +31,7 @@ readonly class WishObserver
         try {
             $this->notifyFriendsAboutNewWish($wish);
         } catch (Exception $e) {
-            Log::error('WishObserver: Error in created method', [
+            $this->logger->error('WishObserver: Error in created method', [
                 'wish_id' => $wish->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -39,15 +45,15 @@ readonly class WishObserver
     private function notifyFriendsAboutNewWish(Wish $wish): void
     {
         try {
-            $wishList = $wish->wishList;
-            if (!$wishList) {
-                Log::warning('WishObserver: WishList not found for wish', ['wish_id' => $wish->id]);
+            $wishList = $this->wishListRepository->findById($wish->wish_list_id);
+            if (!$wishList || !($wishList instanceof WishList)) {
+                $this->logger->warning('WishObserver: WishList not found for wish', ['wish_id' => $wish->id]);
                 return;
             }
 
-            $user = $wishList->user;
-            if (!$user) {
-                Log::warning('WishObserver: User not found for wishList', [
+            $user = $this->wishListRepository->findUserForWishList($wishList);
+            if (!$user || !($user instanceof User)) {
+                $this->logger->warning('WishObserver: User not found for wishList', [
                     'wish_id' => $wish->id,
                     'wish_list_id' => $wishList->id
                 ]);
@@ -59,19 +65,26 @@ readonly class WishObserver
                 return;
             }
 
+            /** @var User $friend */
             foreach ($friends as $friend) {
+                $message = __('messages.friend_added_new_wish', [
+                    'friendName' => $user->name,
+                    'wishTitle' => $wish->title
+                ]);
+
                 $notificationDTO = NotificationDTO::forNewWish(
                     userId: $friend->id,
                     friendId: $user->id,
                     wishId: $wish->id,
                     friendName: $user->name,
-                    wishTitle: $wish->title
+                    wishTitle: $wish->title,
+                    message: $message
                 );
 
-                ProcessNotificationJob::dispatch($notificationDTO);
+                $this->jobDispatcher->dispatch($notificationDTO);
             }
         } catch (Exception $e) {
-            Log::error('WishObserver: Error in notifyFriendsAboutNewWish', [
+            $this->logger->error('WishObserver: Error in notifyFriendsAboutNewWish', [
                 'wish_id' => $wish->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()

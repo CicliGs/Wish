@@ -11,35 +11,35 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use Psr\Log\LoggerInterface;
+use Illuminate\Contracts\Container\Container;
 
 class ProcessNotificationJob implements ShouldQueue
 {
     use Queueable, InteractsWithQueue, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(
         private readonly NotificationDTO $notificationDTO
-    ) {
-        $this->configureJob();
-    }
+    ) {}
 
     /**
      * Execute the job.
      *
      * @throws Exception
      */
-    public function handle(NotificationService $notificationService): void
-    {
-        $this->logJobStart();
+    public function handle(
+        NotificationService $notificationService,
+        LoggerInterface $logger,
+        ConfigRepository $config
+    ): void {
+        $this->logJobStart($logger, $config);
 
         try {
             $notification = $notificationService->create($this->notificationDTO);
-            $this->logJobSuccess($notification->id);
+            $this->logJobSuccess($notification->id, $logger, $config);
         } catch (Exception $e) {
-            $this->logJobError($e);
+            $this->logJobError($e, $logger, $config);
             throw $e;
         }
     }
@@ -47,32 +47,23 @@ class ProcessNotificationJob implements ShouldQueue
     /**
      * Handle a job failure.
      */
-    public function failed(Exception $exception): void
+    public function failed(Exception $exception, Container $container): void
     {
-        $this->logJobFailure($exception);
-    }
-
-    /**
-     * Configure job settings
-     */
-    private function configureJob(): void
-    {
-        $config = config('notifications.queue');
-
-        $this->onQueue($config['name']);
-        $this->onConnection($config['connection']);
+        $logger = $container->make(LoggerInterface::class);
+        $config = $container->make(ConfigRepository::class);
+        $this->logJobFailure($exception, $logger, $config);
     }
 
     /**
      * Log job start
      */
-    private function logJobStart(): void
+    private function logJobStart(LoggerInterface $logger, ConfigRepository $config): void
     {
-        if (!$this->shouldLog()) {
+        if (!$this->shouldLog($config)) {
             return;
         }
 
-        Log::info('ProcessNotificationJob: Processing notification job', $this->getLogContext([
+        $logger->info('ProcessNotificationJob: Processing notification job', $this->getLogContext($config, [
             'user_id' => $this->notificationDTO->userId,
             'friend_id' => $this->notificationDTO->friendId,
             'wish_id' => $this->notificationDTO->wishId,
@@ -82,9 +73,9 @@ class ProcessNotificationJob implements ShouldQueue
     /**
      * Log successful job completion
      */
-    private function logJobSuccess(int $notificationId): void
+    private function logJobSuccess(int $notificationId, LoggerInterface $logger, ConfigRepository $config): void
     {
-        if (!$this->shouldLog()) {
+        if (!$this->shouldLog($config)) {
             return;
         }
     }
@@ -92,62 +83,62 @@ class ProcessNotificationJob implements ShouldQueue
     /**
      * Log job error
      */
-    private function logJobError(Exception $exception): void
+    private function logJobError(Exception $exception, LoggerInterface $logger, ConfigRepository $config): void
     {
-        if (!$this->shouldLog()) {
+        if (!$this->shouldLog($config)) {
             return;
         }
 
-        Log::error('ProcessNotificationJob: Failed to process notification job', $this->getLogContext([
+        $logger->error('ProcessNotificationJob: Failed to process notification job', $this->getLogContext($config, [
             'error' => $exception->getMessage(),
             'notification_data' => $this->notificationDTO->toArray(),
-            'trace' => $this->shouldIncludeTrace() ? $exception->getTraceAsString() : null,
+            'trace' => $this->shouldIncludeTrace($config) ? $exception->getTraceAsString() : null,
         ]));
     }
 
     /**
      * Log permanent job failure
      */
-    private function logJobFailure(Exception $exception): void
+    private function logJobFailure(Exception $exception, LoggerInterface $logger, ConfigRepository $config): void
     {
-        if (!$this->shouldLog()) {
+        if (!$this->shouldLog($config)) {
             return;
         }
 
-        Log::error('ProcessNotificationJob: Failed permanently', $this->getLogContext([
+        $logger->error('ProcessNotificationJob: Failed permanently', $this->getLogContext($config, [
             'error' => $exception->getMessage(),
             'notification_data' => $this->notificationDTO->toArray(),
-            'trace' => $this->shouldIncludeTrace() ? $exception->getTraceAsString() : null,
+            'trace' => $this->shouldIncludeTrace($config) ? $exception->getTraceAsString() : null,
         ]));
     }
 
     /**
      * Check if logging is enabled
      */
-    private function shouldLog(): bool
+    private function shouldLog(ConfigRepository $config): bool
     {
-        return config('notifications.logging.enabled', true);
+        return $config->get('notifications.logging.enabled', true);
     }
 
     /**
      * Check if trace should be included in logs
      */
-    private function shouldIncludeTrace(): bool
+    private function shouldIncludeTrace(ConfigRepository $config): bool
     {
-        return config('notifications.logging.include_trace', false);
+        return $config->get('notifications.logging.include_trace', false);
     }
 
     /**
      * Get log context with common fields
      */
-    private function getLogContext(array $additionalData = []): array
+    private function getLogContext(ConfigRepository $config, array $additionalData = []): array
     {
         $context = [
             'attempt' => $this->attempts(),
             'job_id' => $this->job?->getJobId(),
         ];
 
-        if (config('notifications.logging.context.include_notification_data', true)) {
+        if ($config->get('notifications.logging.context.include_notification_data', true)) {
             $context['notification_data'] = $this->notificationDTO->toArray();
         }
 

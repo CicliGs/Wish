@@ -8,17 +8,23 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\View\View;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Services\ProfileService;
 use App\Services\FriendService;
 use App\Models\User;
 
-class ProfileController extends Controller
+final class ProfileController extends Controller
 {
     use AuthorizesRequests;
 
-    public function __construct(private readonly Guard $auth) {}
+    private const AVATAR_STORAGE_PATH = 'avatars';
+
+    public function __construct(
+        private readonly Guard $auth,
+        private readonly FilesystemFactory $filesystem
+    ) {}
 
     /**
      * Display current user profile
@@ -106,9 +112,26 @@ class ProfileController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
-            $profileService->updateAvatar($user, $request->file('avatar'));
+            $avatarPath = $this->uploadAvatar($request);
+            $profileService->updateAvatar($user, $avatarPath);
         }
 
         return redirect()->route('profile')->with('success', __('messages.profile_updated'));
+    }
+
+    /**
+     * Upload avatar file and return its public path.
+     */
+    private function uploadAvatar(UpdateProfileRequest $request): string
+    {
+        $file = $request->file('avatar');
+        $storage = $this->filesystem->disk('public');
+        $path = $storage->putFile(self::AVATAR_STORAGE_PATH, $file);
+        
+        if ($path === false) {
+            throw new \RuntimeException('Failed to upload avatar');
+        }
+        
+        return $storage->url($path);
     }
 }

@@ -4,12 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
-use App\Models\Reservation;
-use App\Models\User;
-use App\Models\Wish;
-use App\Models\WishList;
 use App\DTOs\ReservationStatisticsDTO;
-use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Reservation repository interface
@@ -19,45 +14,53 @@ interface ReservationRepositoryInterface extends BaseRepositoryInterface
     /**
      * Find reservation by wish and user
      */
-    public function findByWishAndUser(Wish $wish, User $user): ?Reservation;
+    public function findByWishAndUser(object $wish, object $user): ?object;
 
     /**
      * Find reservations by user
+     * 
+     * @return array<object>
      */
-    public function findByUser(User $user): Collection;
+    public function findByUser(object $user): array;
 
     /**
      * Find reservations by wish list
+     * 
+     * @return array<object>
      */
-    public function findByWishList(WishList $wishList): Collection;
+    public function findByWishList(object $wishList): array;
 
     /**
      * Find reservations by wish
+     * 
+     * @return array<object>
      */
-    public function findByWish(Wish $wish): Collection;
+    public function findByWish(object $wish): array;
 
     /**
      * Find reservations with related data
+     * 
+     * @return array<object>
      */
-    public function findWithRelations(User|WishList $entity): Collection;
+    public function findWithRelations(object $entity): array;
 
     /**
      * Get reservation statistics
      */
-    public function getStatistics(User|WishList $entity): ReservationStatisticsDTO;
+    public function getStatistics(object $entity): ReservationStatisticsDTO;
 
     /**
      * Check if wish is reserved by user
      */
-    public function isReservedByUser(Wish $wish, User $user): bool;
+    public function isReservedByUser(object $wish, object $user): bool;
 
     /**
      * Count reservations for user
      */
-    public function countByUser(User $user): int;
+    public function countByUser(object $user): int;
 
     /**
      * Count reservations for wish list
      */
-    public function countByWishList(WishList $wishList): int;
+    public function countByWishList(object $wishList): int;
 }
