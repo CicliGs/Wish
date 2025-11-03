@@ -9,8 +9,9 @@ use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Routing\Controller as BaseController;
 
-final class NotificationController extends Controller
+final class NotificationController extends BaseController
 {
     /**
      * Create a new controller instance.

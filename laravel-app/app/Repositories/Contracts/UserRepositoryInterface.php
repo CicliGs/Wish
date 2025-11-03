@@ -6,9 +6,6 @@ namespace App\Repositories\Contracts;
 
 use App\DTOs\UserStatisticsDTO;
 
-/**
- * User repository interface
- */
 interface UserRepositoryInterface extends BaseRepositoryInterface
 {
     /**
@@ -18,21 +15,21 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Find users by name pattern
-     * 
+     *
      * @return array<object>
      */
     public function findByName(string $name): array;
 
     /**
      * Find friends of user
-     * 
+     *
      * @return array<object>
      */
     public function findFriends(object $user): array;
 
     /**
      * Find users who are friends with given user
-     * 
+     *
      * @return array<object>
      */
     public function findFriendsOf(object $user): array;
@@ -49,7 +46,7 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Search users by name or email, excluding current user
-     * 
+     *
      * @return array<object>
      */
     public function searchByNameOrEmail(string $searchTerm, int $excludeUserId, int $limit = 10): array;

@@ -6,21 +6,18 @@ namespace App\Repositories\Contracts;
 
 use App\DTOs\WishListStatisticsDTO;
 
-/**
- * WishList repository interface
- */
 interface WishListRepositoryInterface extends BaseRepositoryInterface
 {
     /**
      * Find wish lists by user
-     * 
+     *
      * @return array<object>
      */
     public function findByUser(object $user): array;
 
     /**
      * Find wish lists by user ID
-     * 
+     *
      * @return array<object>
      */
     public function findByUserId(int $userId): array;
@@ -32,14 +29,14 @@ interface WishListRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Find public wish lists
-     * 
+     *
      * @return array<object>
      */
     public function findPublic(): array;
 
     /**
      * Find wish lists with wishes count
-     * 
+     *
      * @return array<object>
      */
     public function findWithWishesCount(object $user): array;

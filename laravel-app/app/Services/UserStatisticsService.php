@@ -9,12 +9,12 @@ use App\Repositories\Contracts\FriendRequestRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 
-class UserStatisticsService
+readonly class UserStatisticsService
 {
     public function __construct(
-        private readonly FriendRequestRepositoryInterface $friendRequestRepository,
-        private readonly WishRepositoryInterface $wishRepository,
-        private readonly ReservationRepositoryInterface $reservationRepository
+        private FriendRequestRepositoryInterface $friendRequestRepository,
+        private WishRepositoryInterface          $wishRepository,
+        private ReservationRepositoryInterface   $reservationRepository
     ) {}
 
     /**

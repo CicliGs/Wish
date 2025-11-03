@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\Auth\Guard;
@@ -14,8 +13,11 @@ use App\Http\Requests\UpdateProfileRequest;
 use App\Services\ProfileService;
 use App\Services\FriendService;
 use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Routing\Controller as BaseController;
+use RuntimeException;
 
-final class ProfileController extends Controller
+final class ProfileController extends BaseController
 {
     use AuthorizesRequests;
 
@@ -53,11 +55,11 @@ final class ProfileController extends Controller
     {
         $friendService->sendRequest($this->auth->user(), $user);
         $message = __('messages.friend_request_sent');
-        
+
         if (request()->wantsJson()) {
             return response()->json(['message' => $message]);
         }
-        
+
         return back()->with('success', $message);
     }
 
@@ -104,7 +106,7 @@ final class ProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request, ProfileService $profileService): RedirectResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = $this->auth->user();
 
         if ($request->has('name') && $request->name !== $user->name) {
@@ -127,11 +129,11 @@ final class ProfileController extends Controller
         $file = $request->file('avatar');
         $storage = $this->filesystem->disk('public');
         $path = $storage->putFile(self::AVATAR_STORAGE_PATH, $file);
-        
+
         if ($path === false) {
-            throw new \RuntimeException('Failed to upload avatar');
+            throw new RuntimeException('Failed to upload avatar');
         }
-        
+
         return $storage->url($path);
     }
 }

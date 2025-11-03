@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\AchievementRepositoryInterface;
-use App\Services\CacheManagerService;
 
 class UserService
 {
@@ -19,7 +18,7 @@ class UserService
         private readonly UserRepositoryInterface $userRepository,
         private readonly AchievementRepositoryInterface $achievementRepository
     ) {}
-    
+
     /**
      * Register a new user and grant first achievement.
      */
@@ -32,7 +31,7 @@ class UserService
         }
 
         $this->grantRegistrationAchievement($user);
-        
+
         return $user;
     }
 

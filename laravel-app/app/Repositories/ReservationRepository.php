@@ -11,11 +11,12 @@ use App\Models\WishList;
 use App\DTOs\ReservationStatisticsDTO;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
+use InvalidArgumentException;
 
 /**
  * Reservation repository implementation
  */
-class ReservationRepository extends BaseRepository implements ReservationRepositoryInterface
+final class ReservationRepository extends BaseRepository implements ReservationRepositoryInterface
 {
     /**
      * Create a new repository instance
@@ -33,11 +34,12 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
     public function findByWishAndUser(object $wish, object $user): ?object
     {
         if (!$wish instanceof Wish) {
-            throw new \InvalidArgumentException('Wish must be an instance of ' . Wish::class);
+            throw new InvalidArgumentException('Wish must be an instance of ' . Wish::class);
         }
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
+
         return $this->model->where('wish_id', $wish->id)
             ->where('user_id', $user->id)
             ->first();
@@ -45,13 +47,15 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
 
     /**
      * Find reservations by user
+     *
      * @return array<object>
      */
     public function findByUser(object $user): array
     {
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
+
         return $this->model->where('user_id', $user->id)
             ->with(['wish.wishList', 'wish.wishList.user'])
             ->get()
@@ -60,13 +64,15 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
 
     /**
      * Find reservations by wish list
+     *
      * @return array<object>
      */
     public function findByWishList(object $wishList): array
     {
         if (!$wishList instanceof WishList) {
-            throw new \InvalidArgumentException('WishList must be an instance of ' . WishList::class);
+            throw new InvalidArgumentException('WishList must be an instance of ' . WishList::class);
         }
+
         return $this->model->whereHas('wish', function ($query) use ($wishList) {
             $query->where('wish_list_id', $wishList->id);
         })->with(['wish', 'user'])->get()->all();
@@ -74,13 +80,15 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
 
     /**
      * Find reservations by wish
+     *
      * @return array<object>
      */
     public function findByWish(object $wish): array
     {
         if (!$wish instanceof Wish) {
-            throw new \InvalidArgumentException('Wish must be an instance of ' . Wish::class);
+            throw new InvalidArgumentException('Wish must be an instance of ' . Wish::class);
         }
+
         return $this->model->where('wish_id', $wish->id)
             ->with('user')
             ->get()
@@ -89,6 +97,7 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
 
     /**
      * Find reservations with related data
+     *
      * @return array<object>
      */
     public function findWithRelations(object $entity): array
@@ -98,10 +107,10 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
         }
 
         if ($entity instanceof WishList) {
-        return $this->findByWishList($entity);
+            return $this->findByWishList($entity);
         }
 
-        throw new \InvalidArgumentException('Entity must be an instance of ' . User::class . ' or ' . WishList::class);
+        throw new InvalidArgumentException('Entity must be an instance of ' . User::class . ' or ' . WishList::class);
     }
 
     /**
@@ -111,7 +120,7 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
     {
         if ($entity instanceof User) {
             $reservations = $this->findByUser($entity);
-            
+
             $totalValue = 0;
             foreach ($reservations as $reservation) {
                 if (!$reservation instanceof Reservation) {
@@ -129,10 +138,10 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
                     }
                 }
             }
-            
+
             $totalReservations = count($reservations);
             $averagePrice = $totalReservations > 0 ? $totalValue / $totalReservations : 0.0;
-            
+
             return new ReservationStatisticsDTO(
                 totalReservations: $totalReservations,
                 totalValue: $totalValue,
@@ -141,8 +150,8 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
         }
 
         if ($entity instanceof WishList) {
-        $reservations = $this->findByWishList($entity);
-            
+            $reservations = $this->findByWishList($entity);
+
             $totalValue = 0;
             $userIds = [];
             foreach ($reservations as $reservation) {
@@ -150,18 +159,18 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
                     continue;
                 }
                 $wish = $this->wishRepository->findById($reservation->wish_id);
-                if ($wish instanceof \App\Models\Wish && isset($wish->price)) {
+                if ($wish instanceof Wish && isset($wish->price)) {
                     $totalValue += (float) $wish->price;
                 }
                 if (isset($reservation->user_id)) {
                     $userIds[] = $reservation->user_id;
                 }
             }
-            
+
             $totalReservations = count($reservations);
             $averagePrice = $totalReservations > 0 ? $totalValue / $totalReservations : 0.0;
-            
-        return new ReservationStatisticsDTO(
+
+            return new ReservationStatisticsDTO(
                 totalReservations: $totalReservations,
                 totalValue: $totalValue,
                 averagePrice: $averagePrice,
@@ -169,7 +178,7 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
             );
         }
 
-        throw new \InvalidArgumentException('Entity must be an instance of ' . User::class . ' or ' . WishList::class);
+        throw new InvalidArgumentException('Entity must be an instance of ' . User::class . ' or ' . WishList::class);
     }
 
     /**
@@ -178,11 +187,12 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
     public function isReservedByUser(object $wish, object $user): bool
     {
         if (!$wish instanceof Wish) {
-            throw new \InvalidArgumentException('Wish must be an instance of ' . Wish::class);
+            throw new InvalidArgumentException('Wish must be an instance of ' . Wish::class);
         }
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
+
         return $this->model->where('wish_id', $wish->id)
             ->where('user_id', $user->id)
             ->exists();
@@ -194,8 +204,9 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
     public function countByUser(object $user): int
     {
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
+
         return $this->model->where('user_id', $user->id)->count();
     }
 
@@ -205,8 +216,9 @@ class ReservationRepository extends BaseRepository implements ReservationReposit
     public function countByWishList(object $wishList): int
     {
         if (!$wishList instanceof WishList) {
-            throw new \InvalidArgumentException('WishList must be an instance of ' . WishList::class);
+            throw new InvalidArgumentException('WishList must be an instance of ' . WishList::class);
         }
+
         return $this->model->whereHas('wish', function ($query) use ($wishList) {
             $query->where('wish_list_id', $wishList->id);
         })->count();

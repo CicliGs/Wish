@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
+use DateTimeInterface;
+
 readonly class NotificationDisplayDTO implements BaseDTO
 {
     public function __construct(
@@ -50,16 +52,16 @@ readonly class NotificationDisplayDTO implements BaseDTO
      * Create DTO from data loaded through repositories.
      */
     public static function fromData(
-        int $id,
-        int $friendId,
-        string $friendName,
-        int $wishId,
-        string $wishTitle,
-        ?int $wishListId,
-        string $wishListTitle,
-        bool $isRead,
-        ?\DateTimeInterface $updatedAt,
-        ?\DateTimeInterface $createdAt
+        int                $id,
+        int                $friendId,
+        string             $friendName,
+        int                $wishId,
+        string             $wishTitle,
+        ?int               $wishListId,
+        string             $wishListTitle,
+        bool               $isRead,
+        ?DateTimeInterface $updatedAt,
+        ?DateTimeInterface $createdAt
     ): static {
         return new self(
             id: $id,

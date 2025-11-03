@@ -12,7 +12,7 @@
                 <svg fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ __('messages.back') }}
             </a>
-            @if($wishes->isEmpty())
+            @if(empty($wishes))
                 <div class="empty-state">
                     <div class="empty-state-icon">
                         <i class="bi bi-gift"></i>

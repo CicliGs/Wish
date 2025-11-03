@@ -6,14 +6,17 @@ namespace App\Repositories;
 
 use App\Models\User;
 use App\DTOs\UserStatisticsDTO;
+use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Contracts\Container\Container;
+use InvalidArgumentException;
 
 /**
  * User repository implementation
  */
-class UserRepository extends BaseRepository implements UserRepositoryInterface
+final class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
     /**
      * Create a new repository instance
@@ -36,6 +39,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     /**
      * Find users by name pattern
+     *
      * @return array<object>
      */
     public function findByName(string $name): array
@@ -45,13 +49,15 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     /**
      * Find friends of user
+     *
      * @return array<object>
      */
     public function findFriends(object $user): array
     {
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
+
         return $this->model
             ->join('friends', function ($join) use ($user) {
                 $join->on('users.id', '=', 'friends.friend_id')
@@ -64,13 +70,15 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     /**
      * Find users who are friends with given user
+     *
      * @return array<object>
      */
     public function findFriendsOf(object $user): array
     {
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
+
         return $this->model
             ->join('friends', function ($join) use ($user) {
                 $join->on('users.id', '=', 'friends.user_id')
@@ -87,8 +95,9 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function areFriends(object $user1, object $user2): bool
     {
         if (!$user1 instanceof User || !$user2 instanceof User) {
-            throw new \InvalidArgumentException('Users must be instances of ' . User::class);
+            throw new InvalidArgumentException('Users must be instances of ' . User::class);
         }
+
         return $this->db->table('friends')
             ->where(function ($query) use ($user1, $user2) {
                 $query->where('user_id', $user1->id)
@@ -107,16 +116,15 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function getStatistics(object $user): UserStatisticsDTO
     {
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
-        
-        // Use lazy resolution to avoid circular dependency
-        $wishListRepository = $this->container->make(\App\Repositories\Contracts\WishListRepositoryInterface::class);
-        $reservationRepository = $this->container->make(\App\Repositories\Contracts\ReservationRepositoryInterface::class);
-        
+
+        $wishListRepository = $this->container->make(WishListRepositoryInterface::class);
+        $reservationRepository = $this->container->make(ReservationRepositoryInterface::class);
+
         $wishListStats = $wishListRepository->getStatistics($user);
         $totalReservations = $reservationRepository->countByUser($user);
-        
+
         return new UserStatisticsDTO(
             totalWishLists: $wishListStats->totalWishLists,
             totalWishes: $wishListStats->totalWishes,
@@ -127,6 +135,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     /**
      * Search users by name or email, excluding current user
+     *
      * @return array<object>
      */
     public function searchByNameOrEmail(string $searchTerm, int $excludeUserId, int $limit = 10): array

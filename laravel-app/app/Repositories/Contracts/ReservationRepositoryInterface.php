@@ -6,9 +6,6 @@ namespace App\Repositories\Contracts;
 
 use App\DTOs\ReservationStatisticsDTO;
 
-/**
- * Reservation repository interface
- */
 interface ReservationRepositoryInterface extends BaseRepositoryInterface
 {
     /**
@@ -18,28 +15,28 @@ interface ReservationRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Find reservations by user
-     * 
+     *
      * @return array<object>
      */
     public function findByUser(object $user): array;
 
     /**
      * Find reservations by wish list
-     * 
+     *
      * @return array<object>
      */
     public function findByWishList(object $wishList): array;
 
     /**
      * Find reservations by wish
-     * 
+     *
      * @return array<object>
      */
     public function findByWish(object $wish): array;
 
     /**
      * Find reservations with related data
-     * 
+     *
      * @return array<object>
      */
     public function findWithRelations(object $entity): array;

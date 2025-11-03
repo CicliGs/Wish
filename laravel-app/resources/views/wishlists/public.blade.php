@@ -15,7 +15,7 @@
                 <p class="text-center mb-4 text-muted">{{ $wishList->description }}</p>
             @endif
             
-            @if($wishes->isEmpty())
+            @if(empty($wishes))
                 <div class="empty-state">
                     <div class="empty-state-icon">
                         <i class="bi bi-gift"></i>

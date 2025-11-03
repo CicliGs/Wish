@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 
 /**
  * Base repository implementation providing common CRUD operations
@@ -35,6 +36,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
 
     /**
      * Find all models
+     *
      * @return array<object>
      */
     public function findAll(): array
@@ -56,9 +58,10 @@ abstract class BaseRepository implements BaseRepositoryInterface
     public function update(object $model, array $data): object
     {
         if (!$model instanceof Model) {
-            throw new \InvalidArgumentException('Model must be an instance of ' . Model::class);
+            throw new InvalidArgumentException('Model must be an instance of ' . Model::class);
         }
         $model->update($data);
+
         return $model->fresh();
     }
 
@@ -68,13 +71,15 @@ abstract class BaseRepository implements BaseRepositoryInterface
     public function delete(object $model): bool
     {
         if (!$model instanceof Model) {
-            throw new \InvalidArgumentException('Model must be an instance of ' . Model::class);
+            throw new InvalidArgumentException('Model must be an instance of ' . Model::class);
         }
+
         return $model->delete();
     }
 
     /**
      * Find models by criteria
+     *
      * @return array<object>
      */
     public function findBy(array $criteria): array

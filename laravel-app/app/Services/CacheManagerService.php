@@ -12,10 +12,6 @@ use App\Models\WishList;
 use App\Repositories\Contracts\WishListRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
-/**
- * Centralized cache management service
- * Coordinates cache clearing between different services
- */
 class CacheManagerService
 {
     use ErrorHandlingTrait;

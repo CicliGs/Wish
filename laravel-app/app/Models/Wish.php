@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Observers\WishObserver;
-use App\Support\MoneyService;
+use App\Support\MoneyHelper;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -112,7 +112,7 @@ class Wish extends Model
                 return '';
             }
 
-            return MoneyService::format($this->getMoneyObject());
+            return MoneyHelper::format($this->getMoneyObject());
         } catch (Exception $e) {
             return '';
         }
@@ -136,7 +136,7 @@ class Wish extends Model
      */
     private function getMoneyObject(): Money
     {
-        return MoneyService::create($this->getPriceAsFloat(), $this->getWishListCurrency());
+        return MoneyHelper::create($this->getPriceAsFloat(), $this->getWishListCurrency());
     }
 
     /**

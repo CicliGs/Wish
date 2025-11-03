@@ -10,23 +10,23 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Contracts\Foundation\Application;
 
-class SetLocale
+readonly class SetLocale
 {
     /**
      * Create a new middleware instance.
      */
     public function __construct(
-        private readonly Session $session,
-        private readonly Application $app
+        private Session     $session,
+        private Application $app
     ) {}
 
     /**
      * Handle an incoming request.
      *
      * @param Request $request
-     * 
+     *
      * @param Closure(Request): (Response|RedirectResponse|JsonResponse) $next
-     * 
+     *
      * @return Response|RedirectResponse|JsonResponse
      */
     public function handle(Request $request, Closure $next): Response|RedirectResponse|JsonResponse
