@@ -6,21 +6,18 @@ namespace App\Repositories\Contracts;
 
 use App\DTOs\WishStatisticsDTO;
 
-/**
- * Wish repository interface
- */
 interface WishRepositoryInterface extends BaseRepositoryInterface
 {
     /**
      * Find wishes by wish list
-     * 
+     *
      * @return array<object>
      */
     public function findByWishList(object $wishList): array;
 
     /**
      * Find wishes by wish list ID
-     * 
+     *
      * @return array<object>
      */
     public function findByWishListId(int $wishListId): array;
@@ -33,35 +30,35 @@ interface WishRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Find reserved wishes by user ID
-     * 
+     *
      * @return array<object>
      */
     public function findReservedByUserId(int $userId): array;
 
     /**
      * Find reserved wishes by user in specific wish list
-     * 
+     *
      * @return array<object>
      */
     public function findReservedByUserInWishList(object $user, object $wishList): array;
 
     /**
      * Find available wishes in wish list
-     * 
+     *
      * @return array<object>
      */
     public function findAvailableInWishList(object $wishList): array;
 
     /**
      * Find wishes with reservations
-     * 
+     *
      * @return array<object>
      */
     public function findWithReservations(object $wishList): array;
 
     /**
      * Find wishes by price range
-     * 
+     *
      * @return array<object>
      */
     public function findByPriceRange(float $minPrice, float $maxPrice): array;

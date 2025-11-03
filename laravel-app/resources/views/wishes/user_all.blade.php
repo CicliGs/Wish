@@ -13,7 +13,7 @@
                 {{ __('messages.back') }}
             </a>
             
-            @if($wishLists->isEmpty())
+            @if(empty($wishLists))
                 <div class="empty-state">
                     <div class="empty-state-icon">
                         <i class="bi bi-list-task"></i>

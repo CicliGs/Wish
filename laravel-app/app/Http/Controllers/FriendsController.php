@@ -8,8 +8,9 @@ use App\Services\FriendService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Routing\Controller as BaseController;
 
-final class FriendsController extends Controller
+final class FriendsController extends BaseController
 {
     public function __construct(private readonly Guard $auth) {}
 

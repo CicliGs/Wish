@@ -30,6 +30,7 @@ use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Database\ConnectionInterface;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -80,7 +81,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StatefulGuard::class, function ($app) {
             $guard = $app->make(AuthFactory::class)->guard();
             if (!$guard instanceof StatefulGuard) {
-                throw new \RuntimeException('Auth guard must implement StatefulGuard interface');
+                throw new RuntimeException('Auth guard must implement StatefulGuard interface');
             }
             return $guard;
         });

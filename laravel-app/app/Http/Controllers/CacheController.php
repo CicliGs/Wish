@@ -9,8 +9,9 @@ use App\Enums\CacheType;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
+use Illuminate\Routing\Controller as BaseController;
 
-final class CacheController extends Controller
+final class CacheController extends BaseController
 {
     /**
      * Create a new controller instance.

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
-
 interface NotificationRepositoryInterface extends BaseRepositoryInterface
 {
     /**
@@ -14,7 +13,7 @@ interface NotificationRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Find unread notifications for user
-     * 
+     *
      * @return array<object>
      */
     public function findUnreadForUser(object $user): array;

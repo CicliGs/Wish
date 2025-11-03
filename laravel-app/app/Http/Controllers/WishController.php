@@ -17,9 +17,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Routing\Controller as BaseController;
 
-final class WishController extends Controller
+final class WishController extends BaseController
 {
+    use AuthorizesRequests;
     private const WISH_IMAGE_STORAGE_PATH = 'wishes';
 
     /**
@@ -76,11 +79,11 @@ final class WishController extends Controller
         $file = $request->file('image_file');
         $storage = $this->filesystem->disk('public');
         $path = $storage->putFile(self::WISH_IMAGE_STORAGE_PATH, $file);
-        
+
         if ($path === false) {
             throw new \RuntimeException('Failed to upload image');
         }
-        
+
         return $storage->url($path);
     }
 

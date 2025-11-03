@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
-/**
- * Base repository interface providing common CRUD operations
- */
 interface BaseRepositoryInterface
 {
     /**
@@ -16,7 +13,7 @@ interface BaseRepositoryInterface
 
     /**
      * Find all models
-     * 
+     *
      * @return array<object>
      */
     public function findAll(): array;
@@ -38,7 +35,7 @@ interface BaseRepositoryInterface
 
     /**
      * Find models by criteria
-     * 
+     *
      * @return array<object>
      */
     public function findBy(array $criteria): array;

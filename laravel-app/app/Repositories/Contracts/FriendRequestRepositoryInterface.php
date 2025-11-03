@@ -29,21 +29,21 @@ interface FriendRequestRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Find accepted friend requests for user
-     * 
+     *
      * @return array<object>
      */
     public function findAcceptedForUser(object $user): array;
 
     /**
      * Find incoming pending requests for receiver
-     * 
+     *
      * @return array<object>
      */
     public function findIncomingPendingForReceiver(object $receiver): array;
 
     /**
      * Find outgoing pending requests for sender
-     * 
+     *
      * @return array<object>
      */
     public function findOutgoingPendingForSender(object $sender): array;
@@ -63,4 +63,3 @@ interface FriendRequestRepositoryInterface extends BaseRepositoryInterface
      */
     public function countPendingIncomingForReceiver(object $receiver): int;
 }
-

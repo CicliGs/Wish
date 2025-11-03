@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\WishList;
-use App\Support\MoneyService;
+use App\Support\MoneyHelper;
 use Exception;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +20,7 @@ trait MoneyValidationTrait
             'currency' => [
                 'nullable',
                 'string',
-                Rule::in(array_keys(MoneyService::getSupportedCurrencies()))
+                Rule::in(array_keys(MoneyHelper::getSupportedCurrencies()))
             ],
         ];
     }
@@ -91,9 +91,9 @@ trait MoneyValidationTrait
             return false;
         }
 
-        if ($currency && MoneyService::isValidCurrency($currency)) {
+        if ($currency && MoneyHelper::isValidCurrency($currency)) {
             try {
-                MoneyService::create($price, $currency);
+                MoneyHelper::create($price, $currency);
                 return true;
             } catch (Exception) {
                 return false;

@@ -10,11 +10,12 @@ use App\Models\WishList;
 use App\Services\WishListService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Routing\Controller as BaseController;
 
-final class WishListController extends Controller
+final class WishListController extends BaseController
 {
     use AuthorizesRequests;
 

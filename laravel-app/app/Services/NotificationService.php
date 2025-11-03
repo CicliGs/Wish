@@ -8,19 +8,23 @@ use App\DTOs\NotificationDTO;
 use App\DTOs\NotificationDisplayDTO;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\Wish;
+use App\Models\WishList;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use App\Repositories\Contracts\WishListRepositoryInterface;
+use DateTimeInterface;
 use Illuminate\Support\Collection;
+use RuntimeException;
 
-class NotificationService
+readonly class NotificationService
 {
     public function __construct(
-        private readonly NotificationRepositoryInterface $notificationRepository,
-        private readonly UserRepositoryInterface $userRepository,
-        private readonly WishRepositoryInterface $wishRepository,
-        private readonly WishListRepositoryInterface $wishListRepository
+        private NotificationRepositoryInterface $notificationRepository,
+        private UserRepositoryInterface         $userRepository,
+        private WishRepositoryInterface         $wishRepository,
+        private WishListRepositoryInterface     $wishListRepository
     ) {}
 
     /**
@@ -30,8 +34,9 @@ class NotificationService
     {
         $result = $this->notificationRepository->create($notificationDTO->toArray());
         if (!($result instanceof Notification)) {
-            throw new \RuntimeException('Failed to create notification');
+            throw new RuntimeException('Failed to create notification');
         }
+
         return $result;
     }
 
@@ -46,16 +51,16 @@ class NotificationService
             if (!$notification instanceof Notification) {
                 return null;
             }
-            
+
             $friendId = $notification->friend_id ?? null;
             $friend = $friendId ? $this->userRepository->findById($friendId) : null;
-            
+
             $wishId = $notification->wish_id ?? null;
             $wish = $wishId ? $this->wishRepository->findById($wishId) : null;
-            
+
             $wishList = null;
             $wishListId = null;
-            if ($wish instanceof \App\Models\Wish) {
+            if ($wish instanceof Wish) {
                 $wishListId = $wish->wish_list_id ?? null;
                 if ($wishListId) {
                     $wishList = $this->wishListRepository->findById($wishListId);
@@ -67,12 +72,12 @@ class NotificationService
             $createdAt = $notification->created_at;
 
             $wishTitle = __('messages.unknown_wish');
-            if ($wish instanceof \App\Models\Wish && isset($wish->title)) {
+            if ($wish instanceof Wish && isset($wish->title)) {
                 $wishTitle = $wish->title;
             }
 
             $wishListTitle = __('messages.unknown_wishlist');
-            if ($wishList instanceof \App\Models\WishList && isset($wishList->title)) {
+            if ($wishList instanceof WishList && isset($wishList->title)) {
                 $wishListTitle = $wishList->title;
             }
 
@@ -90,8 +95,8 @@ class NotificationService
                 wishListId: $wishListId ? (int) $wishListId : null,
                 wishListTitle: $wishListTitle,
                 isRead: $isRead,
-                updatedAt: $updatedAt instanceof \DateTimeInterface ? $updatedAt : null,
-                createdAt: $createdAt instanceof \DateTimeInterface ? $createdAt : null
+                updatedAt: $updatedAt instanceof DateTimeInterface ? $updatedAt : null,
+                createdAt: $createdAt instanceof DateTimeInterface ? $createdAt : null
             );
         })->filter();
     }
@@ -117,7 +122,7 @@ class NotificationService
     /**
      * Get user's unread notification by ID.
      */
-    public function findUnread(User $user, int $notificationId): ?Notification
+    public function findUnread(User $user, int $notificationId): object
     {
         return $this->notificationRepository->findUnreadByIdForUser($user, $notificationId);
     }

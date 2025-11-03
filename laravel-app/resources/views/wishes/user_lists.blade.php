@@ -12,7 +12,7 @@
             <link rel="stylesheet" href="{{ asset('css/wishlists.css') }}">
             @endpush
             
-            @if($wishLists->isEmpty())
+            @if(empty($wishLists))
                 <div class="empty-state">
                     <div class="empty-state-icon">
                         <i class="bi bi-list-ul"></i>

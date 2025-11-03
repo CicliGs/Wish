@@ -7,31 +7,42 @@ namespace App\Repositories;
 use App\Models\Notification;
 use App\Models\User;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
+use InvalidArgumentException;
+use RuntimeException;
 
+/**
+ * Repository for managing notification operations.
+ */
 final class NotificationRepository extends BaseRepository implements NotificationRepositoryInterface
 {
+    /**
+     * Create a new repository instance.
+     */
     public function __construct(Notification $model)
     {
         parent::__construct($model);
     }
 
     /**
-     * Create new notification
+     * Create a new notification.
      */
     public function create(array $data): object
     {
         $notification = parent::create($data);
-        return $notification instanceof Notification ? $notification : throw new \RuntimeException('Failed to create notification');
+
+        return $notification instanceof Notification ? $notification : throw new RuntimeException('Failed to create notification');
     }
 
     /**
-     * @return array<object>
+     * Find all unread notifications for a user.
+     * Includes related friend and wish data with ordering by creation date.
      */
     public function findUnreadForUser(object $user): array
     {
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
+
         return $this->model
             ->with(['friend', 'wish.wishList'])
             ->where('user_id', $user->id)
@@ -41,10 +52,13 @@ final class NotificationRepository extends BaseRepository implements Notificatio
             ->all();
     }
 
+    /**
+     * Find a specific unread notification by ID for a user.
+     */
     public function findUnreadByIdForUser(object $user, int $notificationId): ?object
     {
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
         $notification = $this->model
             ->where('id', $notificationId)
@@ -55,19 +69,27 @@ final class NotificationRepository extends BaseRepository implements Notificatio
         return $notification instanceof Notification ? $notification : null;
     }
 
+    /**
+     * Mark a notification as read.
+     */
     public function markAsRead(object $notification): object
     {
         if (!$notification instanceof Notification) {
-            throw new \InvalidArgumentException('Notification must be an instance of ' . Notification::class);
+            throw new InvalidArgumentException('Notification must be an instance of ' . Notification::class);
         }
+
         return $this->update($notification, ['is_read' => true]);
     }
 
+    /**
+     * Mark all unread notifications as read for a user.
+     */
     public function markAllAsReadForUser(object $user): int
     {
         if (!$user instanceof User) {
-            throw new \InvalidArgumentException('User must be an instance of ' . User::class);
+            throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
+
         return $this->model
             ->where('user_id', $user->id)
             ->where('is_read', false)

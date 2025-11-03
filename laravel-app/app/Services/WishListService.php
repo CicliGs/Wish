@@ -12,6 +12,8 @@ use App\Repositories\Contracts\WishListRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use RuntimeException;
+use TypeError;
 
 class WishListService
 {
@@ -42,7 +44,7 @@ class WishListService
 
         $wishList = $this->wishListRepository->create($data);
         if (!$wishList instanceof WishList) {
-            throw new \RuntimeException('Failed to create wish list');
+            throw new RuntimeException('Failed to create wish list');
         }
         $this->cacheManager->clearUserCache($user->id);
 
@@ -59,9 +61,9 @@ class WishListService
 
         $updatedWishList = $this->wishListRepository->update($wishList, $data);
         if (!$updatedWishList instanceof WishList) {
-            throw new \RuntimeException('Failed to update wish list');
+            throw new RuntimeException('Failed to update wish list');
         }
-        
+
         if (isset($updatedWishList->user_id)) {
             $this->cacheManager->clearUserCache($updatedWishList->user_id);
         }
@@ -86,7 +88,7 @@ class WishListService
     /**
      * Find public wish list by UUID.
      */
-    public function findPublicByUuid(string $uuid): ?WishList
+    public function findPublicByUuid(string $uuid): object
     {
         return $this->wishListRepository->findPublicByUuid($uuid);
     }
@@ -119,7 +121,7 @@ class WishListService
 
         $isGuest = $currentUser === null;
         $isOwner = $currentUser && $currentUser->id === $wishList->user_id;
-        
+
         $isFriend = false;
         if ($currentUser && $this->friendService && !$isOwner) {
             $friends = $this->friendService->getFriends($currentUser);
@@ -129,7 +131,7 @@ class WishListService
         if (!$user instanceof User) {
             throw new ModelNotFoundException('User must be an instance of ' . User::class);
         }
-        
+
         return PublicWishListDTO::fromData($wishList, $user, $wishes, $isGuest, $isFriend, $isOwner);
     }
 
@@ -147,7 +149,6 @@ class WishListService
                 if ($dto instanceof WishListDTO) {
                     $wishListsValue = $dto->wishLists ?? null;
                     if (is_array($wishListsValue)) {
-                        // Check if array contains collections (old cached data)
                         $needsRegeneration = false;
                         foreach ($wishListsValue as $item) {
                             if (is_object($item)) {
@@ -168,8 +169,7 @@ class WishListService
                     }
                     return $dto;
                 }
-            } catch (\TypeError $e) {
-                // Invalid cached data, regenerate
+            } catch (TypeError $e) {
             }
         }
 

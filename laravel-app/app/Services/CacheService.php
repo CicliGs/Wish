@@ -12,10 +12,6 @@ use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Psr\Log\LoggerInterface;
 
-/**
- * Core cache service for application data caching
- * Handles static content caching with automatic key tracking
- */
 class CacheService
 {
     use ErrorHandlingTrait;
@@ -56,12 +52,12 @@ class CacheService
         return $this->withErrorHandling(function () {
             $keys = $this->cache->get(self::CACHE_KEYS_STORAGE, []);
             $this->removeCacheKeys($keys);
-            
+
             $store = $this->cacheFactory->store();
             if (method_exists($store, 'flush')) {
                 $store->flush();
             }
-            
+
             return true;
         }, 'Failed to clear all cache', [], $this->logger);
     }

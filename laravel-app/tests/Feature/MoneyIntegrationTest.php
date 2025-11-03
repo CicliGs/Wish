@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use App\Support\MoneyService;
+use App\Support\MoneyHelper;
 
 class MoneyIntegrationTest extends TestCase
 {
@@ -11,22 +11,22 @@ class MoneyIntegrationTest extends TestCase
     /** @test */
     public function money_service_validates_currencies()
     {
-        $this->assertTrue(MoneyService::isValidCurrency('USD'));
-        $this->assertTrue(MoneyService::isValidCurrency('EUR'));
-        $this->assertTrue(MoneyService::isValidCurrency('GBP'));
-        $this->assertTrue(MoneyService::isValidCurrency('RUB'));
-        $this->assertFalse(MoneyService::isValidCurrency('INVALID'));
-        $this->assertFalse(MoneyService::isValidCurrency('NOTREAL'));
+        $this->assertTrue(MoneyHelper::isValidCurrency('USD'));
+        $this->assertTrue(MoneyHelper::isValidCurrency('EUR'));
+        $this->assertTrue(MoneyHelper::isValidCurrency('GBP'));
+        $this->assertTrue(MoneyHelper::isValidCurrency('RUB'));
+        $this->assertFalse(MoneyHelper::isValidCurrency('INVALID'));
+        $this->assertFalse(MoneyHelper::isValidCurrency('NOTREAL'));
     }
 
     /** @test */
     public function money_service_creates_money_objects()
     {
-        $money = MoneyService::create(10.99, 'USD');
-        
+        $money = MoneyHelper::create(10.99, 'USD');
+
         $this->assertEquals('USD', $money->getCurrency()->getCode());
-        
-        $formatted = MoneyService::format($money);
+
+        $formatted = MoneyHelper::format($money);
         $this->assertStringContainsString('10.99', $formatted);
         $this->assertStringContainsString('$', $formatted);
     }
@@ -34,7 +34,7 @@ class MoneyIntegrationTest extends TestCase
     /** @test */
     public function models_use_money_service_for_supported_currencies()
     {
-        $moneyCurrencies = array_keys(MoneyService::getSupportedCurrencies());
+        $moneyCurrencies = array_keys(MoneyHelper::getSupportedCurrencies());
 
         $this->assertContains('USD', $moneyCurrencies);
         $this->assertContains('EUR', $moneyCurrencies);

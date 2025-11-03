@@ -9,10 +9,10 @@ use App\Jobs\ProcessNotificationJob;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Foundation\Bus\PendingDispatch;
 
-final class NotificationJobDispatcher
+final readonly class NotificationJobDispatcher
 {
     public function __construct(
-        private readonly ConfigRepository $config
+        private ConfigRepository $config
     ) {}
 
     public function dispatch(NotificationDTO $notificationDTO): PendingDispatch

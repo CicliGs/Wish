@@ -7,8 +7,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Routing\Controller as BaseController;
 
-final class LanguageController extends Controller
+final class LanguageController extends BaseController
 {
     private const SUPPORTED_LOCALES = ['en', 'ru'];
     private const DEFAULT_LOCALE = 'ru';
