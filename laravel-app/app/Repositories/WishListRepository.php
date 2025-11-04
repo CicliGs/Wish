@@ -69,7 +69,7 @@ final class WishListRepository extends BaseRepository implements WishListReposit
 
     /**
      * Find public wish lists
-     *
+     * 
      * @return array<object>
      */
     public function findPublic(): array
@@ -82,7 +82,7 @@ final class WishListRepository extends BaseRepository implements WishListReposit
 
     /**
      * Find wish lists with wishes count
-     *
+     * 
      * @return array<object>
      */
     public function findWithWishesCount(object $user): array
@@ -96,11 +96,11 @@ final class WishListRepository extends BaseRepository implements WishListReposit
             ->withCount('wishes')
             ->get()
             ->all();
-
+        
         foreach ($wishLists as $wishList) {
             $wishList->reserved_wishes_count = $this->wishRepository->countReservedInWishList($wishList);
         }
-
+        
         return $wishLists;
     }
 
@@ -113,7 +113,7 @@ final class WishListRepository extends BaseRepository implements WishListReposit
             throw new InvalidArgumentException('User must be an instance of ' . User::class);
         }
         $wishLists = $this->findByUser($user);
-
+        
         $totalWishes = 0;
         $totalReservedWishes = 0;
         $publicWishListsCount = 0;
@@ -122,16 +122,16 @@ final class WishListRepository extends BaseRepository implements WishListReposit
             if (!$wishList instanceof WishList) {
                 continue;
             }
-
+            
             $wishes = $this->wishRepository->findByWishListId($wishList->id);
             $totalWishes += count($wishes);
-
+            
             foreach ($wishes as $wish) {
                 if ($wish instanceof Wish && isset($wish->is_reserved) && $wish->is_reserved) {
                     $totalReservedWishes++;
                 }
             }
-
+            
             if (!empty($wishList->uuid)) {
                 $publicWishListsCount++;
             }

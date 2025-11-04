@@ -24,13 +24,13 @@ use App\Models\Wish;
 use App\Models\Reservation;
 use App\Models\FriendRequest;
 use App\Models\Notification;
+use App\Exceptions\InvalidAuthGuardException;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Database\ConnectionInterface;
-use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -81,7 +81,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StatefulGuard::class, function ($app) {
             $guard = $app->make(AuthFactory::class)->guard();
             if (!$guard instanceof StatefulGuard) {
-                throw new RuntimeException('Auth guard must implement StatefulGuard interface');
+                throw new InvalidAuthGuardException();
             }
             return $guard;
         });

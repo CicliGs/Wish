@@ -12,13 +12,6 @@ interface BaseRepositoryInterface
     public function findById(int $id): ?object;
 
     /**
-     * Find all models
-     *
-     * @return array<object>
-     */
-    public function findAll(): array;
-
-    /**
      * Create new model
      */
     public function create(array $data): object;
@@ -32,16 +25,4 @@ interface BaseRepositoryInterface
      * Delete model
      */
     public function delete(object $model): bool;
-
-    /**
-     * Find models by criteria
-     *
-     * @return array<object>
-     */
-    public function findBy(array $criteria): array;
-
-    /**
-     * Find single model by criteria
-     */
-    public function findOneBy(array $criteria): ?object;
 }

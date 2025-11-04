@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
+use App\Exceptions\UserCreationFailedException;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\AchievementRepositoryInterface;
 
@@ -27,7 +28,7 @@ class UserService
         $user = $this->userRepository->create($data);
 
         if (!($user instanceof User)) {
-            throw new \RuntimeException('Failed to create user');
+            throw new UserCreationFailedException();
         }
 
         $this->grantRegistrationAchievement($user);

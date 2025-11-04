@@ -7,13 +7,17 @@ namespace App\Services;
 use App\DTOs\FriendsDTO;
 use App\DTOs\FriendsSearchDTO;
 use App\Enums\FriendRequestStatus;
+use App\Exceptions\AlreadyFriendsException;
+use App\Exceptions\CannotAddSelfAsFriendException;
+use App\Exceptions\FriendRequestAlreadySentException;
+use App\Exceptions\FriendRequestNotFoundException;
+use App\Exceptions\AccessDeniedException;
 use App\Models\User;
 use App\Models\FriendRequest;
 use App\Repositories\Contracts\FriendRequestRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Database\ConnectionInterface;
-use RuntimeException;
 
 class FriendService
 {
@@ -30,23 +34,25 @@ class FriendService
     /**
      * Send friend request.
      *
-     * @throws RuntimeException
+     * @throws CannotAddSelfAsFriendException
+     * @throws FriendRequestAlreadySentException
+     * @throws AlreadyFriendsException
      */
     public function sendRequest(User $sender, User $receiver): void
     {
         if ($sender->id === $receiver->id) {
-            throw new RuntimeException(__('messages.cannot_add_self_as_friend'));
+            throw new CannotAddSelfAsFriendException();
         }
 
         $existingRequest = $this->friendRequestRepository->findPendingBetween($sender->id, $receiver->id);
 
         if ($existingRequest) {
-            throw new RuntimeException(__('messages.friend_request_already_sent'));
+            throw new FriendRequestAlreadySentException();
         }
 
         $existingFriendship = $this->friendRequestRepository->findBetween($sender->id, $receiver->id);
         if ($existingFriendship instanceof FriendRequest && isset($existingFriendship->status) && $existingFriendship->status === FriendRequestStatus::ACCEPTED->value) {
-            throw new RuntimeException(__('messages.already_friends'));
+            throw new AlreadyFriendsException();
         }
 
         $this->friendRequestRepository->deleteBetween($sender->id, $receiver->id);
@@ -62,17 +68,20 @@ class FriendService
 
     /**
      * Accept friend request.
+     *
+     * @throws FriendRequestNotFoundException
+     * @throws AccessDeniedException
      */
     public function acceptRequest(int $requestId, int $receiverId): void
     {
         $request = $this->friendRequestRepository->findByIdOrFail($requestId);
         
         if (!($request instanceof FriendRequest)) {
-            throw new RuntimeException(__('messages.friend_request_not_found'));
+            throw new FriendRequestNotFoundException();
         }
 
         if (isset($request->receiver_id) && $request->receiver_id !== $receiverId) {
-            throw new RuntimeException(__('messages.access_denied'));
+            throw new AccessDeniedException();
         }
 
         $senderId = $request->sender_id ?? 0;
@@ -92,17 +101,20 @@ class FriendService
 
     /**
      * Decline friend request.
+     *
+     * @throws FriendRequestNotFoundException
+     * @throws AccessDeniedException
      */
     public function declineRequest(int $requestId, int $receiverId): void
     {
         $request = $this->friendRequestRepository->findByIdOrFail($requestId);
         
         if (!($request instanceof FriendRequest)) {
-            throw new RuntimeException(__('messages.friend_request_not_found'));
+            throw new FriendRequestNotFoundException();
         }
 
         if (isset($request->receiver_id) && $request->receiver_id !== $receiverId) {
-            throw new RuntimeException(__('messages.access_denied'));
+            throw new AccessDeniedException();
         }
 
         $this->friendRequestRepository->updateStatus($request, FriendRequestStatus::DECLINED->value);

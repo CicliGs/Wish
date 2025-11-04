@@ -107,7 +107,7 @@ final class ReservationRepository extends BaseRepository implements ReservationR
         }
 
         if ($entity instanceof WishList) {
-            return $this->findByWishList($entity);
+        return $this->findByWishList($entity);
         }
 
         throw new InvalidArgumentException('Entity must be an instance of ' . User::class . ' or ' . WishList::class);
@@ -150,7 +150,7 @@ final class ReservationRepository extends BaseRepository implements ReservationR
         }
 
         if ($entity instanceof WishList) {
-            $reservations = $this->findByWishList($entity);
+        $reservations = $this->findByWishList($entity);
 
             $totalValue = 0;
             $userIds = [];
@@ -170,7 +170,7 @@ final class ReservationRepository extends BaseRepository implements ReservationR
             $totalReservations = count($reservations);
             $averagePrice = $totalReservations > 0 ? $totalValue / $totalReservations : 0.0;
 
-            return new ReservationStatisticsDTO(
+        return new ReservationStatisticsDTO(
                 totalReservations: $totalReservations,
                 totalValue: $totalValue,
                 averagePrice: $averagePrice,

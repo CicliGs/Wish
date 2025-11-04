@@ -8,11 +8,12 @@ use App\DTOs\WishListDTO;
 use App\DTOs\PublicWishListDTO;
 use App\Models\User;
 use App\Models\WishList;
+use App\Exceptions\WishListCreationFailedException;
+use App\Exceptions\WishListUpdateFailedException;
 use App\Repositories\Contracts\WishListRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use RuntimeException;
 use TypeError;
 
 class WishListService
@@ -44,7 +45,7 @@ class WishListService
 
         $wishList = $this->wishListRepository->create($data);
         if (!$wishList instanceof WishList) {
-            throw new RuntimeException('Failed to create wish list');
+            throw new WishListCreationFailedException();
         }
         $this->cacheManager->clearUserCache($user->id);
 
@@ -61,7 +62,7 @@ class WishListService
 
         $updatedWishList = $this->wishListRepository->update($wishList, $data);
         if (!$updatedWishList instanceof WishList) {
-            throw new RuntimeException('Failed to update wish list');
+            throw new WishListUpdateFailedException();
         }
 
         if (isset($updatedWishList->user_id)) {

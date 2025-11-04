@@ -6,9 +6,9 @@ namespace App\Repositories;
 
 use App\Models\Notification;
 use App\Models\User;
+use App\Exceptions\NotificationCreationFailedException;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
 use InvalidArgumentException;
-use RuntimeException;
 
 /**
  * Repository for managing notification operations.
@@ -30,7 +30,7 @@ final class NotificationRepository extends BaseRepository implements Notificatio
     {
         $notification = parent::create($data);
 
-        return $notification instanceof Notification ? $notification : throw new RuntimeException('Failed to create notification');
+        return $notification instanceof Notification ? $notification : throw new NotificationCreationFailedException();
     }
 
     /**

@@ -9,6 +9,8 @@ use App\DTOs\UserWishesDTO;
 use App\Models\Wish;
 use App\Models\WishList;
 use App\Models\User;
+use App\Exceptions\WishCreationFailedException;
+use App\Exceptions\WishUpdateFailedException;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Support\Collection;
@@ -45,7 +47,7 @@ class WishService
         $wishData['wish_list_id'] = $wishList->id;
         $wish = $this->wishRepository->create($wishData);
         if (!$wish instanceof Wish) {
-            throw new \RuntimeException('Failed to create wish');
+            throw new WishCreationFailedException();
         }
 
         $this->cacheManager->clearWishListCache($wishList->id, $user->id);
@@ -60,7 +62,7 @@ class WishService
     {
         $updatedWish = $this->wishRepository->update($wish, $wishData);
         if (!$updatedWish instanceof Wish) {
-            throw new \RuntimeException('Failed to update wish');
+            throw new WishUpdateFailedException();
         }
 
         $this->cacheManager->clearWishCache($updatedWish->wish_list_id, $user->id);
