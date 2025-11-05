@@ -35,16 +35,6 @@ abstract class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
-     * Find all models
-     *
-     * @return array<object>
-     */
-    public function findAll(): array
-    {
-        return $this->model->all()->all();
-    }
-
-    /**
      * Create new model
      */
     public function create(array $data): object
@@ -75,35 +65,5 @@ abstract class BaseRepository implements BaseRepositoryInterface
         }
 
         return $model->delete();
-    }
-
-    /**
-     * Find models by criteria
-     *
-     * @return array<object>
-     */
-    public function findBy(array $criteria): array
-    {
-        $query = $this->model->newQuery();
-
-        foreach ($criteria as $field => $value) {
-            $query->where($field, $value);
-        }
-
-        return $query->get()->all();
-    }
-
-    /**
-     * Find single model by criteria
-     */
-    public function findOneBy(array $criteria): ?object
-    {
-        $query = $this->model->newQuery();
-
-        foreach ($criteria as $field => $value) {
-            $query->where($field, $value);
-        }
-
-        return $query->first();
     }
 }

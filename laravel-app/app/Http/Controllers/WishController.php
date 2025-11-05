@@ -11,6 +11,7 @@ use App\Models\WishList;
 use App\Models\User;
 use App\Services\WishService;
 use App\Services\ReservationService;
+use App\Exceptions\ImageUploadFailedException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -81,7 +82,7 @@ final class WishController extends BaseController
         $path = $storage->putFile(self::WISH_IMAGE_STORAGE_PATH, $file);
 
         if ($path === false) {
-            throw new \RuntimeException('Failed to upload image');
+            throw new ImageUploadFailedException();
         }
 
         return $storage->url($path);

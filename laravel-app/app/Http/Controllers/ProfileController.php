@@ -13,9 +13,14 @@ use App\Http\Requests\UpdateProfileRequest;
 use App\Services\ProfileService;
 use App\Services\FriendService;
 use App\Models\User;
+use App\Exceptions\CannotAddSelfAsFriendException;
+use App\Exceptions\FriendRequestAlreadySentException;
+use App\Exceptions\AlreadyFriendsException;
+use App\Exceptions\FriendRequestNotFoundException;
+use App\Exceptions\AccessDeniedException;
+use App\Exceptions\AvatarUploadFailedException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Routing\Controller as BaseController;
-use RuntimeException;
 
 final class ProfileController extends BaseController
 {
@@ -53,6 +58,7 @@ final class ProfileController extends BaseController
      */
     public function sendFriendRequest(User $user, FriendService $friendService): RedirectResponse|JsonResponse
     {
+        try {
         $friendService->sendRequest($this->auth->user(), $user);
         $message = __('messages.friend_request_sent');
 
@@ -61,6 +67,15 @@ final class ProfileController extends BaseController
         }
 
         return back()->with('success', $message);
+        } catch (CannotAddSelfAsFriendException|FriendRequestAlreadySentException|AlreadyFriendsException $e) {
+            $message = $e->getMessage();
+
+            if (request()->wantsJson()) {
+                return response()->json(['message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
     }
 
     /**
@@ -68,9 +83,13 @@ final class ProfileController extends BaseController
      */
     public function acceptFriendRequest(int $requestId, FriendService $friendService): RedirectResponse
     {
+        try {
         $friendService->acceptRequest($requestId, $this->auth->id());
 
         return back()->with('success', __('messages.friend_request_accepted'));
+        } catch (FriendRequestNotFoundException|AccessDeniedException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -78,9 +97,13 @@ final class ProfileController extends BaseController
      */
     public function declineFriendRequest(int $requestId, FriendService $friendService): RedirectResponse
     {
+        try {
         $friendService->declineRequest($requestId, $this->auth->id());
 
         return back()->with('success', __('messages.friend_request_declined'));
+        } catch (FriendRequestNotFoundException|AccessDeniedException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -131,7 +154,7 @@ final class ProfileController extends BaseController
         $path = $storage->putFile(self::AVATAR_STORAGE_PATH, $file);
 
         if ($path === false) {
-            throw new RuntimeException('Failed to upload avatar');
+            throw new AvatarUploadFailedException();
         }
 
         return $storage->url($path);

@@ -8,12 +8,13 @@ use App\Models\Reservation;
 use App\Models\User;
 use App\Models\Wish;
 use App\Models\WishList;
+use App\Exceptions\WishAlreadyReservedException;
+use App\Exceptions\WishNotReservedByUserException;
 use App\Repositories\Contracts\ReservationRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use App\Repositories\Contracts\WishListRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Database\ConnectionInterface;
-use RuntimeException;
 
 class ReservationService
 {
@@ -31,12 +32,12 @@ class ReservationService
     /**
      * Reserve a wish.
      *
-     * @throws RuntimeException
+     * @throws WishAlreadyReservedException
      */
     public function reserve(Wish $wish, User $user): void
     {
         if ($this->wishRepository->isReserved($wish)) {
-            throw new RuntimeException(__('messages.wish_already_reserved'));
+            throw new WishAlreadyReservedException();
         }
 
         $this->db->transaction(function () use ($wish, $user) {
@@ -50,14 +51,14 @@ class ReservationService
     /**
      * Unreserve a wish.
      *
-     * @throws RuntimeException
+     * @throws WishNotReservedByUserException
      */
     public function unreserve(Wish $wish, User $user): void
     {
         $reservation = $this->reservationRepository->findByWishAndUser($wish, $user);
 
         if (!$reservation || !($reservation instanceof Reservation)) {
-            throw new RuntimeException(__('messages.wish_not_reserved_by_user'));
+            throw new WishNotReservedByUserException();
         }
 
         $this->db->transaction(function () use ($reservation, $wish) {

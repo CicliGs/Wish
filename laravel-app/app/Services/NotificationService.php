@@ -10,13 +10,13 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Models\Wish;
 use App\Models\WishList;
+use App\Exceptions\NotificationCreationFailedException;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use App\Repositories\Contracts\WishListRepositoryInterface;
 use DateTimeInterface;
 use Illuminate\Support\Collection;
-use RuntimeException;
 
 readonly class NotificationService
 {
@@ -34,7 +34,7 @@ readonly class NotificationService
     {
         $result = $this->notificationRepository->create($notificationDTO->toArray());
         if (!($result instanceof Notification)) {
-            throw new RuntimeException('Failed to create notification');
+            throw new NotificationCreationFailedException();
         }
 
         return $result;

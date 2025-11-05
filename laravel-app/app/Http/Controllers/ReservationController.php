@@ -7,6 +7,8 @@ namespace App\Http\Controllers;
 use App\Models\Wish;
 use App\Models\WishList;
 use App\Services\ReservationService;
+use App\Exceptions\WishAlreadyReservedException;
+use App\Exceptions\WishNotReservedByUserException;
 use App\Repositories\Contracts\WishRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
@@ -32,30 +34,40 @@ final class ReservationController extends BaseController
      * Reserve a wish.
      *
      * @throws AuthorizationException
+     * @throws WishAlreadyReservedException
      */
     public function reserve(int $wishId): RedirectResponse
     {
         $wish = $this->findWish($wishId);
         $this->authorize('reserve', $wish);
 
+        try {
         $this->service->reserve($wish, $this->auth->user());
 
         return back()->with('success', __('messages.wish_reserved'));
+        } catch (WishAlreadyReservedException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
      * Unreserve a wish.
      *
      * @throws AuthorizationException
+     * @throws WishNotReservedByUserException
      */
     public function unreserve(int $wishId): RedirectResponse
     {
         $wish = $this->findWish($wishId);
         $this->authorize('unreserve', $wish);
 
+        try {
         $this->service->unreserve($wish, $this->auth->user());
 
         return back()->with('success', __('messages.wish_unreserved'));
+        } catch (WishNotReservedByUserException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
