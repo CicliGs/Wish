@@ -21,11 +21,11 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /var/www/html
 
-# Копируем файлы из корня проекта (../)
-COPY --chown=www-data:www-data ../ /var/www/html
+# Копируем файлы из корня проекта
+COPY --chown=www-data:www-data . /var/www/html
 
 # Копируем конфигурацию supervisor
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 USER www-data
 
