@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.3-cli
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -6,29 +6,25 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     zip \
     unzip \
-    nodejs \
-    npm \
-    supervisor \
     && docker-php-ext-install pdo pdo_pgsql \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && mkdir -p /var/www/html/storage \
-    && chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/html/storage
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /var/www/html
 
 # Копируем файлы из корня проекта
-COPY --chown=www-data:www-data . /var/www/html
+COPY . /var/www/html
 
-# Копируем конфигурацию supervisor
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Устанавливаем зависимости
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-USER www-data
+# Настраиваем права
+RUN chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache
 
-EXPOSE 80
+EXPOSE 8000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
