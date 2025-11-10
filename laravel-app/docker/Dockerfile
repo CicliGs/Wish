@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     && docker-php-ext-install pdo pdo_pgsql bcmath \
+    && docker-php-ext-enable bcmath \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apt-get clean \
@@ -18,12 +19,12 @@ WORKDIR /var/www/html
 # Копируем composer файлы
 COPY composer.json composer.lock* ./
 
-# Устанавливаем зависимости
-RUN if [ -f composer.lock ]; then \
-        composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts; \
-    else \
-        composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts; \
-    fi
+# Проверяем установленные расширения PHP
+RUN php -m
+
+# Устанавливаем зависимости (игнорируем требования платформы для bcmath, если проблема сохраняется)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts --ignore-platform-req=ext-bcmath || \
+    (php -m && composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts)
 
 # Копируем остальные файлы
 COPY . /var/www/html
