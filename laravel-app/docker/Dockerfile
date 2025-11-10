@@ -15,8 +15,21 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /var/www/html
 
-# Копируем все файлы
+# Копируем composer файлы
+COPY composer.json composer.lock* ./
+
+# Устанавливаем зависимости
+RUN if [ -f composer.lock ]; then \
+        composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts; \
+    else \
+        composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts; \
+    fi
+
+# Копируем остальные файлы
 COPY . /var/www/html
+
+# Запускаем post-install скрипты (если нужно)
+RUN composer dump-autoload --optimize --no-interaction || true
 
 # Настраиваем права
 RUN chmod -R 775 /var/www/html/storage \
