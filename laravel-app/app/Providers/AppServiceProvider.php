@@ -92,6 +92,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(ViewFactory $view, Guard $auth, FriendRequestRepositoryInterface $friendRequestRepository): void
     {
+        if (env('APP_ENV') === 'production') {
+            \URL::forceScheme('https');
+        }
+
         $view->composer('layouts.app', function ($view) use ($auth, $friendRequestRepository) {
             if ($auth->check()) {
                 $user = $auth->user();
