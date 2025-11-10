@@ -15,11 +15,14 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /var/www/html
 
-# Копируем файлы из корня проекта
-COPY . /var/www/html
+# Копируем только файлы для composer (для кеширования слоев)
+COPY composer.json composer.lock ./
 
-# Устанавливаем зависимости
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Устанавливаем зависимости (пропускаем скрипты, которые требуют .env)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
+
+# Копируем остальные файлы
+COPY . /var/www/html
 
 # Настраиваем права
 RUN chmod -R 775 /var/www/html/storage \
